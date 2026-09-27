@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:18
+    # Local-only credentials: the port is not published outside the Compose network.
+    environment:
+      POSTGRES_USER: podcast
+      POSTGRES_PASSWORD: podcast
+      POSTGRES_DB: podcast
+    # Postgres 18+ keeps its data under /var/lib/postgresql/<major>/docker.
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "podcast", "-d", "podcast"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
