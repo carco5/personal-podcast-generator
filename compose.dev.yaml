@@ -1,0 +1,6 @@
+# Development only: publishes Postgres to this machine so pytest and Alembic can reach it.
+# Usage: docker compose -f compose.yaml -f compose.dev.yaml up -d
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5432"

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import SecretStr
 
 from app.config import Settings
 
@@ -60,4 +61,7 @@ def test_env_example_matches_settings() -> None:
     assert documented.keys() == fields.keys()
     for name, value in documented.items():
         if value:
-            assert value == fields[name].default, name
+            default = fields[name].default
+            if isinstance(default, SecretStr):
+                default = default.get_secret_value()
+            assert value == default, name

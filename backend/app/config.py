@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     elevenlabs_host_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"
     elevenlabs_analyst_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
 
+    # Development default (compose.dev.yaml); Compose overrides it inside the containers.
+    database_url: SecretStr = SecretStr(
+        "postgresql+psycopg://podcast:podcast@127.0.0.1:5433/podcast"
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

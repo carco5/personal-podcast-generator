@@ -4,12 +4,18 @@ version = "0.1.0"
 description = "Personal podcast generator: API, scheduler worker and generation pipeline."
 requires-python = ">=3.14"
 dependencies = [
+    "alembic==1.20.0",
     "elevenlabs==2.69.0",
+    "fastapi==0.141.1",
     "feedparser==6.0.14",
     "httpx==0.28.1",
     "openai==3.19.2",
+    "psycopg[binary]==3.3.6",
     "pydantic-settings==2.15.0",
+    "sqlalchemy==2.1.1",
     "trafilatura==2.2.0",
+    "tzdata==2026.4",
+    "uvicorn==0.54.0",
 ]
 
 [dependency-groups]
@@ -33,3 +39,19 @@ line-length = 100
 
 [tool.ruff.lint]
 extend-select = ["I", "UP", "B"]
+
+[tool.alembic]
+script_location = "%(here)s/migrations"
+file_template = "%%(year)d_%%(month).2d_%%(day).2d-%%(rev)s_%%(slug)s"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_check"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"

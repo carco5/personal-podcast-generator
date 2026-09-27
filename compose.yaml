@@ -1,3 +1,12 @@
+x-backend: &backend
+  build: ./backend
+  image: podcast-backend
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DATABASE_URL: postgresql+psycopg://podcast:podcast@db:5432/podcast
+
 services:
   db:
     image: postgres:18
@@ -14,6 +23,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  prestart:
+    <<: *backend
+    command: ["python", "-m", "app.prestart"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    # Bound to localhost only: the API has no authentication and can spend provider credits.
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      prestart:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

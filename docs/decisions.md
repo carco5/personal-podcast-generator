@@ -30,6 +30,11 @@ record supersedes the old one and both stay here.
 | D22 | [The episode follows the listener's priorities](#d22--the-episode-follows-the-listeners-priorities) | Accepted |
 | D23 | [What an episode covers: what is new, or a catch-up the first time](#d23--what-an-episode-covers-what-is-new-or-a-catch-up-the-first-time) | Accepted |
 | D24 | [Sources are ingested on a schedule and stored](#d24--sources-are-ingested-on-a-schedule-and-stored) | Accepted |
+| D25 | [The data model grows step by step, and PostgreSQL enforces it](#d25--the-data-model-grows-step-by-step-and-postgresql-enforces-it) | Accepted |
+| D26 | [Migrations with Alembic, applied by a prestart job](#d26--migrations-with-alembic-applied-by-a-prestart-job) | Accepted |
+| D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted |
+| D28 | [Tests run against a real PostgreSQL](#d28--tests-run-against-a-real-postgresql) | Accepted |
+| D29 | [One backend image with a cached dependency layer](#d29--one-backend-image-with-a-cached-dependency-layer) | Accepted |
 
 ---
 
@@ -68,8 +73,9 @@ production migrations.
 paid APIs, so it must survive restarts and must never run twice for the same slot.
 
 **Decision.** There is no separate jobs table. An episode row carries `status` (`queued` →
-`in_progress` → `completed` / `failed`), `scheduled_for` and `attempts`, and
-`UNIQUE(user_id, scheduled_for)` prevents duplicates. One worker loops over three tasks: every
+`in_progress` → `completed` / `failed` / `skipped`), `scheduled_for` and `attempts`, and
+`UNIQUE(user_id, scheduled_for)` prevents duplicates. A partial unique index allows at most one
+`queued` or `in_progress` episode per user. `skipped` means there was no fresh material (D19). One worker loops over three tasks: every
 three hours it ingests the catalogue sources (D24); it schedules due episodes (`INSERT … ON
 CONFLICT DO NOTHING`); and it claims one queued episode and runs the pipeline. Claiming uses `SELECT … FOR UPDATE SKIP LOCKED`, so more workers can be added
 without two of them taking the same episode.
@@ -91,7 +97,8 @@ latency before a queued episode starts.
 **Evidence.** PostgreSQL documentation on `SKIP LOCKED`: it "can be used to avoid lock contention
 with multiple consumers accessing a queue-like table"
 ([docs](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE)).
-Revised on 2026-09-27 to add the ingest task (D24).
+Revised on 2026-09-27 to add the ingest task (D24), and in Step 4 to add the `skipped` status
+and the one-in-flight index (D25).
 
 ---
 
@@ -408,15 +415,17 @@ conflict.
 
 ## D10 · Runs locally with Docker Compose, including without API keys
 
-**Status:** Accepted · **Date:** 2026-09-26
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
 
 **Context.** Reviewers must be able to run the project with one command, and the API keys belong
 to Prosper.
 
-**Decision.** `docker compose up` starts the database, a one-off migration job, the API and the
-worker. The `.env` file is optional (`required: false`). Without keys the app still loads with
-the sample episode, the simulated dashboard and the full UI. Only "Generate" needs keys, and it
-explains which one is missing. The database port is not published.
+**Decision.** `docker compose up` starts the database, a one-off `prestart` job (migrations and the
+demo user, D26), the API and the worker (Step 6). The `.env` file is optional (`required: false`).
+Without keys the app still loads with the sample episode, the simulated dashboard and the full UI.
+Only "Generate" needs keys: the API answers 503 and names the missing variables. The database port
+is not published, and the API is published on `127.0.0.1` only, because it has no authentication
+and can spend provider credits.
 
 **Alternatives considered.** *A public deployment:* a public URL could spend the provider credits
 without control.
@@ -425,7 +434,8 @@ without control.
 work.
 
 **Evidence.** Docker Compose documentation: since Compose 2.24.0, an `env_file` entry with
-`required: false` is ignored when the file is missing.
+`required: false` is ignored when the file is missing. Revised in Step 4: the migration job became
+`prestart`, and the API port is bound to localhost.
 
 ---
 
@@ -460,11 +470,13 @@ they are consistent makes this API familiar to them.
 
 **Decision.**
 - `/api/v1/` prefix and `GET /api/v1/health`, as in Prosper's API.
-- `page` + `limit` pagination, as in Prosper's call-log listing.
+- `page` + `limit` pagination, as in Prosper's call-log listing: `page` starts at 0, and a list
+  answers `{"episodes": [...], "page_count": …, "next_page": … | null}`, the shape of Prosper's
+  `{"call_logs": [...], "page_count", "next_page"}`.
 - An endpoint to retry a failed episode, similar to Prosper's `rerun-failed` webhooks endpoint.
-- Episode status values `queued`, `in_progress`, `completed` and `failed`, in one consistent
-  style. This is the job lifecycle of GitHub's Checks API (`queued`, `in_progress`, `completed`)
-  plus `failed`.
+- Episode status values `queued`, `in_progress`, `completed`, `failed` and `skipped`, in one
+  consistent style. This is the job lifecycle of GitHub's Checks API (`queued`, `in_progress`,
+  `completed`) plus `failed`, and `skipped`, which is one of that API's conclusions.
 
 **Alternatives considered.**
 - *Copying Prosper's status values:* they differ between resources (for example `In Progress` and
@@ -472,10 +484,11 @@ they are consistent makes this API familiar to them.
   convention to copy.
 - *`page_size` pagination:* common elsewhere, but Prosper uses `limit`.
 
-**Trade-offs.** None significant.
+**Trade-offs.** Offset pagination gets slower on deep pages. With tens of episodes per user this
+does not matter; keyset pagination is the next step if lists grow.
 
 **Evidence.** Prosper's public OpenAPI document (`voice.getprosperapp.com/openapi.json`), checked
-on 2026-09-27. [GitHub Checks API](https://docs.github.com/en/rest/checks/runs): `status` is
+on 2026-09-27, and again in Step 4 for the page numbering and the response shape. [GitHub Checks API](https://docs.github.com/en/rest/checks/runs): `status` is
 `queued`, `in_progress` or `completed`. Revised on 2026-09-27 after re-checking the OpenAPI
 document: pagination there uses `limit`, and status values are not shared across resources.
 
@@ -582,7 +595,7 @@ must be bit-for-bit reproducible.
 
 ## D16 · Configuration and secrets
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4)
 
 **Context.** The app must run without any API keys (D10), keys must never leak, and reviewers
 need to know every setting that exists.
@@ -599,6 +612,9 @@ need to know every setting that exists.
   if the two drift apart.
 - **What is configurable:** model names and voice IDs. The TTS model is not, because
   text-to-dialogue only exists on v3.
+- **Database URL** (Step 4): also a `SecretStr`, because it contains a password. Its default is
+  the development database on `127.0.0.1:5433` (D17); Compose sets the in-network URL for the
+  containers.
 
 **Alternatives considered.**
 - *Reading `os.environ` wherever a value is needed:* scattered settings, and no types or
@@ -620,7 +636,7 @@ intentional.
 
 ## D17 · PostgreSQL 18 in Compose
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4)
 
 **Context.** The database must keep its data across restarts on any reviewer machine, and it must
 not clash with a PostgreSQL the reviewer already runs.
@@ -641,8 +657,17 @@ not clash with a PostgreSQL the reviewer already runs.
 - *Required credentials from `.env`, as in the official template:* `docker compose up` would
   then fail without a `.env` file.
 
-**Trade-offs.** Tools on the host cannot reach the database until a development override
-publishes a port. That is decided in Step 4, together with migrations.
+**Development access (Step 4).** `compose.dev.yaml` publishes the port on `127.0.0.1:5433`, only
+when asked for: `docker compose -f compose.yaml -f compose.dev.yaml up -d`. A plain
+`docker compose up` still publishes nothing. Port 5433 avoids a local PostgreSQL on 5432, and
+`127.0.0.1` keeps it off the local network. The default URL uses `127.0.0.1`, not `localhost`: on
+Windows, `localhost` tries IPv6 first, where the port is not published.
+- *A `compose.override.yml`*, the official template's choice, was rejected: Compose loads it
+  automatically, so reviewers would publish the port too.
+- *Tests inside a container* were rejected: every change would need an image rebuild, and Alembic
+  could not autogenerate from the host.
+
+**Trade-offs.** Developers type two `-f` flags.
 
 **Evidence.**
 - Compose docs: `compose.yaml` is the preferred filename, and the `version` element is
@@ -651,6 +676,8 @@ publishes a port. That is decided in Step 4, together with migrations.
   `/var/lib/postgresql/18/docker` and the volume is `/var/lib/postgresql`.
 - Local check on 2026-09-27: `data_directory` is `/var/lib/postgresql/18/docker`, there is no
   anonymous volume, and a row survives `docker compose down` followed by `up`.
+- Step 4 measurement: a connection to `localhost:5433` took 5.07 s and one to `127.0.0.1:5433`
+  took 0.04 s.
 
 ---
 
@@ -686,7 +713,7 @@ therefore needs about 3,700 characters, and script length is planned from this f
 
 ## D19 · An episode is shorter rather than padded
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4)
 
 **Context.** The user chooses an episode length, but some days bring little news for an interest.
 A model asked to fill a fixed length with thin material pads it out: it repeats itself or adds
@@ -697,7 +724,8 @@ claims that no source supports.
   material it has.
 - An interest with no fresh material is left out of that day's episode.
 - If no interest has fresh material, the episode is not generated, and the reason is recorded
-  without spending on voice.
+  without spending on voice. It ends as `skipped`, with the reason in `status_reason` (Step 4),
+  so it does not count as a failure and is not offered for retry.
 
 **Alternatives considered.**
 - *A fixed length:* it invites padding, which D7 would then reject in a rewrite loop that cannot
@@ -873,6 +901,235 @@ index of article sitemaps.
 
 ---
 
+## D25 · The data model grows step by step, and PostgreSQL enforces it
+
+**Status:** Accepted · **Date:** 2026-09-27
+
+**Context.** The definition sketched nine tables, but most of them belong to code that does not
+exist yet. The database is written by the API, and later by the worker and by scripts.
+
+**Decision.**
+- **One migration per step.** Each table arrives with the step whose code uses it:
+  - Step 4 adds `users`, `podcast_settings`, `interests` and `episodes`;
+  - Step 5 adds the pipeline tables (`articles`, `episode_articles`, `stage_runs` and
+    `provider_calls`) and the episode's result columns (title, script, audio and duration);
+  - Step 8 adds `listen_events`.
+- **Keys:** `bigint GENERATED ALWAYS AS IDENTITY`.
+- **Types:**
+  - `text`, and `timestamptz` for every point in time;
+  - `jsonb` for the list of hosts;
+  - PostgreSQL arrays for keywords and schedule days. Days are ISO weekdays, where 1 is Monday,
+    as in Python's `isoweekday()` and PostgreSQL's `isodow`.
+- **Enumerated values** (status, trigger, tone, weight, length and interest kind) are `text` with a
+  `CHECK` constraint. The constraint is generated from the same `Literal` type that the API
+  validates.
+- **Rules the database enforces:**
+  - unique `(user_id, topic)` and unique `(user_id, scheduled_for)`;
+  - a partial unique index on `episodes (user_id) WHERE status IN ('queued', 'in_progress')`, so a
+    user has at most one episode in flight;
+  - `ON DELETE CASCADE` from `users`.
+- **Constraint names:** a naming convention gives every constraint a predictable name.
+- **Settings table:** podcast settings are a separate one-to-one table (who the user is, versus how
+  they want their podcast).
+- **Topic catalogue:** it lives in code, because each topic needs code for its sources.
+
+**Alternatives considered.**
+- *All nine tables now:* five tables would have no code or tests until Step 5, and would likely
+  change.
+- *Native PostgreSQL enums:* adding a value needs `ALTER TYPE`, and Alembic's autogenerate does not
+  track enum values.
+- *`serial` or UUID keys:* `serial` is the legacy form of identity columns. Random UUIDv4 keys
+  scatter index inserts, and nothing here needs globally unique IDs.
+- *Validating only in the API:* the worker and scripts write too.
+
+**Trade-offs.**
+- Alembic's autogenerate does not compare `CHECK` constraints, so changing an allowed value means
+  writing that migration by hand.
+- There will be one migration per step instead of one in total.
+
+**Evidence.**
+- Supabase's PostgreSQL best practices: identity keys and UUIDv4 fragmentation; `text` and
+  `timestamptz`; text plus `CHECK` for enumerations; indexing foreign keys. Here the unique indexes
+  that start with `user_id` serve that purpose.
+- The SQLAlchemy and Alembic documentation on constraint naming conventions.
+- `backend/tests/test_models.py` writes a bad value into each constraint, bypassing the API, and
+  checks that PostgreSQL rejects it.
+
+---
+
+## D26 · Migrations with Alembic, applied by a prestart job
+
+**Status:** Accepted · **Date:** 2026-09-27
+
+**Context.** The schema must be versioned and reviewable. `docker compose up` must also apply it,
+without shell scripts in the containers.
+
+**Decision.**
+- **Configuration:** Alembic is configured in `pyproject.toml` (`[tool.alembic]`, Alembic 1.16+),
+  with no `alembic.ini`. `migrations/env.py` takes the database URL from the settings (D16).
+- **Writing migrations:** they are autogenerated from the models and reviewed line by line, and
+  post-write hooks run Ruff on them.
+- **Folder name:** `migrations/`. With a folder named `alembic/`, Ruff's import sorter treats the
+  library as local code.
+- **Applying them:** a one-off `prestart` Compose service runs `python -m app.prestart`. It applies
+  `upgrade head`, then creates the demo user if it does not exist, so it can run on every start.
+  The API waits for it with `condition: service_completed_successfully`.
+- **Tests:**
+  - `alembic check` fails when the models and the migrations drift apart, and a sabotage test
+    proves it catches drift;
+  - a round trip, from a downgrade to `base` back to `head`, proves every downgrade works.
+
+**Alternatives considered.**
+- *`create_all()` at startup:* no history, and it cannot alter existing tables.
+- *The demo user in a data migration:* demo data would live in the schema history, and the Step 9
+  synthetic data needs a seed step anyway.
+- *Migrating when the API starts:* several API replicas would race each other.
+- *An explicit step before `up` (`docker compose run --rm … prestart`):* what the official
+  template does since August 2026. It is the right model for a production deployment, where
+  migrating is a deliberate step, but here reviewers must start everything with one command (D10).
+- *A shell entrypoint:* shell scripts in the containers are avoided on purpose, because Windows
+  checkouts can change their line endings.
+
+**Trade-offs.**
+- One more Compose service, which exits after running.
+- Every `up` applies pending migrations automatically. That is right for a local demo, but a
+  production deployment would run them as an explicit step (future work).
+
+**Evidence.**
+- The official
+  [full-stack FastAPI template](https://github.com/fastapi/full-stack-fastapi-template) ran this
+  job, migrations plus initial data, as its own `prestart` container from PR #1350 (2024). In
+  PR #2426 (release 0.11.0, 2026-08-11) it moved to an explicit command before startup (checked on
+  2026-09-27).
+- Docker's
+  [startup order guide](https://docs.docker.com/compose/how-tos/startup-order/) documents
+  `condition: service_completed_successfully`.
+- Alembic's documentation on `pyproject.toml` configuration, and its cookbook recipe for sharing a
+  connection, which the tests use.
+- `backend/tests/test_migrations.py`.
+
+---
+
+## D27 · API without login: one current-user dependency, and the database as the guard
+
+**Status:** Accepted · **Date:** 2026-09-27
+
+**Context.** Authentication is future work, but the data model already has users. The web app
+(Step 8) needs a predictable API, and a double click must never pay for voice twice.
+
+**Decision.**
+- **Endpoints**, all under `/api/v1`:
+  - `health`;
+  - `catalog`;
+  - `settings`: `GET` and `PUT`;
+  - `interests`: `GET`, `POST`, `PATCH` (the weight) and `DELETE`;
+  - `episodes`: a paginated list, one episode, `POST` for "generate now", and `POST /{id}/retry`.
+- **The current user:** every request acts as the demo user through one `CurrentUser` dependency,
+  and routes carry no user id. Adding authentication changes that dependency only.
+- **Generation:** the API never generates. `POST /episodes` queues an episode and answers
+  `202 Accepted`, and the worker does the work (D2).
+- **Status codes:**
+  - `422` for invalid input;
+  - `404` for another user's rows, so the API does not reveal that they exist;
+  - `409` for a conflict with the current state: a duplicate interest, a sixth interest, no
+    interest to talk about, an episode already in flight, or a retry of an episode that did not
+    fail;
+  - `503` when the generation keys are missing, naming the variables (D10).
+- **The in-flight rule:** "generate now" relies on the partial unique index (D25), not on a prior
+  `SELECT`, so two simultaneous clicks queue one episode. Only that index maps to `409`; any other
+  integrity error surfaces as a `500`.
+- **At most five interests:** with 3 minutes, five blocks plus the introduction and the closing
+  already leave about 30 seconds each.
+- **Settings:** `PUT` replaces all the settings, because the form always sends every field.
+- **Style:** synchronous `def` endpoints with one session per request, `Annotated` dependency
+  aliases and return types, as FastAPI's official skill recommends.
+- **Documented errors:** each route declares its 404, 409 and 503 responses (`responses=`), so the
+  OpenAPI document and `/docs` show every outcome, not only the success response and the 422 that
+  FastAPI adds on its own.
+
+**Alternatives considered.**
+- *`/users/{id}/…` routes:* authentication would then need an ownership check on every route.
+- *Check, then insert:* two concurrent requests both pass the check.
+- *`403` for another user's rows:* it reveals that the row exists.
+
+**Trade-offs.**
+- Without authentication, the API only listens on `127.0.0.1` (D10).
+- The five-interest cap is checked in the API, not in the database, so two concurrent requests
+  could exceed it. For one user this is harmless.
+
+**Evidence.** `backend/tests/test_api_*.py` and `test_openapi.py`. Each guard was broken on
+purpose, and its test failed: the key check, the time zone check, the ownership filter, the
+one-in-flight index and the documented error responses.
+
+---
+
+## D28 · Tests run against a real PostgreSQL
+
+**Status:** Accepted · **Date:** 2026-09-27
+
+**Context.** The model relies on PostgreSQL features: `CHECK` constraints, `jsonb`, arrays and a
+partial unique index. Step 6 adds `SKIP LOCKED`.
+
+**Decision.**
+- **Database:** tests use the development PostgreSQL (`compose.dev.yaml`) with a separate
+  `podcast_test` database. It is recreated on each run and built with the Alembic migrations, so
+  every run also tests them.
+- **Isolation:** each test runs inside a transaction that is rolled back at the end. The
+  application's commits become savepoints, as in SQLAlchemy's recipe for joining a session into an
+  external transaction.
+- **Dependency overrides:** FastAPI's overrides give the API the test session, and settings
+  without keys whatever the machine's `.env` holds.
+- **Sabotage tests:** every guard has one (D20).
+
+**Alternatives considered.**
+- *SQLite:* faster, but it would not exercise the same constraints and types.
+- *Testcontainers:* it starts its own PostgreSQL, at the cost of one more dependency and slower runs.
+- *Truncating tables between tests:* slower, and tests could depend on each other.
+
+**Trade-offs.** Tests need PostgreSQL running in Docker. When it is not running, the error gives
+the command to start it.
+
+**Evidence.** SQLAlchemy's documentation on joining a session into an external transaction. At the
+end of Step 4, the 52 tests took about 2.5 seconds.
+
+---
+
+## D29 · One backend image with a cached dependency layer
+
+**Status:** Accepted · **Date:** 2026-09-27
+
+**Context.** `prestart`, the API and the worker share code. Rebuilds must be fast while developing,
+and reviewers only need Docker.
+
+**Decision.**
+- **Base image:** `python:3.14-slim`, the same Python as locally (D15).
+- **Dependency layer:** the dependencies are installed in their own layer. They are read from
+  `pyproject.toml` with `tomllib`, because pip cannot install only a project's dependencies. The
+  code is copied afterwards, so a change to the code does not reinstall anything.
+- **Contents and user:** only `app/` and `migrations/` go into the image, with no tests or spike.
+  The container runs as an unprivileged user.
+- **In Compose:**
+  - the image is built once (`image: podcast-backend`), and each service sets its own command;
+  - a YAML fragment (`x-backend`) holds what they share: the build, the optional `.env` and the
+    in-network database URL.
+
+**Alternatives considered.**
+- *`pip install .`:* every change to the code reinstalls every dependency, and a second copy of
+  the code ends up in `site-packages`.
+- *uv with `--no-install-project`:* the same idea with a lock file, at the cost of one more tool
+  (D15).
+- *`fastapi[standard]` with `fastapi run`:* more dependencies than uvicorn alone.
+
+**Trade-offs.** The image is 445 MB, mostly lxml and the provider SDKs. There is no multi-stage
+build, because nothing is compiled.
+
+**Evidence.** Measured on 2026-09-27:
+- the first build took about 1.5 minutes, and a rebuild after a change to the code took 3 seconds,
+  with the dependency layer reported as `CACHED`;
+- `id` inside the container reports uid 999 (`podcast`).
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -881,7 +1138,8 @@ useful.
 
 | Skill | Source | Step | Why | What it contributed |
 |---|---|---|---|---|
-| `documentation-and-adrs` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) · MIT · 42.6K installs | 2, kept in 3 | Writing these records | The Status and Date fields, and the rule to supersede records instead of deleting them. It adapted to this file's existing format. |
+| `documentation-and-adrs` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) · MIT · 42.6K installs | 2, kept in 3 and 4 | Writing these records | The Status and Date fields, and the rule to supersede records instead of deleting them. It adapted to this file's existing format. |
+| `fastapi` | [fastapi/fastapi](https://github.com/fastapi/fastapi/tree/master/fastapi/.agents/skills/fastapi) · MIT · official · 10.7K installs | 4 | Current conventions from FastAPI's maintainers | `Annotated` dependency aliases (`SessionDep`, `CurrentUser`), return types instead of `response_model`, the prefix and tags on each `APIRouter`, `def` endpoints for blocking database code, and when a `yield` dependency closes. Its SQLModel, uv and ty advice was set aside on purpose (D1, D15). |
 
 **Evaluated and not installed:**
 - `github/awesome-copilot@create-architectural-decision-record` (MIT, 10.1K installs): it
@@ -894,3 +1152,7 @@ useful.
   (`character-cost`).
 - `bytedance/deer-flow@podcast-generation` (MIT, 2.3K installs), Step 3: it is tied to its own
   agent environment and text-to-speech script.
+- `supabase/agent-skills@supabase-postgres-best-practices` (official, MIT, 419K installs), Step 4:
+  read, and its schema rules are cited in D25. It was not installed: its long description is loaded
+  on every message, and several rules do not apply here, such as row-level security, cursor
+  pagination (D12) and idempotent `DO` blocks, which Alembic does not need.
