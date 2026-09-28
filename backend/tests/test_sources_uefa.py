@@ -79,9 +79,9 @@ def test_uefa_results_standings_and_next_matchday() -> None:
 
     assert items[0].body == (
         "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: "
-        "Barcelona beat Feyenoord 5–1 at home. Goals: Barcelona: Raphinha 3', 57', Karim "
-        "Adeyemi 22', Lamine Yamal 77' (penalty); Feyenoord: Sem Steijn 82'. Own goals: Gernot "
-        "Trauner 85'. Player of the match: Raphinha (Barcelona)."
+        "Barcelona beat Feyenoord 5–1 at home. Barcelona goals: Raphinha 2 (3', 57'), Karim "
+        "Adeyemi 1 (22'), Lamine Yamal 1 (77' penalty). Feyenoord goals: Sem Steijn 1 (82'). "
+        "Own goals: Gernot Trauner (85'). Player of the match: Raphinha (Barcelona)."
     )
     assert items[0].url == f"{SITE}/match/1/"
     assert items[1].body.endswith("Inter and Arsenal drew 1–1.")

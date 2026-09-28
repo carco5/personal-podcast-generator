@@ -63,7 +63,7 @@ def plan_first(prompt: str) -> EditorialPlan:
             "sections": [
                 {
                     "key": section["key"],
-                    "lead_story": 1,
+                    "lead_ids": section["ids"],
                     "angle": "It matters.",
                     "key_facts": [{"text": "The key fact.", "source_ids": section["ids"]}],
                     "roundup_ids": [],

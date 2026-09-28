@@ -145,11 +145,7 @@ def code_problems(script: Script, plan: dict, sources: dict[str, EpisodeSource])
 
 
 def allowed_ids(key: str, plan: dict, sources: dict[str, EpisodeSource]) -> set[str]:
-    if key in ("intro", "closing"):
-        return set(sources)
-    block = next(block for block in plan["blocks"] if block["key"] == key)
-    story_ids = {sid for story in block["stories"] for sid in story["source_ids"]}
-    return story_ids | set(block["context_ids"]) | {"CTX"}
+    return set(sources)
 
 
 def turn_problems(
@@ -158,7 +154,7 @@ def turn_problems(
     problems = []
     unknown = [sid for sid in source_ids if sid not in allowed]
     if unknown:
-        problems.append(f"cites {unknown}, which are not sources of this segment")
+        problems.append(f"cites {unknown}, which are not sources of this episode")
     cited = [sources[sid] for sid in source_ids if sid in sources]
     available = set().union(*(source_numbers(s.text, s.language) for s in cited))
     missing = sorted(numbers_in(text, "en") - available)
@@ -195,12 +191,11 @@ def structure_problems(script: Script, plan: dict) -> list[str]:
     hook = editorial["hook"]["source_ids"]
     if not cited["intro"] & set(hook):
         problems.append(f"The intro must open with the hook and cite {hook}.")
-    blocks = {block["key"]: block for block in plan["blocks"]}
     for section in editorial["sections"]:
         if section["brief"]:
             continue
         key = section["key"]
-        lead = blocks[key]["stories"][section["lead_story"] - 1]["source_ids"]
+        lead = section["lead_ids"]
         if not cited[key] & set(lead):
             problems.append(f"{key}: the lead story ({lead}) is not covered.")
         missing = sorted(set(section["roundup_ids"]) - cited[key])

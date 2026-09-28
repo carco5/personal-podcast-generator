@@ -1513,6 +1513,12 @@ could not say "five points clear" unless a source said so.
 **Trade-offs.** One request per new LaLiga result, to an undocumented page format (D31). A refresh
 counts a changed data item as seen again, so it is a maintenance tool, not part of the schedule.
 
+**Revised on 2026-09-29: code writes the totals.** Each scorer carries his number of goals and
+each team lists its assists with their number ("Raphinha 3 (22', 52', 69'). Assists: Christensen
+1, Lamine Yamal 2"). In the first regeneration of episode 14 the writer counted them itself
+("scored 3", "assisted the next 2"), and the number check rejected it, rightly: those totals were
+not in any source.
+
 **Evidence.** Measured on 2026-09-29: the UEFA match list had `playerEvents.scorers` and
 `playerOfTheMatch` for all 18 finished games, with goal types `SCORED`, `PENALTY` and `OWN`. The
 laliga.com page of Sevilla 1–3 FC Barcelona listed four goals: Fofana (19'), and Raphinha (22',
@@ -1650,8 +1656,16 @@ of D3 and their database constraint stay as they are.
 - *A new "plan" stage:* clearer in the stage history, but it needs a migration of the stage
   constraint for no gain in behaviour.
 
-**Trade-offs.** One more paid call per episode, about $0.02 to $0.03 with `gpt-6-sol`. The fallback
-plan is plainer than the model's.
+**Trade-offs.** One more paid call per episode: about $0.04 to $0.045 with `gpt-6-sol`, measured
+(about 10,400 input tokens). The fallback plan is plainer than the model's.
+
+**Revised on 2026-09-29, after the first regeneration of episode 14 failed.**
+- The lead is given as source ids, not as a story number. Select sometimes groups several
+  results into one story; with a number, the editor could not take one result as the lead and put
+  the others in the roundup, every answer was invalid, and two paid calls ended in the fallback.
+- The fallback plan now gives the titles of the lead's sources and of the section's context
+  (standings, fixtures) as key facts, and splits a grouped story into lead and roundup. Before, it
+  gave the section's name, and the writer had no table to talk about.
 
 **Evidence.** The episode 14 script had 41 turns, with four-result roundups in the ACB, the
 Champions League and LaLiga, and every selected story told. Unit tests cover the shares (exact
@@ -1720,6 +1734,10 @@ every mention.
   (D34). Tags: about one every four or five turns, so the cap rises from 6 to 8.
 - The writer only receives the sources the plan cites, and the structure checks follow the
   plan: the intro cites the hook, and each section cites its lead story and every roundup result.
+- A turn may cite any source of the episode, not only its own section's, so it can refer back to
+  what an earlier section told. Numbers, scores and the judge are still checked against what each
+  turn cites. In the first regeneration of episode 14, the old per-section rule rejected eight
+  correct turns.
 
 **Alternatives considered.**
 - *Adding rules on top of the old ones:* several old rules produced the wire style, so they had

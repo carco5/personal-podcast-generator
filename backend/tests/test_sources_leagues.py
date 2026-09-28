@@ -102,9 +102,9 @@ def test_laliga_results_standings_and_next_matchday() -> None:
 
     assert bodies[0] == (
         "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: "
-        "FC Barcelona beat Sevilla FC 4–1 away. Goals: FC Barcelona: Raphinha 22' (assist: "
-        "Christensen), 52' (assist: Lamine Yamal), Lewandowski 88' (penalty); Sevilla FC: "
-        "Fofana 19' (assist: Felix). Own goals: Badé 80'."
+        "FC Barcelona beat Sevilla FC 4–1 away. FC Barcelona goals: Raphinha 2 (22', 52'), "
+        "Lewandowski 1 (88' penalty). Assists: Christensen 1, Lamine Yamal 1. Sevilla FC goals: "
+        "Fofana 1 (19'). Assists: Felix 1. Own goals: Badé (80')."
     )
     assert bodies[1].endswith("CA Osasuna and Rayo Vallecano drew 1–1.")
     assert items[2].title == "LaLiga standings after Matchday 7"

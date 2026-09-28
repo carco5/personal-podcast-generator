@@ -33,7 +33,7 @@ def editorial(**changes: dict) -> EditorialPlan:
     for block in PLAN["blocks"]:
         section = {
             "key": block["key"],
-            "lead_story": 1,
+            "lead_ids": block["stories"][0]["source_ids"],
             "angle": "Why it matters.",
             "key_facts": [{"text": "A fact.", "source_ids": block["stories"][0]["source_ids"]}],
             "roundup_ids": [],
@@ -70,7 +70,7 @@ def test_a_valid_plan_has_no_problems() -> None:
 def test_each_plan_rule_catches_its_sabotage() -> None:
     fact = {"text": "A fact.", "source_ids": ["S5"]}
     broken = editorial(
-        barca={"lead_story": 3, "key_facts": [{"text": "LaLiga fact.", "source_ids": ["S5"]}]},
+        barca={"lead_ids": ["S5"], "key_facts": [{"text": "LaLiga fact.", "source_ids": ["S5"]}]},
         laliga={"roundup_ids": ["S5"], "next_up": {"text": "Next.", "source_ids": ["S1"]}},
         nba={"key_facts": [fact] * 6},
     )
@@ -78,11 +78,45 @@ def test_each_plan_rule_catches_its_sabotage() -> None:
 
     problems = plan_problems(broken, PLAN, KNOWN)
 
-    assert "barca: lead_story must be between 1 and 2." in problems
+    assert "barca: lead_ids must be source ids of its stories." in problems
     assert any(p.startswith("laliga: roundup_ids") for p in problems)
     assert "laliga: next_up must cite this section's context." in problems
     assert "nba: give 1 to 5 key facts." in problems
     assert "hook must cite sources of this episode." in problems
+
+
+def test_a_grouped_story_can_be_split_into_lead_and_roundup() -> None:
+    grouped = {
+        **PLAN,
+        "blocks": [
+            {
+                "key": "euroleague",
+                "weight": "medium",
+                "stories": [{"source_ids": ["S1", "S2", "S3"]}],
+                "context_ids": [],
+            }
+        ],
+    }
+    answer = EditorialPlan.model_validate(
+        {
+            "hook": {"text": "Hook.", "source_ids": ["S1"]},
+            "sections": [
+                {
+                    "key": "euroleague",
+                    "lead_ids": ["S1"],
+                    "angle": "Why.",
+                    "key_facts": [{"text": "A fact.", "source_ids": ["S1"]}],
+                    "roundup_ids": ["S2", "S3"],
+                    "next_up": None,
+                    "brief": False,
+                    "major": False,
+                }
+            ],
+            "threads": [],
+        }
+    )
+
+    assert plan_problems(answer, grouped, KNOWN) == []
 
 
 def test_sections_must_match_the_plan() -> None:

@@ -115,7 +115,7 @@ def scorers(match: Match) -> list[Goal]:
             team=names.get(str(event.get("teamId")), ""),
             player=event["player"]["internationalName"],
             minute=event["time"]["minute"],
-            note="penalty" if event.get("goalType") == "PENALTY" else "",
+            penalty=event.get("goalType") == "PENALTY",
             own_goal=event.get("goalType") == "OWN",
         )
         for event in match.get("playerEvents", {}).get("scorers", [])

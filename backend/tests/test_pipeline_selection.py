@@ -204,7 +204,7 @@ def test_an_invalid_editorial_plan_is_retried_then_replaced(session: Session) ->
     assert details["editorial"]["fallback"] is True
     assert run.episode.plan["plan_fallback"] is True
     first = run.episode.plan["editorial"]["sections"][0]
-    assert first["lead_story"] == 1 and first["key_facts"]
+    assert first["lead_ids"] and first["key_facts"]
 
 
 def test_the_same_article_under_two_urls_is_kept_once(session: Session) -> None:

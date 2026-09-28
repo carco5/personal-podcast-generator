@@ -1,5 +1,6 @@
 import re
 from abc import ABC, abstractmethod
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -76,7 +77,8 @@ class Goal:
     team: str
     player: str
     minute: int
-    note: str = ""
+    penalty: bool = False
+    assist: str = ""
     own_goal: bool = False
 
 
@@ -84,15 +86,21 @@ def goals_sentence(goals: list[Goal], teams: list[str]) -> str:
     in_order = sorted(goals, key=lambda goal: goal.minute)
     parts = []
     for name in teams:
+        mine = [goal for goal in in_order if goal.team == name and not goal.own_goal]
+        if not mine:
+            continue
         minutes: dict[str, list[str]] = {}
-        for goal in (g for g in in_order if g.team == name and not g.own_goal):
-            note = f" ({goal.note})" if goal.note else ""
-            minutes.setdefault(goal.player, []).append(f"{goal.minute}'{note}")
-        if minutes:
-            players = ", ".join(f"{player} {', '.join(times)}" for player, times in minutes.items())
-            parts.append(f"{name}: {players}")
-    own = [f"{goal.player} {goal.minute}'" for goal in in_order if goal.own_goal]
-    text = f"Goals: {'; '.join(parts)}." if parts else ""
+        for goal in mine:
+            minutes.setdefault(goal.player, []).append(
+                f"{goal.minute}'" + (" penalty" if goal.penalty else "")
+            )
+        scorers = ", ".join(f"{p} {len(m)} ({', '.join(m)})" for p, m in minutes.items())
+        text = f"{name} goals: {scorers}."
+        assists = Counter(goal.assist for goal in mine if goal.assist)
+        if assists:
+            text += " Assists: " + ", ".join(f"{p} {n}" for p, n in assists.items()) + "."
+        parts.append(text)
+    own = [f"{goal.player} ({goal.minute}')" for goal in in_order if goal.own_goal]
     if own:
-        text += f" Own goals: {', '.join(own)}."
-    return text.strip()
+        parts.append(f"Own goals: {', '.join(own)}.")
+    return " ".join(parts)

@@ -20,7 +20,7 @@ class Fact(BaseModel):
 
 class SectionPlan(BaseModel):
     key: str
-    lead_story: int
+    lead_ids: list[str]
     angle: str
     key_facts: list[Fact]
     roundup_ids: list[str]
@@ -47,13 +47,15 @@ You receive the episode's sections in order, each with its candidate stories and
 and all the sources. Plan the episode; a writer will turn your plan into a conversation.
 
 For each section, in the given order:
-- lead_story: the number of its single most impactful story, to be told in depth.
+- lead_ids: the source ids of its single most impactful story, to be told in depth: one event,
+  such as a result with its report, or one news story. When a candidate story groups several
+  results, pick the most impactful one as the lead and put others in the roundup.
 - angle: one sentence on why it matters to this listener.
 - key_facts: up to 5 facts for the lead story, each with the ids of the sources that state it.
-  Prefer player-level detail: scorers, stat lines, quotes. Give fewer when the sources hold
-  fewer: never invent and never pad.
-- roundup_ids: the source ids of at most 3 other results worth one compressed line; leave the
-  rest out. Only results, never the lead story's sources.
+  Prefer player-level detail: scorers, stat lines, quotes, and the table (standings state each
+  team's gap to the leader). Give fewer when the sources hold fewer: never invent and never pad.
+- roundup_ids: the source ids of at most 3 other results of the section worth one compressed
+  line; leave the rest out. Never the lead's sources.
 - next_up: the section's nearest upcoming game, with the day as its source labels it ([say:
   ...]), and its source ids; null if there is none.
 - brief: true when nothing in the section is impactful. It then gets one short line.
@@ -104,7 +106,7 @@ def plan_episode(run: Run) -> dict:
             break
     fallback = editorial is None
     if editorial is None:
-        editorial = code_plan(plan)
+        editorial = code_plan(plan, sources)
     shares = budget_shares(plan, editorial)
     for block in plan["blocks"]:
         block["chars"] = shares[block["key"]]
@@ -152,17 +154,16 @@ def plan_problems(answer: EditorialPlan, plan: dict, known: set[str]) -> list[st
         return [f"The sections must be exactly {list(blocks)}, in that order."]
     for section in answer.sections:
         block = blocks[section.key]
-        stories = block["stories"]
-        allowed = {sid for story in stories for sid in story["source_ids"]}
-        allowed |= set(block["context_ids"]) | {"CTX"}
-        if not 1 <= section.lead_story <= len(stories):
-            problems.append(f"{section.key}: lead_story must be between 1 and {len(stories)}.")
+        story_ids = {sid for story in block["stories"] for sid in story["source_ids"]}
+        allowed = story_ids | set(block["context_ids"]) | {"CTX"}
+        if not section.lead_ids or not set(section.lead_ids) <= story_ids:
+            problems.append(f"{section.key}: lead_ids must be source ids of its stories.")
             continue
-        lead = set(stories[section.lead_story - 1]["source_ids"])
-        others = {sid for story in stories for sid in story["source_ids"]} - lead
+        others = story_ids - set(section.lead_ids)
         if len(section.roundup_ids) > MAX_ROUNDUP or not set(section.roundup_ids) <= others:
             problems.append(
-                f"{section.key}: roundup_ids must be at most {MAX_ROUNDUP} ids of its other stories."
+                f"{section.key}: roundup_ids must be at most {MAX_ROUNDUP} ids of its stories, "
+                "never the lead's."
             )
         low = 0 if section.brief else 1
         if not low <= len(section.key_facts) <= MAX_FACTS:
@@ -184,26 +185,33 @@ def plan_problems(answer: EditorialPlan, plan: dict, known: set[str]) -> list[st
     return problems
 
 
-def code_plan(plan: dict) -> EditorialPlan:
+def code_plan(plan: dict, sources: dict) -> EditorialPlan:
+    def title(sid: str) -> str:
+        return sources[sid].text.splitlines()[0]
+
     sections = []
     for block in plan["blocks"]:
-        lead = block["stories"][0]["source_ids"]
+        ids = block["stories"][0]["source_ids"]
+        results = [sid for sid in ids if sources[sid].is_data]
+        if len(results) > 1:
+            lead = [results[0], *(sid for sid in ids if sid not in results)]
+            roundup = results[1 : 1 + MAX_ROUNDUP]
+        else:
+            lead, roundup = ids, []
+        facts = [Fact(text=title(sid), source_ids=[sid]) for sid in lead + block["context_ids"]]
         sections.append(
             SectionPlan(
                 key=block["key"],
-                lead_story=1,
+                lead_ids=lead,
                 angle="",
-                key_facts=[Fact(text=block["title"], source_ids=lead)],
-                roundup_ids=[],
+                key_facts=facts[:MAX_FACTS],
+                roundup_ids=roundup,
                 next_up=None,
                 brief=False,
                 major=False,
             )
         )
-    hook = Fact(
-        text=plan["blocks"][0]["title"], source_ids=plan["blocks"][0]["stories"][0]["source_ids"]
-    )
-    return EditorialPlan(hook=hook, sections=sections, threads=[])
+    return EditorialPlan(hook=sections[0].key_facts[0], sections=sections, threads=[])
 
 
 def budget_shares(plan: dict, editorial: EditorialPlan) -> dict[str, int]:

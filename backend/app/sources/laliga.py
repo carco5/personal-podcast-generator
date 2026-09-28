@@ -91,13 +91,14 @@ def match_goals(fetcher: Fetcher, match: Match) -> list[Goal]:
         kind = event["match_event_kind"]["name"]
         if event["match_event_kind"].get("collection") != "goal":
             continue
-        assist = (event.get("assist") or {}).get("person", {}).get("nickname")
+        assist = (event.get("assist") or {}).get("person", {}).get("nickname") or ""
         goals.append(
             Goal(
                 team=names.get(event["lineup"]["team"]["id"], ""),
                 player=event["lineup"]["person"]["nickname"],
                 minute=event["time"],
-                note="penalty" if "Penalty" in kind else (f"assist: {assist}" if assist else ""),
+                penalty="Penalty" in kind,
+                assist=assist,
                 own_goal=kind.startswith("Own"),
             )
         )

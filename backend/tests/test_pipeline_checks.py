@@ -28,7 +28,7 @@ PLAN = {
         "sections": [
             {
                 "key": "euroleague",
-                "lead_story": 1,
+                "lead_ids": ["S1"],
                 "angle": "Barça's first away win.",
                 "key_facts": [{"text": "Punter scored 19 points.", "source_ids": ["S1"]}],
                 "roundup_ids": ["S2"],
@@ -191,7 +191,8 @@ def test_length_rules() -> None:
 def test_unknown_source_ids_are_caught() -> None:
     problems = problems_after(1, 0, "FC Barcelona beat Dubai 80–70 away.", ["S9"])
 
-    assert any("cites ['S9']" in problem for problem in problems)
+    assert any("cites ['S9'], which are not sources of this episode" in p for p in problems)
+    assert problems_after(0, 1, "What a start, after that win in Dubai.", ["S1", "S3"]) == []
 
 
 def test_a_number_without_sources_is_caught() -> None:
