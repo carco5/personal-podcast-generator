@@ -1,3 +1,4 @@
+import argparse
 import logging
 from collections.abc import Iterable
 from datetime import timedelta
@@ -24,10 +25,13 @@ def short_error(error: Exception) -> str:
     return f"{type(error).__name__}: {first_line}"[:MAX_ERROR_CHARS]
 
 
-def ingest(session: Session, sources: Iterable[Source], fetcher: Fetcher) -> dict[str, dict]:
+def ingest(
+    session: Session, sources: Iterable[Source], fetcher: Fetcher, *, refresh: bool = False
+) -> dict[str, dict]:
     report: dict[str, dict] = {}
     for source in sources:
-        known = set(session.scalars(select(Article.url).where(Article.source == source.key)))
+        stored = select(Article.url).where(Article.source == source.key)
+        known = set() if refresh else set(session.scalars(stored))
         try:
             items = list(source.items(fetcher, known))
             saved = save(session, source, items)
@@ -83,10 +87,15 @@ def purge(session: Session) -> int:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Ingest the catalogue sources (free GETs).")
+    parser.add_argument("--source", action="append", help="only this source key (repeatable)")
+    parser.add_argument("--refresh", action="store_true", help="re-read items already stored")
+    args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     with Session(engine) as session:
-        sources = catalogue_sources(get_settings()).values()
-        report = ingest(session, sources, Fetcher())
+        catalogue = catalogue_sources(get_settings())
+        sources = [catalogue[key] for key in args.source] if args.source else catalogue.values()
+        report = ingest(session, sources, Fetcher(), refresh=args.refresh)
     for key, result in report.items():
         print(f"{key:>26}: {result}")
 

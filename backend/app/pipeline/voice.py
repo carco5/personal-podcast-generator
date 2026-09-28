@@ -108,16 +108,32 @@ class ToneVoice:
 
 SEASON_SLASH = re.compile(r"\b(\d{4})/(\d{2})\b")
 NAME_SLASH = re.compile(r"(?<=[^\W\d_])/(?=[^\W\d_])")
+PRONUNCIATIONS = {
+    "Bodø/Glimt": "Bodo Glimt",
+    "iLERNA Lleida": "Lleida",
+    "iLERNA": "Lleida",
+}
+PRONOUNCED = re.compile(
+    r"\b(" + "|".join(map(re.escape, sorted(PRONUNCIATIONS, key=len, reverse=True))) + r")(?!\w)"
+)
+GOALS = ["nil", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+GOALS += ["eleven", "twelve", "thirteen", "fourteen", "fifteen"]
 
 
 def spoken_pair(match: re.Match[str]) -> str:
     first, second = match.groups()
     if len(first) == 4 and len(second) == 2:
         return f"{first}-{second}"
+    a, b = int(first), int(second)
+    if a < len(GOALS) and b < len(GOALS):
+        if a == b:
+            return "nil-nil" if a == 0 else f"{GOALS[a]}-all"
+        return f"{GOALS[a]}-{GOALS[b]}"
     return f"{first} to {second}"
 
 
 def speakable(text: str) -> str:
+    text = PRONOUNCED.sub(lambda match: PRONUNCIATIONS[match.group(1)], text)
     text = NAME_SLASH.sub(" ", SEASON_SLASH.sub(r"\1-\2", text))
     return SCORE.sub(spoken_pair, text).replace(" – ", ", ").replace(" & ", " and ")
 

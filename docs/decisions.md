@@ -1371,6 +1371,14 @@ rules disallow; Protego did not. Every path the providers use is allowed. The ro
 EuroLeague API and its standings host returned 404, and the Guardian API's returned 401. The
 Guardian API accepted the key in a header (HTTP 200). See [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309).
 
+**Revised on 2026-09-29 (Step 7): a pause between requests to the same site.** The fetcher waits
+at least one second between two requests to the same site, or longer if the site's `robots.txt`
+asks for it with `Crawl-delay`. The first request to a site does not wait, and the tests, which
+use a fake network, do not wait either, except the test that checks the waits. Evidence: on
+2026-09-29 a test that read fcbarcelona.com's news listing sent about 40 requests in a row and got
+`429 Too Many Requests`. Trade-off: an ingest that reads many pages from one site takes longer,
+about one second per page.
+
 ---
 
 ## D31 · Official data is read from the data inside official pages
@@ -1467,6 +1475,133 @@ save fail, and the first version of the runner, reading the episode before rolli
 episode stuck `in_progress`. After the fix, the same episode was retried: its stage history shows
 the failed first attempt, and the second completed with all six stages. Its text stages took
 about 80 seconds: fetch 4, select 9, write 27 and check 34.
+
+---
+
+## D33 · Official results carry the players, and code computes the gaps
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** After reading the episode 14 script, the author found it sounded like a news wire:
+"Barça won 3–1 at Sevilla" with no names. Fans talk about who decided a game. The football
+results came from official data that only held the score, while the basketball data already
+named the best player of each team. The writer is also told never to compute numbers (D7), so it
+could not say "five points clear" unless a source said so.
+
+**Decision.**
+- **Scorers in official football results.** A UEFA result lists the goals by team (player and
+  minute, marking penalties, with own goals apart) and the player of the match; the match list
+  the source already reads carries them. A LaLiga result lists the goals with their assists, read
+  from the data inside each match page on laliga.com (D31): one more request per new result, about
+  ten per matchday. If that page fails, the result is saved without goals.
+- **Gaps computed by code.** Each row of the LaLiga and Champions League tables says how far it is
+  from the leader ("5 points behind the leader", or "level on points with the leader"). The
+  writer can then say "five points clear" and cite the official table; the model still never
+  computes.
+- **Refreshing stored data.** `python -m app.sources.ingest --refresh --source KEY` reads stored
+  items again, so data already saved picks up an improved reader. News is never overwritten.
+
+**Alternatives considered.**
+- *Match reports from fcbarcelona.com:* they arrive through the club's news sitemap, like the
+  basketball reports, but only for recent games. The report of the game at Sevilla (19 September)
+  predates the first ingest (24 September), and news older than four days is not stored (D24). The
+  club's news listing links to it, next to player pages and other non-news links. Reading reports
+  from the listing is left as a future improvement.
+- *Letting the model compute gaps:* it would weaken the number check (D7), because a computed
+  number cannot be found in any source.
+
+**Trade-offs.** One request per new LaLiga result, to an undocumented page format (D31). A refresh
+counts a changed data item as seen again, so it is a maintenance tool, not part of the schedule.
+
+**Evidence.** Measured on 2026-09-29: the UEFA match list had `playerEvents.scorers` and
+`playerOfTheMatch` for all 18 finished games, with goal types `SCORED`, `PENALTY` and `OWN`. The
+laliga.com page of Sevilla 1–3 FC Barcelona listed four goals: Fofana (19'), and Raphinha (22',
+52', 69'), with assists from Christensen and twice from Lamine Yamal. The results listing itself
+had only `home_score` and `away_score`.
+
+---
+
+## D34 · Days are spoken relative to the episode, and code writes the labels
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (dates)
+
+**Context.** D7 asked for the weekday and the date on every game ("on Sunday 4 October"), so the
+judge could check the day. In audio, full dates on every result sound like a news wire, and
+models get weekdays wrong: in Step 5 the judge miscounted which date "Sunday" was.
+
+**Decision.**
+- Code labels each date in the sources with how to say it, relative to the episode's day in the
+  listener's time zone: "today", "yesterday", "tomorrow", "last Saturday" (2 to 6 days before),
+  "this Sunday" (2 to 6 days after), or "Saturday the 10th" further away. A source reads
+  "Saturday 26 September 2026 [say: last Saturday]".
+- The writer and the judge read the same labelled sources, so the judge checks days against the
+  labels. The ±7-day calendar in the episode context goes away.
+- The intro says which day it is ("It's Monday"), so the labels still make sense when an episode
+  is played later.
+
+**Alternatives considered.**
+- *Full dates:* checkable, but they sound like a wire service.
+- *The model working out relative days:* the error seen in Step 5.
+
+**Trade-offs.** An episode played on a later day still says "tomorrow" for the day after it was
+made; the weekday in the intro anchors it. Labels are English only, like the scripts.
+
+**Evidence.** The episode 14 script gave a full date on almost every result. Unit tests cover each
+rule with the sample's own dates, including the 11th to 13th.
+
+---
+
+## D35 · Speech normalisation before the voice, with a pronunciation dictionary
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (scores)
+
+**Context.** The script keeps digits so the number check can compare them with the sources (D7).
+A broadcaster does not read "3–1" as "3 to 1", and some names break the voice: "Bodø/Glimt" with
+its slash, and sponsor names such as "iLERNA Lleida".
+
+**Decision.** Just before the voice, code rewrites the text, for every episode:
+- football scores (both numbers 15 or less, which never happens in basketball) in words, British
+  style: "three-one", "five-nil", "one-all", "nil-nil"; basketball scores as "89 to 82";
+- seasons as "2013-14", never "2013 to 14";
+- a slash between two words becomes a space;
+- a pronunciation dictionary in code for names the voice gets wrong, the longest match first. It
+  starts with "Bodø/Glimt" → "Bodo Glimt" and "iLERNA Lleida" → "Lleida", as fans say it. It
+  grows when a name is heard wrong, and it applies to every episode, never to one.
+
+**Alternatives considered.**
+- *Scores in words in the script:* the number check could no longer compare them with the sources.
+- *ElevenLabs pronunciation dictionaries:* they live in the provider's account and are managed
+  through its API. A local dictionary is versioned, tested and free.
+
+**Trade-offs.** The dictionary is hand-kept. The "15 or less" rule is a heuristic that only fails
+for a basketball score of 15 or less, which does not happen.
+
+**Evidence.** The episode 14 script contained "Bodø/Glimt", "2013/14" and "iLERNA Lleida". Unit
+tests cover every rule.
+
+---
+
+## D36 · The same story under two URLs is one source
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** In episode 14, sources S3 and S4 were the same fcbarcelona.com article: the club
+fixed a typo in the address of a published story ("beat" → "best"), and the ingest stored the
+new URL as a new article.
+
+**Decision.** Selection groups a source's stored pieces by a hash of their text, with whitespace
+normalised, and keeps the one seen last, which is the corrected URL. If any copy was already told
+in an earlier episode, the kept one counts as told.
+
+**Alternatives considered.**
+- *Deduplicating by the numeric id in the club's URLs:* specific to one site.
+- *Deduplicating at ingest:* the typo URL would be kept, and it may stop working.
+
+**Trade-offs.** Two copies whose text differs, even slightly, are still two sources. The same text
+from two different outlets is not merged here: that is the editor's job (grouping), as before.
+
+**Evidence.** Episode 14's S3 and S4 shared article id 4581481 and the same body. A unit test
+covers the typo case, the "already told" case and the cross-outlet case.
 
 ---
 

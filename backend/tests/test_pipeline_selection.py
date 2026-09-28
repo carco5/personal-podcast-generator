@@ -14,6 +14,7 @@ from app.pipeline.selection import (
     select_stories,
     sport_order,
     story_slots,
+    unique_articles,
 )
 from tests.fakes import FakeLlm, make_article, make_listener, make_run
 
@@ -164,6 +165,21 @@ def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
     assert details["stories"] == 6
     assert "Pick up to 3 stories" in run.llm.prompts[0][1]
     assert "latest\n  result in each competition" in run.llm.instructions[0]
+
+
+def test_the_same_article_under_two_urls_is_kept_once(session: Session) -> None:
+    typo = make_article(session, "fcbarcelona", "One win from beat ever start", ago(1), body="Same")
+    fixed = make_article(
+        session, "fcbarcelona", "One win from best ever start", ago(0.5), body="Same"
+    )
+    other = make_article(
+        session, "eurohoops-euroleague", "Same text elsewhere", ago(1), body="Same"
+    )
+
+    kept, told = unique_articles([typo, fixed, other], {typo.id})
+
+    assert kept == [fixed, other]
+    assert told == {typo.id, fixed.id}
 
 
 def test_club_results_are_guaranteed_by_code(session: Session) -> None:

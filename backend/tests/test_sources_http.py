@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from app.sources.http import USER_AGENT, RobotsDisallowed
+from app.sources.http import USER_AGENT, Fetcher, RobotsDisallowed
 from tests.web import FakeWeb
 
 ESPN_ROBOTS = "User-agent: *\nDisallow: */boxscore?\n"
@@ -40,6 +40,28 @@ def test_missing_robots_allows_everything_and_is_read_once() -> None:
     fetcher.get("https://example.com/b")
 
     assert web.urls().count("https://example.com/robots.txt") == 1
+
+
+def test_requests_to_the_same_site_are_spaced() -> None:
+    web = FakeWeb(
+        {
+            "https://a.example/1": "A1",
+            "https://a.example/2": "A2",
+            "https://b.example/1": "B1",
+            "https://c.example/robots.txt": "User-agent: *\nCrawl-delay: 3\n",
+            "https://c.example/1": "C1",
+            "https://c.example/2": "C2",
+        }
+    )
+    fetcher = Fetcher(httpx.MockTransport(web.handle), min_interval=1.0)
+    waits: list[float] = []
+    fetcher._clock = lambda: 100.0
+    fetcher._sleep = waits.append
+
+    for url in ["a.example/1", "b.example/1", "a.example/2", "c.example/1", "c.example/2"]:
+        fetcher.get(f"https://{url}")
+
+    assert waits == [1.0, 3.0]
 
 
 def test_a_robots_server_error_blocks_the_site() -> None:

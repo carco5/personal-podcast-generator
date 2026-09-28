@@ -5,7 +5,7 @@ from pydantic import SecretStr
 
 from app.sources.acb import CALENDAR, AcbCalendarSource, calendar_data
 from app.sources.guardian import SEARCH, GuardianSource
-from app.sources.laliga import BASE, LaLigaSource, page_data
+from app.sources.laliga import BASE, MATCH_PAGE, LaLigaSource, page_data
 from tests.web import PARAGRAPH, FakeWeb
 
 # ---------------------------------------------------------------------------------- LaLiga
@@ -17,18 +17,29 @@ def next_page(page_props: dict) -> str:
 
 
 def team(name: str) -> dict:
-    return {"nickname": name}
+    return {"nickname": name, "id": len(name)}
 
 
 def match(number: int, home: str, away: str, score: tuple[int, int] | None, day: str) -> dict:
     return {
         "id": number,
+        "slug": f"match-{number}",
         "date": f"{day}T19:00:00+00:00",
         "status": "FullTime" if score else "PreMatch",
         "home_team": team(home),
         "away_team": team(away),
         "home_score": score[0] if score else None,
         "away_score": score[1] if score else None,
+    }
+
+
+def event(kind: str, club: str, player: str, clock: int, assist: str | None = None) -> dict:
+    collection = "goal" if kind in ("Goal", "Own", "Penalty Goal") else "booking"
+    return {
+        "match_event_kind": {"name": kind, "collection": collection},
+        "lineup": {"team": {"id": len(club)}, "person": {"nickname": player}},
+        "time": clock,
+        "assist": {"person": {"nickname": assist}} if assist else None,
     }
 
 
@@ -61,13 +72,25 @@ def fake_laliga() -> FakeWeb:
             f"{BASE}/results/2026-27/gameweek-7": next_page(
                 {
                     "matches": [
-                        match(1, "Sevilla FC", "FC Barcelona", (1, 3), "2026-09-19"),
+                        match(1, "Sevilla FC", "FC Barcelona", (1, 4), "2026-09-19"),
                         match(2, "CA Osasuna", "Rayo Vallecano", (1, 1), "2026-09-19"),
                     ]
                 }
             ),
             f"{BASE}/results/2026-27/gameweek-8": next_page(
                 {"matches": [match(3, "FC Barcelona", "Getafe CF", None, "2026-10-10")]}
+            ),
+            MATCH_PAGE.format(slug="match-1"): next_page(
+                {
+                    "events": [
+                        event("Goal", "Sevilla FC", "Fofana", 19, "Felix"),
+                        event("Yellow", "FC Barcelona", "Pedri", 30),
+                        event("Goal", "FC Barcelona", "Raphinha", 22, "Christensen"),
+                        event("Goal", "FC Barcelona", "Raphinha", 52, "Lamine Yamal"),
+                        event("Own", "Sevilla FC", "Badé", 80),
+                        event("Penalty Goal", "FC Barcelona", "Lewandowski", 88),
+                    ]
+                }
             ),
         }
     )
@@ -79,11 +102,17 @@ def test_laliga_results_standings_and_next_matchday() -> None:
 
     assert bodies[0] == (
         "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: "
-        "FC Barcelona beat Sevilla FC 3–1 away."
+        "FC Barcelona beat Sevilla FC 4–1 away. Goals: FC Barcelona: Raphinha 22' (assist: "
+        "Christensen), 52' (assist: Lamine Yamal), Lewandowski 88' (penalty); Sevilla FC: "
+        "Fofana 19' (assist: Felix). Own goals: Badé 80'."
     )
-    assert "CA Osasuna and Rayo Vallecano drew 1–1" in bodies[1]
+    assert bodies[1].endswith("CA Osasuna and Rayo Vallecano drew 1–1.")
     assert items[2].title == "LaLiga standings after Matchday 7"
     assert "1. FC Barcelona, 21 points from 7 games (7 wins, 0 draws, 0 losses)." in bodies[2]
+    assert (
+        "2. Athletic Club, 11 points from 6 games (3 wins, 2 draws, 1 loss), 10 points"
+        in (bodies[2])
+    )
     assert bodies[3] == (
         "LaLiga EA Sports Matchday 8 fixtures (official schedule). "
         "Saturday 10 October 2026: FC Barcelona host Getafe CF."

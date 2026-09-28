@@ -90,6 +90,17 @@ def test_known_urls_articles_are_kept_and_data_is_updated(session: Session) -> N
     assert bodies == {"https://a.example/n": "v1", "https://a.example/d": "v2"}
 
 
+def test_refresh_rereads_stored_items(session: Session) -> None:
+    ingest(session, [FakeSource("s", [item("https://a.example/d", "v1", "data")])], Fetcher())
+    again = FakeSource("s", [item("https://a.example/d", "v1 with scorers", "data")])
+
+    report = ingest(session, [again], Fetcher(), refresh=True)
+
+    assert again.known == set()
+    assert report["s"] == {"items": 1, "saved": 1}
+    assert session.scalars(select(Article.body)).one() == "v1 with scorers"
+
+
 def test_data_is_updated_when_only_its_meta_changes(session: Session) -> None:
     first = item("https://a.example/table", "Table", "data")
     ingest(session, [FakeSource("s", [first])], Fetcher())

@@ -64,7 +64,12 @@ def test_scores_are_made_speakable() -> None:
     assert speakable("Welcome to Barça & Beyond!") == "Welcome to Barça and Beyond!"
     assert speakable("Tata Martino's side, in 2013/14.") == "Tata Martino's side, in 2013-14."
     assert speakable("A player option for 2028–29.") == "A player option for 2028-29."
-    assert speakable("Bayern beat Bodø/Glimt 5–0.") == "Bayern beat Bodø Glimt 5 to 0."
+    assert speakable("Bayern beat Bodø/Glimt 5–0.") == "Bayern beat Bodo Glimt five-nil."
+    assert speakable("Barça won 3–1, then drew 1–1 and 0–0.") == (
+        "Barça won three-one, then drew one-all and nil-nil."
+    )
+    assert speakable("iLERNA Lleida won 105–100.") == "Lleida won 105 to 100."
+    assert speakable("Fenerbahçe/Istanbul") == "Fenerbahçe Istanbul"
 
 
 def test_one_request_per_segment_split_between_turns() -> None:

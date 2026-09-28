@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.models import Article, EpisodeArticle, Language
 from app.pipeline.common import Run
+from app.pipeline.days import with_day_labels
 from app.sources.base import spoken_date
 from app.sources.registry import SOURCE_NAMES
 
@@ -42,13 +43,14 @@ class EpisodeSource:
     is_data: bool
 
 
+def episode_day(plan: dict, zone: ZoneInfo) -> date:
+    return datetime.fromisoformat(plan["selected_at"]).astimezone(zone).date()
+
+
 def context_text(plan: dict, zone: ZoneInfo) -> str:
-    today = datetime.fromisoformat(plan["selected_at"]).astimezone(zone).date()
-    before = ", ".join(spoken_date(today - timedelta(days=n)) for n in range(7, 0, -1))
-    after = ", ".join(spoken_date(today + timedelta(days=n)) for n in range(1, 8))
-    return (
-        f"Today is {spoken_date(today)}. This episode is {plan['coverage']}. "
-        f"The last 7 days were {before}. The next 7 days are {after}."
+    today = episode_day(plan, zone)
+    return with_day_labels(
+        f"Today is {spoken_date(today)}. This episode is {plan['coverage']}.", today
     )
 
 
@@ -59,17 +61,18 @@ def script_sources(run: Run) -> dict[str, EpisodeSource]:
         .where(EpisodeArticle.episode_id == run.episode.id)
     ).all()
     zone = ZoneInfo(run.podcast.timezone)
+    today = episode_day(run.episode.plan, zone)
     sources = {
         "CTX": EpisodeSource(
             "CTX", "Episode context", "en", context_text(run.episode.plan, zone), True
         )
     }
     for source_id, article in sorted(rows, key=lambda row: int(row[0][1:])):
-        sources[source_id] = episode_source(source_id, article, zone)
+        sources[source_id] = episode_source(source_id, article, zone, today)
     return sources
 
 
-def episode_source(source_id: str, article: Article, zone: ZoneInfo) -> EpisodeSource:
+def episode_source(source_id: str, article: Article, zone: ZoneInfo, today: date) -> EpisodeSource:
     if article.kind == "data":
         kind = "Official data"
     else:
@@ -79,7 +82,7 @@ def episode_source(source_id: str, article: Article, zone: ZoneInfo) -> EpisodeS
         source_id,
         f"{kind} · {SOURCE_NAMES.get(article.source, article.source)}",
         article.language,
-        f"{article.title}\nPublished: {published}\n{article.body}",
+        with_day_labels(f"{article.title}\nPublished: {published}\n{article.body}", today),
         article.kind == "data",
     )
 

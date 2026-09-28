@@ -1,3 +1,4 @@
+import hashlib
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -81,7 +82,8 @@ def select_stories(run: Run) -> dict:
     pool = run.session.scalars(
         select(Article).where(Article.source.in_(episode_sources(run)))
     ).all()
-    blocks = build_blocks(run.interests, list(pool), since, run.now, told)
+    pool, told = unique_articles(list(pool), told)
+    blocks = build_blocks(run.interests, pool, since, run.now, told)
     allocate(blocks, story_slots(run.podcast.length_minutes))
     blocks = sport_order([block for block in blocks if block.wanted > 0])
     if not blocks:
@@ -110,6 +112,24 @@ def previous_selection(run: Run) -> datetime | None:
         .limit(1)
     )
     return datetime.fromisoformat(plan["selected_at"]) if plan else None
+
+
+def unique_articles(pool: list[Article], told: set[int]) -> tuple[list[Article], set[int]]:
+    groups: dict[tuple[str, str], list[Article]] = {}
+    for article in pool:
+        groups.setdefault((article.source, content_hash(article.body)), []).append(article)
+    keep: set[int] = set()
+    told_out = set(told)
+    for copies in groups.values():
+        newest = max(copies, key=lambda article: article.fetched_at)
+        keep.add(newest.id)
+        if any(article.id in told for article in copies):
+            told_out.add(newest.id)
+    return [article for article in pool if article.id in keep], told_out
+
+
+def content_hash(text: str) -> str:
+    return hashlib.sha256(" ".join(text.split()).encode()).hexdigest()
 
 
 def told_articles(run: Run) -> set[int]:
@@ -209,7 +229,7 @@ def fresh_stories(
         for a in pool
         if a.kind == "article"
         and a.id not in told
-        and a.published_at >= now - NEWS_WINDOW
+        and now - NEWS_WINDOW <= a.published_at <= now
         and (since is None or a.fetched_at > since)
     ]
     results = [a for a in pool if a.meta.get("type") == "result" and a.id not in told]

@@ -12,10 +12,35 @@ def match(number: int, md: int, day: str, home: str, away: str, score: tuple | N
         "matchday": {"name": f"MD{md}"},
         "status": "FINISHED" if score else "UPCOMING",
         "kickOffTime": {"date": day, "dateTime": f"{day}T19:00:00Z"},
-        "homeTeam": {"internationalName": home},
-        "awayTeam": {"internationalName": away},
+        "homeTeam": {"internationalName": home, "id": home},
+        "awayTeam": {"internationalName": away, "id": away},
         "score": {"total": {"home": score[0], "away": score[1]}} if score else None,
     }
+
+
+def scorer(player: str, club: str, minute: int, kind: str = "SCORED") -> dict:
+    return {
+        "player": {"internationalName": player},
+        "teamId": club,
+        "time": {"minute": minute},
+        "goalType": kind,
+    }
+
+
+def barca_feyenoord() -> dict:
+    game = match(1, 1, "2026-09-09", "Barcelona", "Feyenoord", (5, 1))
+    game["playerEvents"] = {
+        "scorers": [
+            scorer("Raphinha", "Barcelona", 3),
+            scorer("Sem Steijn", "Feyenoord", 82),
+            scorer("Raphinha", "Barcelona", 57),
+            scorer("Lamine Yamal", "Barcelona", 77, "PENALTY"),
+            scorer("Karim Adeyemi", "Barcelona", 22),
+            scorer("Gernot Trauner", "Feyenoord", 85, "OWN"),
+        ]
+    }
+    game["playerOfTheMatch"] = {"player": {"internationalName": "Raphinha"}, "teamId": "Barcelona"}
+    return game
 
 
 def row(rank: int, name: str, won: int, drawn: int, lost: int) -> dict:
@@ -34,7 +59,7 @@ def fake_uefa() -> FakeWeb:
     return FakeWeb(
         {
             MATCHES: [
-                match(1, 1, "2026-09-09", "Barcelona", "Feyenoord", (5, 1)),
+                barca_feyenoord(),
                 match(2, 1, "2026-09-10", "Inter", "Arsenal", (1, 1)),
                 match(3, 2, "2026-10-13", "Galatasaray", "Barcelona", None),
             ],
@@ -54,12 +79,17 @@ def test_uefa_results_standings_and_next_matchday() -> None:
 
     assert items[0].body == (
         "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: "
-        "Barcelona beat Feyenoord 5–1 at home."
+        "Barcelona beat Feyenoord 5–1 at home. Goals: Barcelona: Raphinha 3', 57', Karim "
+        "Adeyemi 22', Lamine Yamal 77' (penalty); Feyenoord: Sem Steijn 82'. Own goals: Gernot "
+        "Trauner 85'. Player of the match: Raphinha (Barcelona)."
     )
     assert items[0].url == f"{SITE}/match/1/"
-    assert "Inter and Arsenal drew 1–1" in items[1].body
+    assert items[1].body.endswith("Inter and Arsenal drew 1–1.")
     standings = by_title["Champions League standings after Matchday 1"]
     assert "1. Barcelona, 3 points from 1 game (1 win, 0 draws, 0 losses)." in standings.body
+    assert "2. Inter, 1 point from 1 game (0 wins, 1 draw, 0 losses), 2 points behind" in (
+        standings.body
+    )
     fixtures = by_title["Champions League Matchday 2 fixtures"]
     assert "Tuesday 13 October 2026: Galatasaray host Barcelona." in fixtures.body
     assert datetime.now(UTC) >= standings.published_at

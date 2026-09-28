@@ -22,6 +22,7 @@ from app.pipeline.script import (
     EpisodeSource,
     Script,
     context_text,
+    episode_day,
     episode_source,
 )
 
@@ -96,7 +97,7 @@ def load_sources(session: Session) -> dict[str, EpisodeSource]:
     sources = {"CTX": EpisodeSource("CTX", "Episode context", "en", context_text(PLAN, ZONE), True)}
     for source_id, url in SOURCES.items():
         article = session.scalars(select(Article).where(Article.url == url)).one()
-        sources[source_id] = episode_source(source_id, article, ZONE)
+        sources[source_id] = episode_source(source_id, article, ZONE, episode_day(PLAN, ZONE))
     return sources
 
 

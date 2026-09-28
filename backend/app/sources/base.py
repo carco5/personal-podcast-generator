@@ -1,6 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -59,3 +60,39 @@ def spoken_date(day: date) -> str:
 
 def count(number: int, singular: str, plural: str | None = None) -> str:
     return f"{number} {singular}" if number == 1 else f"{number} {plural or singular + 's'}"
+
+
+def gap_to_leader(points: int, leader: int, *, first: bool) -> str:
+    if first:
+        return ""
+    gap = leader - points
+    if gap == 0:
+        return ", level on points with the leader"
+    return f", {count(gap, 'point')} behind the leader"
+
+
+@dataclass(frozen=True)
+class Goal:
+    team: str
+    player: str
+    minute: int
+    note: str = ""
+    own_goal: bool = False
+
+
+def goals_sentence(goals: list[Goal], teams: list[str]) -> str:
+    in_order = sorted(goals, key=lambda goal: goal.minute)
+    parts = []
+    for name in teams:
+        minutes: dict[str, list[str]] = {}
+        for goal in (g for g in in_order if g.team == name and not g.own_goal):
+            note = f" ({goal.note})" if goal.note else ""
+            minutes.setdefault(goal.player, []).append(f"{goal.minute}'{note}")
+        if minutes:
+            players = ", ".join(f"{player} {', '.join(times)}" for player, times in minutes.items())
+            parts.append(f"{name}: {players}")
+    own = [f"{goal.player} {goal.minute}'" for goal in in_order if goal.own_goal]
+    text = f"Goals: {'; '.join(parts)}." if parts else ""
+    if own:
+        text += f" Own goals: {', '.join(own)}."
+    return text.strip()

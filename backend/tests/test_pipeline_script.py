@@ -51,8 +51,8 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     details = write_script(run)
 
     _, prompt = llm.prompts[0]
-    assert "[CTX] Today is Thursday 1 October 2026." in prompt
-    assert "The next 7 days are Friday 2 October 2026, Saturday 3 October 2026," in prompt
+    assert "[CTX] Today is Thursday 1 October 2026 [say: today]." in prompt
+    assert "Friday 2 October 2026 [say: tomorrow]: Besiktas host FC Barcelona" in prompt
     assert 'Segment "euroleague" (EuroLeague; sport: basketball): about 760 characters.' in prompt
     assert "Say clearly when the episode moves to" in llm.instructions[0]
     assert "[S2] Official · Liga ACB" in prompt

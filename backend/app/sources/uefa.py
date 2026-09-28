@@ -3,7 +3,16 @@ from datetime import UTC, date, datetime
 from itertools import groupby
 from typing import Any
 
-from app.sources.base import Source, SourceItem, count, parse_datetime, spoken_date
+from app.sources.base import (
+    Goal,
+    Source,
+    SourceItem,
+    count,
+    gap_to_leader,
+    goals_sentence,
+    parse_datetime,
+    spoken_date,
+)
 from app.sources.http import Fetcher
 
 MATCHES = "https://match.uefa.com/v5/matches"
@@ -70,17 +79,20 @@ def result_item(match: Match, url: str) -> SourceItem:
     goals = match["score"]["total"]
     home_goals, away_goals = goals["home"], goals["away"]
     if home_goals == away_goals:
-        text = f"{home} and {away} drew {home_goals}–{away_goals}"
+        text, order = f"{home} and {away} drew {home_goals}–{away_goals}", [home, away]
     elif home_goals > away_goals:
-        text = f"{home} beat {away} {home_goals}–{away_goals} at home"
+        text, order = f"{home} beat {away} {home_goals}–{away_goals} at home", [home, away]
     else:
-        text = f"{away} beat {home} {away_goals}–{home_goals} away"
+        text, order = f"{away} beat {home} {away_goals}–{home_goals} away", [away, home]
     number = matchday(match)
+    details = " ".join(
+        part for part in (goals_sentence(scorers(match), order), star(match)) if part
+    )
     return SourceItem(
         url=url,
         title=f"Champions League Matchday {number}: {text}",
         body=f"UEFA Champions League, league phase Matchday {number}, "
-        f"{spoken_date(match_day(match))}: {text}.",
+        f"{spoken_date(match_day(match))}: {text}. {details}".strip(),
         published_at=parse_datetime(match["kickOffTime"]["dateTime"]),
         kind="data",
         meta={
@@ -93,14 +105,43 @@ def result_item(match: Match, url: str) -> SourceItem:
     )
 
 
+def scorers(match: Match) -> list[Goal]:
+    names = {
+        str(match["homeTeam"]["id"]): team(match["homeTeam"]),
+        str(match["awayTeam"]["id"]): team(match["awayTeam"]),
+    }
+    return [
+        Goal(
+            team=names.get(str(event.get("teamId")), ""),
+            player=event["player"]["internationalName"],
+            minute=event["time"]["minute"],
+            note="penalty" if event.get("goalType") == "PENALTY" else "",
+            own_goal=event.get("goalType") == "OWN",
+        )
+        for event in match.get("playerEvents", {}).get("scorers", [])
+    ]
+
+
+def star(match: Match) -> str:
+    best = match.get("playerOfTheMatch")
+    if not best:
+        return ""
+    names = {str(match[side]["id"]): team(match[side]) for side in ("homeTeam", "awayTeam")}
+    club = names.get(str(best.get("teamId")))
+    suffix = f" ({club})" if club else ""
+    return f"Player of the match: {best['player']['internationalName']}{suffix}."
+
+
 def standings_item(rows: list[dict[str, Any]]) -> SourceItem:
     played = {row["played"] for row in rows}
     today = datetime.now(UTC).date()
     when = f"after Matchday {played.pop()}" if len(played) == 1 else f"on {spoken_date(today)}"
+    leader = max(row["points"] for row in rows)
     table = " ".join(
         f"{row['rank']}. {team(row['team'])}, {count(row['points'], 'point')} from "
         f"{count(row['played'], 'game')} ({count(row['won'], 'win')}, "
-        f"{count(row['drawn'], 'draw')}, {count(row['lost'], 'loss', 'losses')})."
+        f"{count(row['drawn'], 'draw')}, {count(row['lost'], 'loss', 'losses')})"
+        f"{gap_to_leader(row['points'], leader, first=row is rows[0])}."
         for row in rows
     )
     return SourceItem(
