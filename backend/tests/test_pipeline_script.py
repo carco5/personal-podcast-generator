@@ -51,19 +51,22 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     details = write_script(run)
 
     _, prompt = llm.prompts[0]
+    instructions = llm.instructions[0]
     assert "[CTX] Today is Thursday 1 October 2026 [say: today]." in prompt
+    assert "Hook: Barça won in Dubai. (sources S1)" in prompt
+    assert 'Segment "euroleague" (EuroLeague): about 760 characters.' in prompt
+    assert "    - Punter scored 19 points. (sources S1)" in prompt
+    assert "  Roundup: S2" in prompt
     assert "Friday 2 October 2026 [say: tomorrow]: Besiktas host FC Barcelona" in prompt
-    assert 'Segment "euroleague" (EuroLeague; sport: basketball): about 760 characters.' in prompt
-    assert "Say clearly when the episode moves to" in llm.instructions[0]
     assert "[S2] Official · Liga ACB" in prompt
-    assert "George" in llm.instructions[0] and "Sarah" in llm.instructions[0]
-    assert '"Test Show"' in llm.instructions[0]
-    assert 'say "a performance rating of 30"' in llm.instructions[0]
-    assert "mention each fixture only once" in llm.instructions[0]
-    assert "Leave its details to its segment" in llm.instructions[0]
-    assert "Say team names in full" in llm.instructions[0]
-    assert 'never "that day" twice' in llm.instructions[0]
-    assert "use 2 to 4 audio tags" in llm.instructions[0]
+    assert '"Test Show"' in instructions
+    assert "introduces George and Sarah by name" in instructions
+    assert "never list every section" in instructions
+    assert "Days: never say a full date" in instructions
+    assert "At most two stock openers" in instructions
+    assert "about one audio tag every four or five turns" in instructions
+    assert 'say "a performance rating of 30"' in instructions
+    assert "Now, basketball" not in instructions
     assert run.episode.title == "Barça win in Dubai"
     assert details["segments"] == 3 and not details["rewrite"]
 

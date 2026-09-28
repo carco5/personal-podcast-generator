@@ -1671,7 +1671,8 @@ basketball, Liga ACB, EuroLeague), then the NBA. The product must stay generic.
 - The engine stays generic (D22): each interest is a section, a team with several sports gives
   one section per sport, and each section's weight is its interest's weight. The sections follow
   sport, then weight, then the order in which the listener added the interests. The show's name
-  comes from the settings. No prompt names Barça: they speak of "the listener's team".
+  comes from the settings. The rules in the prompts speak of "the listener's team"; Barça only
+  appears in their examples.
 - The sample's format is the demo listener's configuration: FC Barcelona (high), then LaLiga,
   the Champions League, the Liga ACB and the EuroLeague (medium), and the NBA (low), added in
   that order. The show is "Barça & Beyond", 5 minutes.
@@ -1689,6 +1690,48 @@ without Barça basketball). That needs a data-model change and belongs to the we
 **Evidence.** The demo listener's interests were re-created in this order on 2026-09-29 through
 the API. On 2026-09-28 the author had chosen the Champions League before LaLiga; he changed it so
 both sports follow the same pattern.
+
+---
+
+## D39 · The writer turns the plan into a conversation between two fans
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (the writer's instructions)
+
+**Context.** The writer's instructions had grown one rule at a time during the sample test runs,
+and together they produced a news wire: "Now, basketball.", a full date on every result, an
+intro that listed every section, "one short sentence per result", and the team's full name on
+every mention.
+
+**Decision.** The style and structure part of the writer's prompt was rewritten, not extended:
+- **Roles:** the host drives the show and asks the analyst real questions; the analyst explains
+  why it matters and never reads out lists of results.
+- **Structure from the plan (D37):** each section tells its lead story in three to five turns,
+  then one roundup line and what comes next; a brief section gets one line. The intro opens with
+  the hook, says which day it is, welcomes the listener and introduces both hosts by name, and
+  teases two or three stories. Sections are bridged with the plan's threads or a short handoff.
+  The closing starts with the listener's team's next game.
+- **Conversation:** every turn answers, builds on or pushes back on the previous one; short
+  reactions mixed with explanations; at most two numbers per turn; a genuine question from the
+  host in each section; one or two mild disagreements; limits on stock openers and spoken
+  markers; the names fans use; players named whenever the sources name them.
+- **Kept as they were:** facts only from cited sources, "never compute numbers", the number
+  format, the Spanish glossary and the audio tag format. Two rules were tightened: a description
+  of how a game went counts as a fact for the judge too, and days are said with their labels
+  (D34). Tags: about one every four or five turns, so the cap rises from 6 to 8.
+- The writer only receives the sources the plan cites, and the structure checks follow the
+  plan: the intro cites the hook, and each section cites its lead story and every roundup result.
+
+**Alternatives considered.**
+- *Adding rules on top of the old ones:* several old rules produced the wire style, so they had
+  to go, not be counterweighted.
+- *Giving the writer every source:* it would drift back to telling everything the sources say.
+
+**Trade-offs.** Conversational rules (turns that respond, genuine questions) cannot all be
+checked by code; the deterministic ones are linted (D40), the rest are reviewed by reading the
+script.
+
+**Evidence.** The episode 14 script, reviewed by the author on 2026-09-29. Unit tests check what
+the writer receives (plan, only the cited sources) and each structure check with a sabotage.
 
 ---
 

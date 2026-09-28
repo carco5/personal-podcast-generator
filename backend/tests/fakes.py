@@ -80,17 +80,31 @@ def plan_first(prompt: str) -> EditorialPlan:
 
 def write_from_plan(prompt: str) -> Script:
     segments: list[dict] = []
-    for line in prompt.split("SOURCES")[0].splitlines():
-        if found := re.match(r'- Segment "([^"]+)"', line):
+    hook: list[str] = []
+
+    def ids(text: str) -> list[str]:
+        return [sid.strip() for sid in text.split(",")]
+
+    for line in prompt.split("\nSOURCES")[0].splitlines():
+        if found := re.match(r"Hook: .* \(sources (.+)\)$", line):
+            hook = ids(found.group(1))
+        elif found := re.match(r'- Segment "([^"]+)"', line):
             segments.append({"key": found.group(1), "turns": []})
-        elif found := re.match(r"  - Story \d+: sources (.+)", line):
-            ids = found.group(1).split(", ")
-            segments[-1]["turns"].append(
-                {"speaker": "host", "text": "Next story.", "source_ids": ids}
-            )
-    lead = segments[1]["turns"][0]["source_ids"]
-    segments[0]["turns"] = [{"speaker": "host", "text": "Big news today.", "source_ids": lead}]
+        elif (found := re.match(r"    - .* \(sources (.+)\)$", line)) and not segments[-1]["turns"]:
+            turn = {"speaker": "host", "text": "Big story.", "source_ids": ids(found.group(1))}
+            segments[-1]["turns"].append(turn)
+        elif found := re.match(r"  Roundup: (.+)$", line):
+            turn = {
+                "speaker": "analyst",
+                "text": "And the rest.",
+                "source_ids": ids(found.group(1)),
+            }
+            segments[-1]["turns"].append(turn)
+    segments[0]["turns"] = [{"speaker": "host", "text": "Big news today.", "source_ids": hook}]
     segments[-1]["turns"] = [{"speaker": "analyst", "text": "See you tomorrow!", "source_ids": []}]
+    for segment in segments:
+        if not segment["turns"]:
+            segment["turns"] = [{"speaker": "host", "text": "Quiet day.", "source_ids": []}]
     return Script.model_validate({"title": "Test episode", "segments": segments})
 
 

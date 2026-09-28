@@ -23,6 +23,22 @@ PLAN = {
             "context_ids": ["S3"],
         }
     ],
+    "editorial": {
+        "hook": {"text": "Barça won in Dubai.", "source_ids": ["S1"]},
+        "sections": [
+            {
+                "key": "euroleague",
+                "lead_story": 1,
+                "angle": "Barça's first away win.",
+                "key_facts": [{"text": "Punter scored 19 points.", "source_ids": ["S1"]}],
+                "roundup_ids": ["S2"],
+                "next_up": {"text": "Besiktas host Barça [say: tomorrow].", "source_ids": ["S3"]},
+                "brief": False,
+                "major": False,
+            }
+        ],
+        "threads": [],
+    },
 }
 SOURCES = {
     "CTX": EpisodeSource("CTX", "Episode context", "en", "Today is Thursday 1 October 2026.", True),
@@ -155,18 +171,26 @@ def test_the_script_must_still_use_digits() -> None:
 
 
 def test_structure_checks() -> None:
-    no_lead = copy.deepcopy(GOOD)
-    no_lead["segments"][0]["turns"][0]["source_ids"] = []
-    no_lead["segments"][0]["turns"][0]["text"] = "Big night in the EuroLeague."
+    no_hook = copy.deepcopy(GOOD)
+    no_hook["segments"][0]["turns"][0]["source_ids"] = []
+    no_hook["segments"][0]["turns"][0]["text"] = "Big night in the EuroLeague."
     assert any(
-        "lead story" in p for p in code_problems(Script.model_validate(no_lead), PLAN, SOURCES)
+        "open with the hook" in p
+        for p in code_problems(Script.model_validate(no_hook), PLAN, SOURCES)
     )
 
     skipped = copy.deepcopy(GOOD)
     del skipped["segments"][1]["turns"][2:4]
     assert any(
-        "story 2 (['S2']) is not covered" in p
+        "the roundup results ['S2'] are not covered" in p
         for p in code_problems(Script.model_validate(skipped), PLAN, SOURCES)
+    )
+
+    no_lead = copy.deepcopy(GOOD)
+    del no_lead["segments"][1]["turns"][0:2]
+    assert any(
+        "the lead story (['S1']) is not covered" in p
+        for p in code_problems(Script.model_validate(no_lead), PLAN, SOURCES)
     )
 
     reordered = copy.deepcopy(GOOD)
@@ -177,9 +201,9 @@ def test_structure_checks() -> None:
     )
 
     tagged = copy.deepcopy(GOOD)
-    tagged["segments"][2]["turns"] = [turn("host", "[laughs] Bye!")] * 7
+    tagged["segments"][2]["turns"] = [turn("host", "[laughs] Bye!")] * 8
     assert any(
-        "8 audio tags" in p for p in code_problems(Script.model_validate(tagged), PLAN, SOURCES)
+        "9 audio tags" in p for p in code_problems(Script.model_validate(tagged), PLAN, SOURCES)
     )
 
     long = copy.deepcopy(GOOD)

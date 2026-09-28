@@ -75,9 +75,11 @@ Return exactly one verdict for every turn:
 - wrong_time: it places an event on the wrong day, or tells a future event as past (or the
   reverse).
 Judge each turn only against its own cited sources and [CTX]. Opinions about sourced facts are
-fine. Statements about the episode itself (the welcome, what it covers, the sign-off) are
-transitions, not facts. [CTX] lists the dates of the days around today: use it for weekdays. Sources may be in Spanish: compare the meaning across languages, including the day of the
-week. {glossary}
+fine, but a description of how a game went ("dominated", "late winner", "came from behind") is
+a fact. Statements about the episode itself (the welcome, the hosts' names, what it covers, the
+sign-off) are transitions, not facts. Each date in the sources carries how to say it relative
+to today ([say: last Saturday]): a day said that way is right. Sources may be in Spanish:
+compare the meaning across languages, including the day of the week. {glossary}
 Explain every verdict other than supported or opinion in one sentence.
 """
 
@@ -168,15 +170,21 @@ def structure_problems(script: Script, plan: dict) -> list[str]:
         segment.key: {sid for turn in segment.turns for sid in turn.source_ids}
         for segment in script.segments
     }
-    lead = plan["blocks"][0]["stories"][0]["source_ids"]
-    if not cited["intro"] & set(lead):
-        problems.append(f"The intro must open with the lead story and cite {lead}.")
-    for block in plan["blocks"]:
-        for number, story in enumerate(block["stories"], start=1):
-            if not cited[block["key"]] & set(story["source_ids"]):
-                problems.append(
-                    f"{block['key']}: story {number} ({story['source_ids']}) is not covered."
-                )
+    editorial = plan["editorial"]
+    hook = editorial["hook"]["source_ids"]
+    if not cited["intro"] & set(hook):
+        problems.append(f"The intro must open with the hook and cite {hook}.")
+    blocks = {block["key"]: block for block in plan["blocks"]}
+    for section in editorial["sections"]:
+        if section["brief"]:
+            continue
+        key = section["key"]
+        lead = blocks[key]["stories"][section["lead_story"] - 1]["source_ids"]
+        if not cited[key] & set(lead):
+            problems.append(f"{key}: the lead story ({lead}) is not covered.")
+        missing = sorted(set(section["roundup_ids"]) - cited[key])
+        if missing:
+            problems.append(f"{key}: the roundup results {missing} are not covered.")
     length = sum(len(turn.text) for segment in script.segments for turn in segment.turns)
     planned = plan["intro_chars"] + plan["closing_chars"] + sum(b["chars"] for b in plan["blocks"])
     if length > planned * LENGTH_TOLERANCE:
