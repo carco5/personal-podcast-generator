@@ -11,6 +11,7 @@ from app.config import Settings
 from app.models import Article, Episode, Interest, PodcastSettings, User
 from app.pipeline.checks import Judgement
 from app.pipeline.common import PaidCall, Run
+from app.pipeline.editorial import EditorialPlan
 from app.pipeline.script import Script
 from app.pipeline.selection import Picks
 from app.pipeline.voice import ToneVoice, Voice
@@ -19,7 +20,12 @@ from app.sources.http import Fetcher
 
 class FakeLlm:
     def __init__(self, responders: dict[type, Callable[[str], BaseModel]] | None = None) -> None:
-        defaults = {Picks: pick_first, Script: write_from_plan, Judgement: approve_all}
+        defaults = {
+            Picks: pick_first,
+            EditorialPlan: plan_first,
+            Script: write_from_plan,
+            Judgement: approve_all,
+        }
         self.responders = defaults | (responders or {})
         self.prompts: list[tuple[type, str]] = []
         self.instructions: list[str] = []
@@ -42,6 +48,34 @@ def pick_first(prompt: str) -> Picks:
         stories = [{"source_ids": [temp], "reason": "fake"} for temp in ids]
         blocks.append({"key": key, "stories": stories})
     return Picks.model_validate({"blocks": blocks})
+
+
+def plan_first(prompt: str) -> EditorialPlan:
+    sections: list[dict] = []
+    for line in prompt.split("\nSOURCES")[0].splitlines():
+        if found := re.match(r'- Section "([^"]+)"', line):
+            sections.append({"key": found.group(1), "ids": []})
+        elif found := re.match(r"  Story 1: ([^—]+) —", line):
+            sections[-1]["ids"] = [sid.strip() for sid in found.group(1).split(",")]
+    return EditorialPlan.model_validate(
+        {
+            "hook": {"text": "Big news today.", "source_ids": sections[0]["ids"]},
+            "sections": [
+                {
+                    "key": section["key"],
+                    "lead_story": 1,
+                    "angle": "It matters.",
+                    "key_facts": [{"text": "The key fact.", "source_ids": section["ids"]}],
+                    "roundup_ids": [],
+                    "next_up": None,
+                    "brief": False,
+                    "major": False,
+                }
+                for section in sections
+            ],
+            "threads": [],
+        }
+    )
 
 
 def write_from_plan(prompt: str) -> Script:

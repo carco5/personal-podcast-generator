@@ -10,6 +10,7 @@ from sqlalchemy import delete, select
 from app.catalog import CATALOG
 from app.models import Article, Episode, EpisodeArticle, Interest
 from app.pipeline.common import EpisodeSkipped, Run
+from app.pipeline.editorial import plan_episode
 from app.pipeline.fetch import episode_sources
 from app.sources.base import spoken_date
 from app.sources.registry import SPORTS, TOPIC_FEEDS, Sport, TopicFeed, source_sport
@@ -65,9 +66,9 @@ given, most important first.
   source_ids, the official one first.
 - Less important results of the same round can share one roundup story: put up to 4 of them
   in its source_ids. Keep the most important games as stories of their own.
-- In a block about one club, the first story is the club's latest results: put its latest
-  result in each competition (league, European cup) together in that story, most recent first.
-  Its news come after.
+- In a block about one club, one story gathers the club's latest result in each competition
+  (league, European cup), most recent first. Its place in the block does not matter: an editor
+  decides later which story leads.
 - Prefer substantial, fresh stories: results, signings, injuries, milestones, key statements.
 - Skip previews of games that have already been played, promotional items and trivia.
 - Use only the ids listed in that block, each id at most once.
@@ -91,12 +92,14 @@ def select_stories(run: Run) -> dict:
         raise EpisodeSkipped(f"No fresh news for your interests{since_text}.")
     picks = pick_stories(run, blocks)
     plan = save_plan(run, blocks, picks, since, zone)
+    editorial = plan_episode(run)
     return {
         "coverage": plan["coverage"],
         "blocks": [
             {"key": b.key, "candidates": len(b.stories), "wanted": b.wanted} for b in blocks
         ],
         "stories": sum(len(block["stories"]) for block in plan["blocks"]),
+        "editorial": editorial,
     }
 
 

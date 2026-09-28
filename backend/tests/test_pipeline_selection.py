@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Article, Episode, EpisodeArticle
 from app.pipeline.common import EpisodeSkipped
+from app.pipeline.editorial import EditorialPlan
 from app.pipeline.selection import (
     Block,
     Picks,
@@ -164,7 +165,46 @@ def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
     assert run.episode.plan["coverage"] == "catch-up: the listener's first episode"
     assert details["stories"] == 6
     assert "Pick up to 3 stories" in run.llm.prompts[0][1]
-    assert "latest\n  result in each competition" in run.llm.instructions[0]
+    assert "latest result in each competition" in run.llm.instructions[0]
+    assert "an editor\n  decides later which story leads" in run.llm.instructions[0]
+
+
+def test_select_saves_the_editorial_plan_and_the_shares(session: Session) -> None:
+    user, podcast, interests = make_listener(
+        session, [("fc-barcelona", "high"), ("euroleague", "medium")]
+    )
+    scenario(session)
+    run = make_run(session, user, podcast, interests, now=NOW)
+
+    details = select_stories(run)
+
+    plan = run.episode.plan
+    assert details["editorial"]["fallback"] is False
+    assert [s["key"] for s in plan["editorial"]["sections"]] == [b["key"] for b in plan["blocks"]]
+    assert sum(block["chars"] for block in plan["blocks"]) == 3720 - 300 - 250
+
+
+def test_an_invalid_editorial_plan_is_retried_then_replaced(session: Session) -> None:
+    user, podcast, interests = make_listener(
+        session, [("fc-barcelona", "high"), ("euroleague", "medium")]
+    )
+    scenario(session)
+
+    def broken(prompt: str) -> EditorialPlan:
+        hook = {"text": "Nothing.", "source_ids": ["S99"]}
+        return EditorialPlan.model_validate({"hook": hook, "sections": [], "threads": []})
+
+    llm = FakeLlm({EditorialPlan: broken})
+    run = make_run(session, user, podcast, interests, llm=llm, now=NOW)
+
+    details = select_stories(run)
+
+    prompts = [prompt for schema, prompt in llm.prompts if schema is EditorialPlan]
+    assert len(prompts) == 2 and "YOUR PREVIOUS PLAN had these problems" in prompts[1]
+    assert details["editorial"]["fallback"] is True
+    assert run.episode.plan["plan_fallback"] is True
+    first = run.episode.plan["editorial"]["sections"][0]
+    assert first["lead_story"] == 1 and first["key_facts"]
 
 
 def test_the_same_article_under_two_urls_is_kept_once(session: Session) -> None:

@@ -1605,6 +1605,93 @@ covers the typo case, the "already told" case and the cross-outlet case.
 
 ---
 
+## D37 · An editorial plan before writing
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D19 (how the length is shared), D22
+(which story leads)
+
+**Context.** The episode 14 script was accurate but read like a news wire. The writer received a
+list of stories per block and told every one of them, result by result, with equal weight. The
+author asked for fewer stories, only the impactful ones, discussed in depth.
+
+**Decision.** Generation becomes "plan, then write". After select picks the candidate stories,
+an editor (`gpt-6-sol`, the writing model, since editorial judgement is what had to improve)
+returns a plan in a validated schema:
+- per section: the lead story (told in depth), why it matters to this listener, one to five key
+  facts with their source ids (player detail preferred), at most three other results for one
+  roundup line, the next game, and two flags: `brief` (nothing impactful: one line) and `major`
+  (clearly bigger than a normal day);
+- for the episode: the cold-open hook (fresh and relevant, preferring the last 72 hours or the
+  next 48) and up to three threads that link sections.
+- "Impactful" is defined in the instructions: the listener's team, records and streaks, upsets,
+  big or dramatic margins, results that move the table, standout players. Competition sections
+  look through the eyes of a fan of the listener's team; a competition the team does not play
+  in is covered on its own terms.
+
+Code keeps what code does best:
+- it validates the plan (only ids that exist, each in its own section; the roundup never repeats
+  the lead), asks once more with the problems if needed, and otherwise falls back to a simple
+  plan of its own, marked in the episode, so an episode never depends on the model's format;
+- it shares the length: the total the listener chose minus the intro and the closing, split by
+  the weight of each section (3, 2, 1), a `major` section counting 1.5 times, a `brief` one
+  getting one line. The largest-remainder method makes the shares add up exactly;
+- select still groups a club's latest result in each competition into one story (D22), but no
+  longer puts it first: the plan decides what leads.
+
+The plan runs inside the select stage: select decides what is told, the plan how. The six stages
+of D3 and their database constraint stay as they are.
+
+**Alternatives considered.**
+- *Only rewriting the writer's prompt:* the writer would still receive every selected story as
+  something to tell.
+- *The plan inside the writer's call:* cheaper, but the plan could not be validated before
+  writing.
+- *The model sharing the length:* models do not add up characters reliably.
+- *A new "plan" stage:* clearer in the stage history, but it needs a migration of the stage
+  constraint for no gain in behaviour.
+
+**Trade-offs.** One more paid call per episode, about $0.02 to $0.03 with `gpt-6-sol`. The fallback
+plan is plainer than the model's.
+
+**Evidence.** The episode 14 script had 41 turns, with four-result roundups in the ACB, the
+Champions League and LaLiga, and every selected story told. Unit tests cover the shares (exact
+sum, brief, major), one sabotage per plan rule, and the retry and fallback path.
+
+---
+
+## D38 · The show's format comes from the listener's interests
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Confirms:** D22
+
+**Context.** The author described the sample's format: the Barça sections first, each followed by
+its competitions, national league before Europe (Barça football, LaLiga, Champions League, Barça
+basketball, Liga ACB, EuroLeague), then the NBA. The product must stay generic.
+
+**Decision.**
+- The engine stays generic (D22): each interest is a section, a team with several sports gives
+  one section per sport, and each section's weight is its interest's weight. The sections follow
+  sport, then weight, then the order in which the listener added the interests. The show's name
+  comes from the settings. No prompt names Barça: they speak of "the listener's team".
+- The sample's format is the demo listener's configuration: FC Barcelona (high), then LaLiga,
+  the Champions League, the Liga ACB and the EuroLeague (medium), and the NBA (low), added in
+  that order. The show is "Barça & Beyond", 5 minutes.
+- The catalog offers the Barça universe because those are the competitions with reliable
+  official sources and player-level detail. Another club would mean adding its interests and
+  sources to the catalog.
+
+**Alternatives considered.**
+- *A fixed Barça format in configuration, with a flag and a weight per section:* it would
+  duplicate the interests and make the product Barça-only.
+
+**Trade-offs.** A team's two sports cannot yet be chosen separately (for example, Barça football
+without Barça basketball). That needs a data-model change and belongs to the web app step.
+
+**Evidence.** The demo listener's interests were re-created in this order on 2026-09-29 through
+the API. On 2026-09-28 the author had chosen the Champions League before LaLiga; he changed it so
+both sports follow the same pattern.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
