@@ -25,16 +25,19 @@ record supersedes the old one and both stay here.
 | D17 | [PostgreSQL 18 in Compose](#d17--postgresql-18-in-compose) | Accepted |
 | D18 | [Measure with a throwaway spike before building the pipeline](#d18--measure-with-a-throwaway-spike-before-building-the-pipeline) | Accepted |
 | D19 | [An episode is shorter rather than padded](#d19--an-episode-is-shorter-rather-than-padded) | Accepted |
-| D20 | [Every check is proven by a sabotage test, and the judge is measured](#d20--every-check-is-proven-by-a-sabotage-test-and-the-judge-is-measured) | Accepted |
+| D20 | [Every check is proven by a sabotage test, and the judge is measured](#d20--every-check-is-proven-by-a-sabotage-test-and-the-judge-is-measured) | Accepted, measured in Step 5 |
 | D21 | [Episodes of 3, 5 or 7 minutes, and a 5-minute sample](#d21--episodes-of-3-5-or-7-minutes-and-a-5-minute-sample) | Accepted |
 | D22 | [The episode follows the listener's priorities](#d22--the-episode-follows-the-listeners-priorities) | Accepted |
 | D23 | [What an episode covers: what is new, or a catch-up the first time](#d23--what-an-episode-covers-what-is-new-or-a-catch-up-the-first-time) | Accepted |
-| D24 | [Sources are ingested on a schedule and stored](#d24--sources-are-ingested-on-a-schedule-and-stored) | Accepted |
+| D24 | [Sources are ingested on a schedule and stored](#d24--sources-are-ingested-on-a-schedule-and-stored) | Accepted, built in Step 5 |
 | D25 | [The data model grows step by step, and PostgreSQL enforces it](#d25--the-data-model-grows-step-by-step-and-postgresql-enforces-it) | Accepted |
 | D26 | [Migrations with Alembic, applied by a prestart job](#d26--migrations-with-alembic-applied-by-a-prestart-job) | Accepted |
 | D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted |
 | D28 | [Tests run against a real PostgreSQL](#d28--tests-run-against-a-real-postgresql) | Accepted |
 | D29 | [One backend image with a cached dependency layer](#d29--one-backend-image-with-a-cached-dependency-layer) | Accepted |
+| D30 | [Sources are downloaded like a responsible crawler](#d30--sources-are-downloaded-like-a-responsible-crawler) | Accepted |
+| D31 | [Official data is read from the data inside official pages](#d31--official-data-is-read-from-the-data-inside-official-pages) | Accepted |
+| D32 | [The pipeline runs as recorded stages, behind small provider interfaces](#d32--the-pipeline-runs-as-recorded-stages-behind-small-provider-interfaces) | Accepted |
 
 ---
 
@@ -123,13 +126,15 @@ called directly.
 
 **Evidence.** ElevenLabs bills per character, which makes voice the dominant cost. Checking the
 script before voicing it (D7) avoids paying for audio that will be thrown away. Sources:
-ElevenLabs API pricing and the GenFM documentation.
+ElevenLabs API pricing and the GenFM documentation. Built in Step 5 as described in D32: in a real
+test on 2026-09-28, an episode that failed during its first attempt resumed on retry without
+repeating the paid stages.
 
 ---
 
 ## D4 · News sources behind a `NewsProvider` interface
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27, 2026-09-28 (Step 5)
 
 **Context.** The brief asks the backend to pull news "from APIs or scraping outlets' websites".
 Every fact in the script must be checkable against the text it came from, so sources must provide
@@ -158,20 +163,21 @@ a source, and a story covered by two outlets is kept once.
 
 | Topic | Official source | Reference outlets |
 |---|---|---|
-| FC Barcelona (football and basketball) | fcbarcelona.com, English articles sitemap | The league sources below, filtered by the team's names |
+| FC Barcelona (football and basketball) | fcbarcelona.com, English articles sitemap, first teams only | The league sources below, filtered by the team's names |
 | EuroLeague | The EuroLeague API | Eurohoops, Sportando |
-| Liga ACB | acb.com game reports and news, in Spanish (recent-news sitemap and news listing) | None needed |
+| Liga ACB | acb.com: its calendar (results and next round, D31) and its game reports and news, in Spanish (recent-news sitemap and news listing) | None needed |
 | NBA | None reachable: nba.com returns HTTP 403 | ESPN, CBS Sports |
-| Champions League | uefa.com news sitemap | The Guardian (`football/championsleague`) |
-| LaLiga | None usable: laliga.com's `robots.txt` disallows its news pages | The Guardian (`football/laligafootball`) |
+| Champions League | UEFA's match and standings data (results, standings and next matchday), and the uefa.com news sitemap | The Guardian (`football/championsleague`) |
+| LaLiga | laliga.com's English pages: results, standings and next matchday (D31). Its English news is corporate, so stories come from the reference outlet | The Guardian (`football/laligafootball`) |
 
-Free-text topics use keywords over the catalogue and, with a key, the Guardian.
+Free-text topics use keywords over the catalogue and, with a key, the Guardian. Every source is
+downloaded as described in D30.
 
 **Alternatives considered.**
 - *Official sources only:* the NBA's and the EuroLeague's websites block automated access (HTTP
   403 and 429), so there would be no NBA block and no EuroLeague stories beyond the data.
-- *acb.com's results and standings pages:* they load their data from an undocumented internal API.
-  The official game reports carry the same results and the players' figures.
+- *acb.com's undocumented internal API:* the calendar page already carries the same data, which is
+  read from the page instead (D31). The official game reports carry the players' figures.
 - *Google News RSS:* its links end in a consent wall.
 - *Bing News RSS:* returned 0 results when measured.
 - *Yahoo Sports:* an aggregator of other outlets' stories.
@@ -189,7 +195,7 @@ Free-text topics use keywords over the catalogue and, with a key, the Guardian.
 **Trade-offs.**
 - Without a Guardian key, a free-text topic only gets what the catalogue sources contain.
 - ACB sources are in Spanish, so the model writes English from Spanish text and the judge compares
-  across languages.
+  across languages, both with a glossary of the reports' terms (D7).
 - The NBA has no reachable official source, so its block relies on reference outlets.
 - Pages extracted from fcbarcelona.com include share-button labels that have to be filtered out.
 
@@ -213,19 +219,40 @@ an audit of official sources, all checked with our User-Agent:
 - three stories appeared in both Eurohoops and Sportando within 48 hours, hence the duplicate
   filter.
 
+Revised on 2026-09-28, when the providers were built and every source was checked again:
+- **laliga.com was wrongly recorded as disallowed.** Its `robots.txt` has `Allow: /en-GB/` and
+  `Disallow: /en-*/*`, of equal length; under RFC 9309 the allow rule wins the tie. Its English
+  pages are allowed and its Spanish ones are not (D30).
+- fcbarcelona.com's articles sitemap lists only its 10 latest articles across 8 sections
+  (women's football, handball, futsal…), so the provider keeps the first teams' paths.
+- CBS Sports' NBA feed also carried NFL and college football stories, and ESPN's carried fantasy
+  articles, so each feed keeps only its section's paths.
+- acb.com's short team names are cut for its web layout ("Casademont Zgz"), so the full names are
+  used.
+- A first real ingest of all 12 sources took 27 seconds and stored about 110 items.
+- **The Champions League had news but no data**, so a catch-up could not tell FC Barcelona's
+  matchday-1 game. UEFA's own data services, `match.uefa.com` and `standings.uefa.com` (the ones
+  uefa.com uses), answer without a key and are allowed by `robots.txt`. They returned the 144
+  league-phase games, with Barcelona 5–1 Feyenoord on 9 September and Galatasaray–Barcelona on 13
+  October, and the 36-team table. UEFA names the club "Barcelona", so team names in the data are
+  matched exactly, never as text: "Barcelona" must not match "RCD Espanyol de Barcelona".
+- uefa.com's news sitemap once listed the same article twice, so a batch is deduplicated by URL
+  before it is saved (D24).
+
 ---
 
 ## D5 · One OpenAI model per task
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27, 2026-09-28
 
 **Context.** Three stages use a language model: selecting stories and checking the script's
 claims (D7), which are classification tasks, and writing the script, where quality is audible.
 
 **Decision.** `gpt-6-sol` writes the script, and `gpt-6-luna` selects the stories and checks the
-claims. Both are
-settings, not hard-coded values (D16). `gpt-6-astra` is kept only as an option to try on the
-sample episode.
+claims. They are settings, not hard-coded values (D16): `OPENAI_WRITE_MODEL`,
+`OPENAI_SELECT_MODEL` and, since Step 5, `OPENAI_JUDGE_MODEL`, so the judge can be measured or
+changed without touching selection. `gpt-6-astra` is kept only as an option to try on the sample
+episode. A model without a known price is refused before any call is made.
 
 **Alternatives considered.**
 - *`gpt-6-astra` for writing:* about five times the price of `gpt-6-sol`.
@@ -235,13 +262,17 @@ sample episode.
 
 **Evidence.** [OpenAI pricing](https://developers.openai.com/api/docs/pricing). The real cost
 per episode is measured in the Step 3 spike and recorded per call (D11). Revised on 2026-09-27,
-when the claim check became a required stage (D7).
+when the claim check became a required stage (D7). Prices checked again on 2026-09-28 (standard
+processing, per million tokens: `gpt-6-sol` $2.00 input, $0.20 cached, $2.50 cache write, $10.00
+output; `gpt-6-luna` $0.10, $0.01, $0.125 and $0.50). On the first real episodes: selection
+cost about $0.001, the script $0.04 and the judge $0.002.
 
 ---
 
 ## D6 · Voice: ElevenLabs v3 text-to-dialogue
 
-**Status:** Accepted, validated in Step 3 · **Date:** 2026-09-26, validated 2026-09-27
+**Status:** Accepted, validated in Step 3 · **Date:** 2026-09-26, validated 2026-09-27 ·
+**Revised:** 2026-09-28 (Step 5)
 
 **Context.** The episode is a conversation between two hosts, and it has to sound natural.
 
@@ -289,11 +320,24 @@ The audio checks were added on 2026-09-27 after a review of every check. The end
 documentation warns that requests over 2,000 characters "can terminate early". Chunks stay under
 that limit, and the duration check still catches a truncated chunk at no cost.
 
+Built in Step 5 (2026-09-28), with these details fixed:
+- a segment longer than 2,000 characters is split between turns, never inside one; its chapter
+  starts with its first chunk;
+- a chunk counts as cut short above 18.6 characters per second, 1.5 times the measured 12.4 (the
+  spike measured 10.5 to 13.6), and as silent below −45 dB of mean volume. A bad chunk is
+  requested once more, and a second failure fails the stage;
+- scores become "89 to 82" just before the voice request;
+- for development and tests, a tone voice generates, with ffmpeg, a tone as long as the speech
+  would be, at no cost. Its model name is part of the cache key, so development audio is never
+  served as real audio;
+- tests with ffmpeg cover the cache, a cut-short chunk, a silent chunk, the final loudness and the
+  chapter times.
+
 ---
 
 ## D7 · Check the script before paying for voice
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27, 2026-09-28 (Step 5)
 
 **Context.** The worst failure for a news podcast is a made-up fact: a score, a statistic, a
 claim that no source supports, or a rumour told as a fact.
@@ -352,6 +396,46 @@ In the Step 3 spike, v3 read both "89–82" and "89 to 82" correctly in a single
 are still rewritten as "89 to 82": the result does not depend on the model's text
 normalisation, and it costs 3 characters per score.
 
+**Revised on 2026-09-28, when the checks were built (Step 5) and run on real episodes.**
+- *Scores.* Outlets write home team first, so a score in the script must be written winner
+  first (89–82, never 82–89) and the pair must appear in a cited source in either order. Who beat
+  whom is left to the judge.
+- *Numbers as words.* In the script, a number word is rejected only when it counts a statistic
+  ("twenty points", "three straight wins"), so "the two teams" and "a three-pointer" pass. In a
+  source, number words count as digits ("nueve rebotes" supports "9 rebounds"), except "one",
+  "uno", "un" and "una", which are usually articles.
+- *Structure and form.* Each segment cites only its own block's sources (the intro and the closing
+  may cite any); the intro must cite the lead story; every planned story must be covered; turns
+  stay under 500 characters; at most 6 audio tags from the allowed list; the script may not exceed
+  the plan by more than 25%.
+- *Order.* The code checks run first, and the judge only if they pass, so a script already known
+  to be wrong is not paid for twice.
+- *The judge.* Every turn must get a verdict, and a missing one is a problem. Talk about the
+  episode itself (the welcome, what it covers) counts as a transition. The episode context lists
+  the date of every day from a week before to a week after, so nobody has to work out which date
+  "Sunday" is.
+- *Spanish sources.* The writer and the judge get the same glossary of the Liga ACB reports'
+  terms: "val" is the valuation, not points; a "triple" is a three-pointer, not a triple-double,
+  but "triple campeón" is a three-time champion; a "parcial" is a scoring run, not a final score.
+- *Writing.* People are introduced by their team ("Barça's Kevin Punter"), or by a role only when a
+  source states it, and games and fixtures are given with the weekday and the date.
+
+Evidence from the real runs on 2026-09-28:
+- In the 18 stored ACB reports, "val"/"valoración" appeared 24 times, "triple" 49 and "parcial" 18.
+  A "23 val" told as "23 points" would pass the number check, since 23 is in the source: only the
+  glossary and the judge prevent it.
+- The first real episode failed in the check stage before any voice was paid for. The judge
+  rightly flagged player positions that the writer had invented, which an instruction to put "the
+  role before the name" had invited. It also raised two false alarms: the intro describing the
+  episode, and a fixture "on Sunday" whose date it got wrong. Both were fixed with the changes
+  above.
+- The second real episode completed. The code checks caught one unsupported number, the rewrite
+  fixed it, and the judge passed all 26 turns. Labelled by hand, turn by turn, by the author (a
+  native Spanish speaker) against their sources, including the Spanish originals, all 26 were
+  correct.
+- One official ACB report contradicts itself: 8 rebounds and a valuation of 29 in its summary,
+  "nueve rebotes" and 30 in its body. No check can settle which figure is right. The script may
+  use either figure the official source states, and nothing outside it.
 ---
 
 ## D8 · Internal dashboard: product and operations
@@ -441,7 +525,7 @@ work.
 
 ## D11 · Cost-aware development
 
-**Status:** Accepted · **Date:** 2026-09-26
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-28 (Step 5)
 
 **Context.** The balance of the provided keys is not visible. The OpenAI costs endpoint returns
 403, and the ElevenLabs key lacks the permission to read its quota.
@@ -458,6 +542,14 @@ work.
 
 **Evidence.** Free, read-only checks on 2026-09-26. The same data also feeds the Operations tab
 (D8).
+
+Built in Step 5 (2026-09-28): every paid call is stored with its stage, including the calls of a
+stage that then failed, since they were paid anyway. The cache key includes the voice model, so
+free development audio is never served as real audio. Every paid run was estimated first with a
+dry run on the real prompts. The text of a 5-minute episode was estimated at about $0.05 when the
+script passes at once; the two real episodes, text only, needed one rewrite each and cost $0.082
+and $0.084. The voice for 5 minutes adds about $0.37 (D21). The whole of Step 5 cost $0.17 in
+OpenAI credits and nothing in ElevenLabs credits.
 
 ---
 
@@ -713,7 +805,7 @@ therefore needs about 3,700 characters, and script length is planned from this f
 
 ## D19 · An episode is shorter rather than padded
 
-**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4)
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4), 2026-09-28 (Step 5)
 
 **Context.** The user chooses an episode length, but some days bring little news for an interest.
 A model asked to fill a fixed length with thin material pads it out: it repeats itself or adds
@@ -740,11 +832,33 @@ reason is shown to the user.
 limits what can be said. The Step 3 spike measured about 12.4 characters of dialogue per second,
 which turns a share of the length into a character budget per block.
 
+**Revised on 2026-09-28, when selection was built (Step 5).** How the length is shared:
+- *Budget:* the length times 12.4 characters per second, minus about 300 characters for the intro
+  and 250 for the closing, in stories of about 380 characters (roughly 30 seconds: the fact and a
+  reaction). That gives 4, 8 and 12 stories for 3, 5 and 7 minutes, in line with the definition's
+  estimate of about 5, 8 and 11.
+- *Sharing:* first one story for each interest block that has material, in weight order, so no
+  interest is left out while there is room; then the rest one at a time by the D'Hondt method
+  (the one used to share parliamentary seats), with weights of 3, 2 and 1 points. The quotient is
+  counted per interest, so a team split into two sports blocks (D22) does not weigh double; within
+  it, the block with fewer stories gets the slot. A block with no more material leaves its slot to
+  the others.
+- *Roundups:* up to 4 lesser results of the same round can form one roundup story, told in one
+  sentence each.
+
+On the real data of 2026-09-28, a 5-minute catch-up for the sample's interests shared its 8
+stories as 2 for Barça's football, 1 for Barça's basketball, 2 for the EuroLeague, 2 for the Liga
+ACB and 1 for the NBA, with 5 to 31 candidates per block. Before counting per interest, the split
+Barça took 5 of the 8. Without roundups, a catch-up told only 2 of the EuroLeague's 9 games. The
+limit was time, not material. The first real script came out at 2,956 of the 3,590 planned
+characters, about 4 of the 5 minutes: the writer reads "never pad" as leave to be short, which is
+tuned with the sample (Step 7).
+
 ---
 
 ## D20 · Every check is proven by a sabotage test, and the judge is measured
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted, measured in Step 5 · **Date:** 2026-09-27 · **Revised:** 2026-09-28
 
 **Context.** A check that never fails proves nothing, and an LLM judge can be wrong in both
 directions.
@@ -773,6 +887,28 @@ Measuring it costs under $0.01.
 
 **Evidence.** The sabotage practice comes from a previous project (D7). The measurement is
 recorded when the judge is built (Step 5) and on the sample episode (Step 7).
+
+**Measured on 2026-09-28 (Step 5).**
+- *Sabotage tests:* each code check has its own, and each one asserts the exact reason reported.
+  They cover an invented number, a score written loser first, a score made of two real numbers
+  that do not go together, a number word, a tag outside the list, a URL, markdown, an emoji, a
+  source id read aloud, an over-long turn, an unknown source id, a number without sources, the
+  intro skipping the lead story, a skipped story, the wrong segment order, too many tags and an
+  over-long script. The judge's wiring is tested with a fake judge for each failing verdict, and
+  the audio checks with a cut-short chunk and a silent one.
+- *The real judge, on hand-labelled claims:* 28 claims about 7 real sources, 14 of them about
+  Liga ACB reports in Spanish, with the traps found in those reports (a valuation told as points,
+  "triple" told as triple-doubles, a narrow win told as an easy one). It called all 28 correctly as
+  pass or fail, with no false alarm and no miss; 25 got the exact expected label, and the other 3
+  were flagged under a neighbouring label. One `gpt-6-luna` call, $0.0015, 13 seconds
+  ([`backend/scripts/measure_judge.py`](../backend/scripts/measure_judge.py) holds the claims and
+  labels; the source texts are read from the database, not stored in the repository).
+- *The real judge, on a real script:* all 26 turns of the second real episode passed, and all 26
+  were labelled correct by hand (D7).
+
+Both samples are small. The claims were written and labelled by the AI assistant that built the
+checks, and the script's turns by the author, so they rule out gross errors rather than give an
+accuracy figure. The sample episode will be checked the same way.
 
 ---
 
@@ -806,7 +942,7 @@ The sample is the one episode the reviewers will listen to.
 
 ## D22 · The episode follows the listener's priorities
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-28 (Step 5)
 
 **Context.** The listener's main interest can be a team, such as FC Barcelona, that plays in
 competitions covered by other interests: the EuroLeague, the Liga ACB and LaLiga. Without a rule,
@@ -837,11 +973,27 @@ basketball: 10 articles from the last 24 hours on 2026-09-27, including the repo
 ([docs/spike.md](spike.md)). On the same day, 5 of 20 Eurohoops articles named Barcelona only in
 passing, in the body, which is why the filter uses the headline.
 
+**Revised on 2026-09-28 (Step 5): the episode goes sport by sport.** After hearing the first real
+script, which mixed Barça's football and basketball in one block, the author asked for football
+first and basketball after, so the listener always knows which Barça is meant.
+- A team that plays several sports gets one block per sport: FC Barcelona's football (its club
+  news, and its LaLiga and Champions League games and tables) and FC Barcelona's basketball (its
+  club news, and its EuroLeague and Liga ACB games and tables). The club's sitemap gives the sport
+  in each URL; league sources take their competition's sport.
+- Blocks are grouped by sport. Each sport goes in the order of its highest-weighted block; on a
+  tie, football goes first (the club's main sport), then basketball, then topics without a sport.
+  Within a sport, blocks keep their weight order. For the sample: Barça's football, Barça's
+  basketball, the EuroLeague, the Liga ACB and the NBA.
+- The writer is told to say when the episode moves to another sport and which of the club's teams
+  it means. Time is still shared per interest (D19), so splitting a team does not give it more.
+- Data is matched to a team by exact official names, never as text: UEFA names the club
+  "Barcelona", and "Barcelona" must not match "RCD Espanyol de Barcelona".
+
 ---
 
 ## D23 · What an episode covers: what is new, or a catch-up the first time
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-28 (Step 5)
 
 **Context.** A fixed time window cannot serve both a new listener and a daily one. With a 48-hour
 window, an episode on a Monday would miss a round played on the Thursday and Friday before, and a
@@ -870,11 +1022,23 @@ official news.
 10 official Barça articles from the last 24 hours and 17 official ACB news items from the last 48
 hours, besides the latest round of each league.
 
+**Revised on 2026-09-28, when selection was built (Step 5).**
+- *"New" means first seen by us after the previous episode chose its stories,* not published or
+  played after it. A game that started before the previous episode and ended after it would
+  otherwise never be told. The previous episode's plan stores the moment it chose (`selected_at`);
+  its start time is not used, because a retry changes it.
+- *"Already told"* is every source a completed episode of the listener used. The standings are
+  told again only when they change; what comes next may repeat, since it is still next.
+- *In a catch-up,* a team's block takes the team's latest game in each competition, and a
+  competition's block takes its latest round.
+- *Standings* now come from official structured data for the EuroLeague, LaLiga and the Champions
+  League (D31, D4). For the Liga ACB, only its official news mention them.
+
 ---
 
 ## D24 · Sources are ingested on a schedule and stored
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted, built in Step 5 · **Date:** 2026-09-27 · **Revised:** 2026-09-28
 
 **Context.** Official news lists only show the latest items. On 2026-09-27, acb.com's recent-news
 sitemap and news listing showed reports for all 9 games of round 1 in the afternoon, and only 6
@@ -899,11 +1063,24 @@ hours. Its recent-news sitemap held 17 to 19 items, about a day and a half of ne
 leaves a wide margin. Its news listing ignores page parameters, while fcbarcelona.com publishes an
 index of article sitemaps.
 
+**Built in Step 5 (2026-09-28).**
+- One ingest runs every source, and a source that fails, while downloading or while saving,
+  never stops the others: its transaction is rolled back and the ingest report carries a one-line
+  error (a database error's full statement, which holds article text, goes only to the log).
+- A news article is never overwritten, so the text an episode was checked against stays the same.
+  A data item (fixtures, a table) is updated when its text or its structured fields change.
+- A batch is deduplicated by URL before it is saved: uefa.com's sitemap once listed an article
+  twice, and PostgreSQL refuses to update the same row twice in one statement.
+- Only articles from the last 4 days are downloaded, and an article already stored is not
+  downloaded again.
+- It can be run by hand with `python -m app.sources.ingest`. The first full real ingest, of 12
+  sources, took 27 seconds.
+
 ---
 
 ## D25 · The data model grows step by step, and PostgreSQL enforces it
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-28 (Step 5)
 
 **Context.** The definition sketched nine tables, but most of them belong to code that does not
 exist yet. The database is written by the API, and later by the worker and by scripts.
@@ -954,6 +1131,24 @@ exist yet. The database is written by the API, and later by the worker and by sc
 - The SQLAlchemy and Alembic documentation on constraint naming conventions.
 - `backend/tests/test_models.py` writes a bad value into each constraint, bypassing the API, and
   checks that PostgreSQL rejects it.
+
+**Step 5 (2026-09-28), migration `e3d606ed94cd`.**
+- `articles`: the stored sources, shared by all listeners, with a unique URL, the source's name,
+  kind (article or data), whether it is official, its language, the publication date, the body
+  and `jsonb` metadata (competition, round, type and teams of a data item).
+- `episode_articles`: the sources each episode uses, with the short id the script cites (`S1`…),
+  the block and the rank. Its foreign key to `articles` has no cascade, so a source that an
+  episode cites can never be deleted.
+- `stage_runs` (one row per stage and attempt, with its details in `jsonb`) and `provider_calls`
+  (one row per paid call). A `CHECK` ties the usage to the provider: OpenAI rows carry tokens and
+  no characters, ElevenLabs rows the reverse. Cost is `numeric(10, 6)`, never a float.
+- `episodes` gains its results: title, plan, script, audio path, duration and chapters.
+- Two coherence rules on `episodes`: a `completed` episode has audio and only it does, and a
+  `failed` or `skipped` episode has a reason and only they do. Alembic's autogenerate does not
+  detect new `CHECK` constraints on an existing table, so both were added to the migration by
+  hand; a test fails if either is missing.
+- The article's text column is `body`, not `text`: inside the model class, a `text` attribute
+  would hide SQLAlchemy's `text()` function, which the same class uses.
 
 ---
 
@@ -1130,6 +1325,142 @@ build, because nothing is compiled.
 
 ---
 
+## D30 · Sources are downloaded like a responsible crawler
+
+**Status:** Accepted · **Date:** 2026-09-28
+
+**Context.** Most sources are web pages, feeds and sitemaps that we do not own. Each site states
+in its `robots.txt` what automated clients may fetch, often with wildcard rules.
+
+**Decision.** Every download goes through one fetcher:
+- an honest User-Agent that links to this repository, so a site can see who we are and block us
+  by name;
+- `robots.txt` read once per site and ingest, and applied as RFC 9309 defines it, with Protego
+  (the parser Scrapy uses). A `robots.txt` that returns 4xx allows everything; a 5xx or a network
+  error disallows the whole site until the next ingest;
+- a 20-second timeout per request;
+- the Guardian key goes in the `api-key` header, never in the URL, so it cannot appear in an error
+  message or a log;
+- a failing page skips only that article, and a failing source is reported in the ingest result
+  without stopping the other sources.
+
+**Alternatives considered.**
+- *Python's `urllib.robotparser`:* it ignores `*` and `$` in rules, so it allowed URLs that sites
+  disallow.
+- *A hand-written matcher:* the standard has edge cases (longest match, ties, `$`), and Protego is
+  small and maintained.
+- *Not checking `robots.txt`, as in the Step 3 spike:* acceptable for a one-off measurement, not
+  for a scheduled product.
+
+**Trade-offs.** One more dependency (Protego 0.7.0, BSD-3, with no dependencies of its own). A site
+whose `robots.txt` fails with a server error is skipped for that ingest, three hours at most.
+
+**Evidence.** Measured on 2026-09-28 against the live `robots.txt` files, comparing both parsers:
+`urllib.robotparser` allowed ESPN's `/nba/boxscore?…`, laliga.com's `/es-ES/noticias/` and its
+PDF files, CBS Sports' `?sortdir=` pages and the Guardian's `/print` pages, which their wildcard
+rules disallow; Protego did not. Every path the providers use is allowed. The robots files of the
+EuroLeague API and its standings host returned 404, and the Guardian API's returned 401. The
+Guardian API accepted the key in a header (HTTP 200). See [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309).
+
+---
+
+## D31 · Official data is read from the data inside official pages
+
+**Status:** Accepted · **Date:** 2026-09-28
+
+**Context.** The source rule (D4) takes data from official sources. The EuroLeague has a public
+API, but LaLiga and the Liga ACB do not document one. Their websites are built with Next.js, which
+embeds each page's data in the HTML that any browser receives.
+
+**Decision.**
+- **laliga.com (English pages):** the JSON in `<script id="__NEXT_DATA__">` gives the standings,
+  the results of the current and previous matchdays, and the fixtures of the next one.
+- **acb.com's calendar:** the React Server Components data in the page gives the teams and the 34
+  rounds with their scores, dates and status, so it provides the latest results and the next
+  round.
+- Like the EuroLeague API, each result, standings table and set of fixtures becomes a plain-text
+  source with its own id (D4). Results are written winner first; records are written in words
+  ("1 win and 0 losses"), so they are never mistaken for scores; fixtures give the day and never
+  a time, since the time depends on the listener.
+- If a page stops carrying the data, the source fails with a clear error, the ingest reports it,
+  and episodes go on with the other sources. Nothing is invented to fill the gap.
+
+**Alternatives considered.**
+- *The internal APIs these pages call:* undocumented, and not meant for third parties.
+- *Standings and fixtures from news stories only:* not structured, and often missing.
+- *The ACB's official calendar PDF:* parsing a PDF is more fragile than the page's data.
+- *A commercial football data API:* it needs a key and is not an official source.
+
+**Trade-offs.** These are not stable, documented APIs: a redesign can break a provider, which the
+ingest report shows at once. The ACB format is the more fragile of the two. The tests use small
+pages with the same data shape, written for the tests, and no third-party content.
+
+**Evidence.** Measured on 2026-09-28: laliga.com's standings page embedded 20 rows (`position`,
+`points`, `played`, `won`, `drawn`, `lost`), its current matchday was 8 (9 to 12 October) and
+matchday 7 was complete, with Sevilla 1–3 FC Barcelona. acb.com's calendar held 306 games (34
+rounds of 9), with all 9 round-1 results and the round-2 fixtures for 3 and 4 October. Two teams
+had played one game fewer (a postponed game), so the table says "after Matchday 7" when the
+current matchday has not started, and each row gives the games played.
+
+---
+
+## D32 · The pipeline runs as recorded stages, behind small provider interfaces
+
+**Status:** Accepted · **Date:** 2026-09-28
+
+**Context.** D3 defines six stages with checkpoints. An episode involves network sources, two paid
+providers and ffmpeg, and it must be testable at no cost, resumable after a failure, and
+explainable from the database afterwards.
+
+**Decision.**
+- **Two packages:** `app/sources` downloads and stores sources (D24, D30), and `app/pipeline`
+  generates an episode. Each stage is a function that receives one `Run` object (the database
+  session, the episode, the listener's settings and interests, the providers and "now") and
+  returns its details.
+- **Small provider interfaces:** one `Llm` interface for the three model calls (select, write and
+  judge), so cost is computed in one place; one `Voice` interface. The real implementations wrap
+  the OpenAI and ElevenLabs SDKs. The tests use a fake model, and development can use a tone voice
+  (D6), so the whole pipeline runs at no cost.
+- **Recorded stages:** before a stage runs, its `stage_runs` row is committed as `in_progress`, so a
+  crash leaves visible which stage was running. Whatever happens, it is then closed with its
+  status, error, details and finish time (taken from Python: PostgreSQL's `now()` is the start of
+  the transaction), and the stage's paid calls are saved, even when the stage failed. That commit
+  also stores the stage's output: the checkpoint.
+- **Resuming:** fetch always runs (it is free and brings the latest news); select runs if the
+  episode has no plan, write if it has no script, and check if it has not passed yet; voice always
+  runs, but its cache means nothing is paid twice; master always runs, since it is free.
+- **Endings:** "nothing new" ends as `skipped` (D19); a known failure (a check failing twice, bad
+  audio) ends as `failed` with its reason; an unexpected error rolls the transaction back first,
+  because PostgreSQL accepts nothing more in a failed transaction, and then ends as `failed` with a
+  one-line reason. A completed episode's status and audio are written together, as the database
+  requires (D25).
+- **By hand:** `python -m app.pipeline.runner <id>` or `--new`, with `--tone-voice` for free
+  audio. It checks the keys before doing anything.
+
+**Alternatives considered.**
+- *A workflow framework (Celery, Prefect, LangGraph):* retries and state for six linear stages
+  that already have checkpoints in PostgreSQL; one more system to run and explain.
+- *One function per episode, without stage records:* a failure would repeat paid work and leave
+  nothing to inspect.
+- *Mocking the SDKs in tests:* the tests would depend on each SDK's internals instead of on our
+  own interface.
+
+**Trade-offs.**
+- The runner marks the episode `in_progress` itself. In Step 6 the worker will claim episodes
+  with `SKIP LOCKED`, and that step decides where the claim lives.
+- An episode is generated synchronously, one at a time per process: about 1.5 minutes of text
+  stages when measured, plus the voice.
+
+**Evidence.** End-to-end tests with the fakes and real ffmpeg: a full episode, a retry that
+resumes without repeating paid calls, a skipped episode, an unexpected error and a database error.
+The last test comes from a real incident on 2026-09-28: a duplicated URL in a source made the
+save fail, and the first version of the runner, reading the episode before rolling back, left the
+episode stuck `in_progress`. After the fix, the same episode was retried: its stage history shows
+the failed first attempt, and the second completed with all six stages. Its text stages took
+about 80 seconds: fetch 4, select 9, write 27 and check 34.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -1138,7 +1469,7 @@ useful.
 
 | Skill | Source | Step | Why | What it contributed |
 |---|---|---|---|---|
-| `documentation-and-adrs` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) · MIT · 42.6K installs | 2, kept in 3 and 4 | Writing these records | The Status and Date fields, and the rule to supersede records instead of deleting them. It adapted to this file's existing format. |
+| `documentation-and-adrs` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) · MIT · 42.6K installs | 2, kept in 3 to 5 | Writing these records | The Status and Date fields, and the rule to supersede records instead of deleting them. It adapted to this file's existing format. |
 | `fastapi` | [fastapi/fastapi](https://github.com/fastapi/fastapi/tree/master/fastapi/.agents/skills/fastapi) · MIT · official · 10.7K installs | 4 | Current conventions from FastAPI's maintainers | `Annotated` dependency aliases (`SessionDep`, `CurrentUser`), return types instead of `response_model`, the prefix and tags on each `APIRouter`, `def` endpoints for blocking database code, and when a `yield` dependency closes. Its SQLModel, uv and ty advice was set aside on purpose (D1, D15). |
 
 **Evaluated and not installed:**
@@ -1156,3 +1487,12 @@ useful.
   read, and its schema rules are cited in D25. It was not installed: its long description is loaded
   on every message, and several rules do not apply here, such as row-level security, cursor
   pagination (D12) and idempotent `DO` blocks, which Alembic does not need.
+- Step 5, after reading each `SKILL.md`, no new skill was installed; `fastapi` and
+  `documentation-and-adrs` were kept:
+  - `affaan-m/ecc@cost-aware-llm-pipeline` (MIT, 9.4K installs): generic, with Anthropic examples;
+    what it proposes (a model per task, recording the cost of each call) is already in D5 and D11;
+  - `refoundai/lenny-skills@ai-evals` (MIT, 2K installs): mostly podcast quotes; the useful part,
+    measuring a judge on labelled examples, is already in D20;
+  - `wshobson/agents@python-testing-patterns` (MIT, 33.6K installs): basic pytest patterns
+    already in use;
+  - `digitalsamba/claude-code-video-toolkit@ffmpeg` (MIT, 9.3K installs): built for video.

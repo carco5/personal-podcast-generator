@@ -1,14 +1,19 @@
 from datetime import datetime, time
-from typing import Literal, get_args
+from decimal import Decimal
+from typing import Any, Literal, get_args
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
+    Double,
     ForeignKey,
     Identity,
     Index,
+    Integer,
     MetaData,
+    Numeric,
     SmallInteger,
     Text,
     Time,
@@ -25,6 +30,11 @@ EpisodeLength = Literal[3, 5, 7]
 Tone = Literal["casual", "analytical"]
 InterestKind = Literal["catalog", "custom"]
 Weight = Literal["low", "medium", "high"]
+SourceKind = Literal["article", "data"]
+Language = Literal["en", "es"]
+Stage = Literal["fetch", "select", "write", "check", "voice", "master"]
+StageStatus = Literal["in_progress", "completed", "failed"]
+Provider = Literal["openai", "elevenlabs"]
 
 # Deterministic constraint names, so migrations can refer to them.
 NAMING_CONVENTION = {
@@ -110,6 +120,12 @@ class Episode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    title: Mapped[str | None] = mapped_column(Text)
+    plan: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    script: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    audio_path: Mapped[str | None] = mapped_column(Text)
+    duration_seconds: Mapped[float | None] = mapped_column(Double)
+    chapters: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
 
     __table_args__ = (
         UniqueConstraint("user_id", "scheduled_for"),
@@ -122,4 +138,99 @@ class Episode(Base):
         ),
         allowed_values("status", EpisodeStatus),
         allowed_values("trigger", EpisodeTrigger),
+        CheckConstraint("(status = 'completed') = (audio_path IS NOT NULL)", name="audio"),
+        CheckConstraint(
+            "(status IN ('failed', 'skipped')) = (status_reason IS NOT NULL)", name="reason"
+        ),
+    )
+
+
+class Article(Base):
+    __tablename__ = "articles"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    source: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(Text)
+    official: Mapped[bool] = mapped_column(Boolean)
+    language: Mapped[str] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text, unique=True)
+    title: Mapped[str] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(Text)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'"))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        allowed_values("kind", SourceKind),
+        allowed_values("language", Language),
+        Index("ix_articles_source_published_at", "source", "published_at"),
+    )
+
+
+class EpisodeArticle(Base):
+    __tablename__ = "episode_articles"
+
+    episode_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("episodes.id", ondelete="CASCADE"), primary_key=True
+    )
+    article_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("articles.id"), primary_key=True)
+    source_id: Mapped[str] = mapped_column(Text)
+    block: Mapped[str] = mapped_column(Text)
+    rank: Mapped[int] = mapped_column(SmallInteger)
+    reason: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        UniqueConstraint("episode_id", "source_id"),
+        Index(None, "article_id"),
+    )
+
+
+class StageRun(Base):
+    __tablename__ = "stage_runs"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    episode_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("episodes.id", ondelete="CASCADE")
+    )
+    attempt: Mapped[int] = mapped_column(SmallInteger)
+    stage: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'"))
+
+    __table_args__ = (
+        allowed_values("stage", Stage),
+        allowed_values("status", StageStatus),
+        Index(None, "episode_id"),
+    )
+
+
+class ProviderCall(Base):
+    __tablename__ = "provider_calls"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    stage_run_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("stage_runs.id", ondelete="CASCADE")
+    )
+    provider: Mapped[str] = mapped_column(Text)
+    model: Mapped[str] = mapped_column(Text)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    characters: Mapped[int | None] = mapped_column(Integer)
+    cost_usd: Mapped[Decimal] = mapped_column(Numeric(10, 6))
+    latency_ms: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        allowed_values("provider", Provider),
+        CheckConstraint(
+            "(provider = 'openai' AND input_tokens IS NOT NULL AND output_tokens IS NOT NULL"
+            " AND characters IS NULL)"
+            " OR (provider = 'elevenlabs' AND characters IS NOT NULL"
+            " AND input_tokens IS NULL AND output_tokens IS NULL)",
+            name="usage",
+        ),
+        Index(None, "stage_run_id"),
     )

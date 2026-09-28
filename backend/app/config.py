@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # OpenAI model per pipeline stage.
     openai_write_model: str = "gpt-6-sol"
     openai_select_model: str = "gpt-6-luna"
+    openai_judge_model: str = "gpt-6-luna"
+
+    # Audio files (episodes and the voice cache), outside git.
+    data_dir: Path = ENV_FILE.parent / "data"
 
     # ElevenLabs default voices: George (host) and Sarah (analyst).
     elevenlabs_host_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"

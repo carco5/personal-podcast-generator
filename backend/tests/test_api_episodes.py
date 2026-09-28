@@ -26,6 +26,8 @@ def add_episode(session: Session, user: User, status: str, hours_ago: int = 0) -
         trigger="scheduled",
         status=status,
         scheduled_for=datetime.now(UTC) - timedelta(hours=hours_ago),
+        audio_path="episodes/test.mp3" if status == "completed" else None,
+        status_reason="Test reason" if status in ("failed", "skipped") else None,
     )
     session.add(episode)
     session.flush()
