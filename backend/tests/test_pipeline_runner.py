@@ -7,7 +7,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models import Episode, ProviderCall, StageRun
+from app.models import Article, Episode, EpisodeArticle, ProviderCall, StageRun
 from app.pipeline import fetch, master, runner
 from app.pipeline.common import Run
 from app.pipeline.runner import run_episode
@@ -77,6 +77,43 @@ def test_a_full_episode(session: Session, tmp_path: Path) -> None:
         ("check", "openai"),
         ("voice", "elevenlabs"),
     }
+
+
+def test_as_of_reproduces_a_past_moment(session: Session, tmp_path: Path) -> None:
+    episode = setup(session)
+    as_of = datetime.now(UTC) - timedelta(hours=1)
+    later = datetime.now(UTC) - timedelta(minutes=10)
+    make_article(session, "eurohoops-euroleague", "Later news", later)
+    config = Settings(_env_file=None, openai_api_key=None, data_dir=tmp_path)
+
+    run_episode(
+        session,
+        episode,
+        llm=FakeLlm(),
+        voice=ToneVoice(),
+        fetcher=Fetcher(),
+        config=config,
+        as_of=as_of,
+    )
+
+    assert stages(session, episode)[0][1] == "select"
+    assert episode.plan["selected_at"] == as_of.isoformat()
+    titles = session.scalars(
+        select(Article.title)
+        .join(EpisodeArticle, EpisodeArticle.article_id == Article.id)
+        .where(EpisodeArticle.episode_id == episode.id)
+    ).all()
+    assert "Big signing" in titles and "Later news" not in titles
+    master_details = session.scalars(
+        select(StageRun.details).where(
+            StageRun.episode_id == episode.id, StageRun.stage == "master"
+        )
+    ).one()
+    metrics = master_details["metrics"]
+    assert metrics["llm_calls"] == 6 and metrics["voice_calls"] > 0
+    assert metrics["planned_chars"] == 2232 and metrics["chars_per_second"] == pytest.approx(
+        12.4, abs=0.3
+    )
 
 
 def test_a_retry_resumes_without_paying_again(

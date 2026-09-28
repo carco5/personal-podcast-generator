@@ -1777,6 +1777,33 @@ for the per-episode counters.
 
 ---
 
+## D41 · Episodes can be regenerated as of a past moment
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** To judge a pipeline change, the author wanted the episode 14 script regenerated with
+the same date and the same news window, and compared with the original.
+
+**Decision.** The runner accepts `--as-of <ISO time>`. The episode is generated as if it were
+that moment: it is the "now" of the run (the episode's day, the day labels of D34 and the news
+window of D23), the fetch stage does not run, and news published after it is left out. Official
+data is the latest stored, since it only changes when games are played. The episode's own start
+and finish times stay real.
+
+**Alternatives considered.**
+- *Snapshotting the database:* heavy for a comparison of two scripts.
+- *Filtering data by the time it was fetched:* a refreshed data item (D33) is stamped with the
+  refresh time, so the results would disappear from the window.
+
+**Trade-offs.** Data refreshed after that moment is used as it is now: fine between rounds, not
+across one.
+
+**Evidence.** Between the original episode 14 (2026-09-28, 21:32 UTC) and its regeneration, no
+LaLiga, Champions League, EuroLeague or ACB game was played. A unit test checks that no fetch
+runs, the plan carries the given time, and later news stays out.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the

@@ -54,11 +54,13 @@ def run_episode(
     voice: Voice,
     fetcher: Fetcher,
     config: Settings,
+    as_of: datetime | None = None,
 ) -> Episode:
-    now = datetime.now(UTC)
+    started = datetime.now(UTC)
+    now = as_of or started
     episode.status, episode.status_reason = "in_progress", None
     episode.attempts += 1
-    episode.started_at, episode.finished_at = now, None
+    episode.started_at, episode.finished_at = started, None
     session.commit()
     interests = session.scalars(
         select(Interest).where(Interest.user_id == episode.user_id).order_by(Interest.id)
@@ -77,6 +79,8 @@ def run_episode(
     try:
         result: dict = {}
         for name, function, pending in STAGES:
+            if name == "fetch" and as_of is not None:
+                continue
             if pending(run):
                 result = run_stage(run, name, function)
         finish(session, episode, "completed", None, result)
@@ -152,6 +156,11 @@ def main() -> None:
         "--new", action="store_true", help="create a manual episode for the demo user"
     )
     parser.add_argument("--tone-voice", action="store_true", help="use the free development voice")
+    parser.add_argument(
+        "--as-of",
+        type=datetime.fromisoformat,
+        help="generate as of this ISO time, without fetching (to reproduce an episode's date)",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     config = get_settings()
@@ -175,6 +184,7 @@ def main() -> None:
             voice=voice,
             fetcher=Fetcher(),
             config=config,
+            as_of=args.as_of,
         )
         print(f"Episode {episode.id}: {episode.status} {episode.status_reason or ''}")
         stages = session.scalars(
