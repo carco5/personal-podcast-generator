@@ -180,11 +180,17 @@ def main() -> None:
         stages = session.scalars(
             select(StageRun).where(StageRun.episode_id == episode.id).order_by(StageRun.id)
         )
+        last: dict[str, dict] = {}
         for stage in stages:
             cost = sum(call.cost_usd for call in stage_calls(session, stage))
             print(
                 f"  {stage.attempt} {stage.stage:>6}: {stage.status} ${cost:.4f} {stage.error or ''}"
             )
+            last[stage.stage] = stage.details or {}
+        for warning in last.get("check", {}).get("warnings", []):
+            print(f"  warning: {warning}")
+        if metrics := last.get("master", {}).get("metrics"):
+            print(f"  metrics: {metrics}")
         if episode.audio_path:
             print(f"Audio: {config.data_dir / episode.audio_path} ({episode.duration_seconds} s)")
 

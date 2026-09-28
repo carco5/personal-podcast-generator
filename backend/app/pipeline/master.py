@@ -1,9 +1,13 @@
 from pathlib import Path
 
+from sqlalchemy import func, select
+
+from app.models import ProviderCall, StageRun
 from app.pipeline import audio
 from app.pipeline.common import Run, StageFailed
 from app.pipeline.script import Script
-from app.pipeline.voice import cache_path, voice_requests, voices
+from app.pipeline.selection import CHARS_PER_SECOND
+from app.pipeline.voice import Request, cache_path, voice_requests, voices
 
 LEAD_IN_SECONDS = 0.5
 GAP_SECONDS = 0.4
@@ -40,6 +44,41 @@ def master_episode(run: Run) -> dict:
         "chapters": chapters,
         "loudness_lufs": integrated,
         "true_peak_dbfs": peak,
+        "metrics": episode_metrics(run, script, requests, files),
+    }
+
+
+def episode_metrics(run: Run, script: Script, requests: list[Request], files: list[Path]) -> dict:
+    spoken = sum(request.chars for request in requests)
+    speech = sum(audio.duration(path) for path in files)
+    calls = {
+        provider: (count, float(cost or 0), characters or 0)
+        for provider, count, cost, characters in run.session.execute(
+            select(
+                ProviderCall.provider,
+                func.count(),
+                func.sum(ProviderCall.cost_usd),
+                func.sum(ProviderCall.characters),
+            )
+            .join(StageRun, StageRun.id == ProviderCall.stage_run_id)
+            .where(StageRun.episode_id == run.episode.id)
+            .group_by(ProviderCall.provider)
+        ).all()
+    }
+    llm = calls.get("openai", (0, 0.0, 0))
+    voice = calls.get("elevenlabs", (0, 0.0, 0))
+    return {
+        "planned_chars": (run.episode.plan or {}).get("target_chars"),
+        "script_chars": sum(len(t.text) for s in script.segments for t in s.turns),
+        "spoken_chars": spoken,
+        "estimated_seconds": round(spoken / CHARS_PER_SECOND, 1),
+        "speech_seconds": round(speech, 1),
+        "chars_per_second": round(spoken / speech, 2) if speech else None,
+        "llm_calls": llm[0],
+        "llm_cost_usd": round(llm[1], 4),
+        "voice_calls": voice[0],
+        "voice_characters": voice[2],
+        "voice_cost_usd": round(voice[1], 4),
     }
 
 

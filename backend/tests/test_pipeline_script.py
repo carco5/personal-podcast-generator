@@ -54,7 +54,7 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     instructions = llm.instructions[0]
     assert "[CTX] Today is Thursday 1 October 2026 [say: today]." in prompt
     assert "Hook: Barça won in Dubai. (sources S1)" in prompt
-    assert 'Segment "euroleague" (EuroLeague): about 760 characters.' in prompt
+    assert 'Segment "euroleague" (EuroLeague): about 230 characters.' in prompt
     assert "    - Punter scored 19 points. (sources S1)" in prompt
     assert "  Roundup: S2" in prompt
     assert "Friday 2 October 2026 [say: tomorrow]: Besiktas host FC Barcelona" in prompt
@@ -78,7 +78,7 @@ def test_a_supported_script_passes(session: Session) -> None:
 
     details = check_script(run)
 
-    assert details == {"rounds": [{"problems": [], "judged": True}]}
+    assert details == {"rounds": [{"problems": [], "judged": True, "style": []}], "warnings": []}
     assert "compare the meaning across languages" in llm.instructions[0]
     assert '"triple" is a three-pointer' in llm.instructions[0]
 

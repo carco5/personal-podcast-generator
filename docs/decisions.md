@@ -1735,6 +1735,48 @@ the writer receives (plan, only the cited sources) and each structure check with
 
 ---
 
+## D40 · Style lint, length control and a record of every episode
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (the check stage), D19 (length)
+
+**Context.** Some of the new conversation rules (D39) can be checked by code, and the length is
+the contract with the listener: they chose 3, 5 or 7 minutes. The sample test runs came out at
+82% to 111% of the target, because models cannot count characters. Rewriting text costs cents;
+regenerating audio costs voice credits.
+
+**Decision.**
+- **Style lint (code):** no full calendar date spoken; at most two stock openers and three spoken
+  markers in the episode; at most two numbers per turn, a score counting as one; the analyst
+  never reads out two or more scores; no section longer than 1.5 times its share.
+- **Length (code):** the total must be within 10% of the target. Over it, the model is asked to
+  trim, roundup lines first, then the weakest section, never the lead stories' key facts. Under
+  it, only sections below 80% of their share are expanded, with analysis of their plan facts and
+  no new facts; if none is short, a short episode is accepted (D19). A script more than 25% over
+  still fails the episode, which protects the voice credits.
+- **One revision for everything:** style and length problems go into the same single rewrite as
+  the factual ones (D7). After it, factual problems still fail the episode; style and length
+  problems remain as warnings in the check details and in the runner's output, instead of
+  looping.
+- **A record of every episode,** in the master stage details: planned, script and spoken
+  characters; estimated and measured speech seconds, and the measured characters per second, to
+  calibrate each voice; and the number and cost of the paid calls, for the language model and for
+  the voice, across all attempts.
+
+**Alternatives considered.**
+- *Failing the episode on style:* a stock phrase too many is not worth losing an episode or
+  paying for a loop.
+- *A second rewrite for style:* it doubles the writing cost for small gains.
+- *Asking the model to count characters:* measured unreliable.
+
+**Trade-offs.** The lint covers only what code can see; whether turns really answer each other is
+judged by reading. Some warnings will reach the voice.
+
+**Evidence.** Measured lengths of the sample test runs: 82% (episode 4), 111% (10), 104% (11),
+86% (12), 90% (13) and 107% (14). One unit test per lint rule, one for each length case, and one
+for the per-episode counters.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the

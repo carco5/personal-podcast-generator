@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.models import Language
 from app.pipeline.common import Run, StageFailed
+from app.pipeline.days import MONTHS
 from app.pipeline.script import (
     ALLOWED_TAGS,
     MAX_TAGS,
@@ -37,6 +38,24 @@ NUMBER_WORDS = re.compile(rf"\b{NUMBER_WORD}(?:\s+[a-z]+)?\s+{STAT}\b", re.IGNOR
 MAX_TURN_CHARS = 500
 LENGTH_TOLERANCE = 1.25
 JUDGE_EFFORT = "medium"
+MONTH = "|".join(MONTHS)
+FULL_DATE = re.compile(
+    rf"\b\d{{1,2}}(?:st|nd|rd|th)?(?: of)? (?:{MONTH})\b|\b(?:{MONTH}) \d{{1,2}}(?:st|nd|rd|th)?\b"
+)
+STOCK_OPENER = re.compile(
+    r"^(?:\[\w+\]\s*)?(?:absolutely|exactly|totally|great point|good point|you're spot on"
+    r"|spot on|i'm glad you brought that up)\b",
+    re.IGNORECASE,
+)
+SPOKEN_MARKER = re.compile(
+    r"\b(?:i mean|honestly)\b|(?:^|[.!?]\s)(?:\[\w+\]\s*)?look,", re.IGNORECASE
+)
+MAX_OPENERS = 2
+MAX_MARKERS = 3
+MAX_NUMBERS_PER_TURN = 2
+SECTION_CAP = 1.5
+LENGTH_BAND = 0.10
+SHORT_SECTION = 0.8
 
 
 Verdict = Literal[
@@ -89,15 +108,17 @@ def check_script(run: Run) -> dict:
     for attempt in (1, 2):
         sources = script_sources(run)
         script = Script.model_validate(run.episode.script)
-        problems = code_problems(script, run.episode.plan, sources)
+        plan = run.episode.plan
+        problems = code_problems(script, plan, sources)
         judged = attempt == 1 or not problems
         if judged:
             problems += judge_problems(run, script, sources)
-        rounds.append({"problems": problems, "judged": judged})
-        if not problems:
-            return {"rounds": rounds}
+        style = style_problems(script, plan) + length_problems(script, plan)
+        rounds.append({"problems": problems, "judged": judged, "style": style})
+        if not problems and (not style or attempt == 2):
+            return {"rounds": rounds, "warnings": style}
         if attempt == 1:
-            write_script(run, problems)
+            write_script(run, problems + style)
     first = "; ".join(rounds[-1]["problems"][:3])
     raise StageFailed(f"check: the script failed twice ({first})", {"rounds": rounds})
 
@@ -190,6 +211,76 @@ def structure_problems(script: Script, plan: dict) -> list[str]:
     if length > planned * LENGTH_TOLERANCE:
         problems.append(f"The script has {length} characters; the plan allows about {planned}.")
     return problems
+
+
+def style_problems(script: Script, plan: dict) -> list[str]:
+    problems: list[str] = []
+    openers = markers = 0
+    shares = {block["key"]: block["chars"] for block in plan["blocks"]}
+    for segment in script.segments:
+        for number, turn in enumerate(segment.turns, start=1):
+            where = f"{segment.key} turn {number}"
+            if FULL_DATE.search(turn.text):
+                problems.append(f"{where}: say the day as its source labels it, never a full date.")
+            openers += bool(STOCK_OPENER.search(turn.text))
+            markers += len(SPOKEN_MARKER.findall(turn.text))
+            scores = len(SCORE.findall(turn.text))
+            numbers = scores + len(NUMBER.findall(SCORE.sub("", turn.text)))
+            if turn.speaker == "analyst" and scores >= 2:
+                problems.append(
+                    f"{where}: the analyst reads out {scores} scores; the host gives results and "
+                    "the analyst explains them."
+                )
+            elif numbers > MAX_NUMBERS_PER_TURN:
+                problems.append(
+                    f"{where}: {numbers} numbers in one turn; at most {MAX_NUMBERS_PER_TURN}."
+                )
+        length = sum(len(turn.text) for turn in segment.turns)
+        share = shares.get(segment.key)
+        if share and length > SECTION_CAP * share:
+            problems.append(
+                f"{segment.key}: {length} characters, over 1.5 times its share of {share}; trim it."
+            )
+    if openers > MAX_OPENERS:
+        problems.append(
+            f"{openers} turns open with a stock phrase (Absolutely, Exactly…); at most {MAX_OPENERS}."
+        )
+    if markers > MAX_MARKERS:
+        problems.append(
+            f"{markers} spoken markers (I mean, honestly, look); at most {MAX_MARKERS}."
+        )
+    return problems
+
+
+def length_problems(script: Script, plan: dict) -> list[str]:
+    target = plan["target_chars"]
+    length = sum(len(turn.text) for segment in script.segments for turn in segment.turns)
+    if length > target * (1 + LENGTH_BAND):
+        return [
+            (
+                f"The script has {length} characters; the target is {target} (within 10%). "
+                "Trim it: first the roundup lines, then the weakest section; never the lead "
+                "stories' key facts."
+            )
+        ]
+    if length < target * (1 - LENGTH_BAND):
+        brief = {s["key"] for s in plan["editorial"]["sections"] if s["brief"]}
+        written = {s.key: sum(len(t.text) for t in s.turns) for s in script.segments}
+        short = [
+            block["key"]
+            for block in plan["blocks"]
+            if block["key"] not in brief
+            and written.get(block["key"], 0) < SHORT_SECTION * block["chars"]
+        ]
+        if short:
+            return [
+                (
+                    f"The script has {length} characters; the target is {target} (within 10%). "
+                    f"Expand the lead story of {', '.join(short)} with analysis of its plan "
+                    "facts; never add facts."
+                )
+            ]
+    return []
 
 
 def numbers_in(text: str, language: Language) -> set[str]:

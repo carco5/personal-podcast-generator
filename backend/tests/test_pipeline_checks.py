@@ -2,23 +2,23 @@ import copy
 
 import pytest
 
-from app.pipeline.checks import code_problems, source_numbers
+from app.pipeline.checks import code_problems, length_problems, source_numbers, style_problems
 from app.pipeline.script import EpisodeSource, Script
 
 PLAN = {
     "selected_at": "2026-10-01T08:00:00+00:00",
     "today": "Thursday 1 October 2026",
     "coverage": "catch-up: the listener's first episode",
-    "target_chars": 3720,
-    "intro_chars": 300,
-    "closing_chars": 250,
+    "target_chars": 330,
+    "intro_chars": 60,
+    "closing_chars": 40,
     "blocks": [
         {
             "key": "euroleague",
             "title": "EuroLeague",
             "weight": "high",
             "sport": "basketball",
-            "chars": 760,
+            "chars": 230,
             "stories": [{"source_ids": ["S1"], "reason": ""}, {"source_ids": ["S2"], "reason": ""}],
             "context_ids": ["S3"],
         }
@@ -89,7 +89,7 @@ GOOD = {
                 turn("analyst", "[excited] Kevin Punter scored 19 points.", "S1"),
                 turn("host", "In Spain, Real Madrid edged Unicaja 89–87.", "S2"),
                 turn("analyst", "The round averaged 94.8 points, with 1,706 fans watching.", "S2"),
-                turn("host", "Next, Barça visit Besiktas on Friday 2 October.", "S3"),
+                turn("host", "Next, Barça visit Besiktas tomorrow.", "S3"),
             ],
         },
         {"key": "closing", "turns": [turn("host", "That's all for today. See you tomorrow!")]},
@@ -132,6 +132,60 @@ def test_each_check_catches_its_sabotage(
     problems = problems_after(segment, number, text)
 
     assert any(expected in problem for problem in problems), problems
+
+
+def test_the_good_script_has_no_style_problems() -> None:
+    script = Script.model_validate(GOOD)
+
+    assert style_problems(script, PLAN) == []
+    assert length_problems(script, PLAN) == []
+
+
+@pytest.mark.parametrize(
+    ("segment", "number", "speaker", "text", "expected"),
+    [
+        (1, 4, "host", "Next, Barça visit Besiktas on 2 October.", "never a full date"),
+        (1, 4, "host", "Next, Barça visit Besiktas on October 2nd.", "never a full date"),
+        (1, 3, "analyst", "Madrid won 89–87 and Barça 80–70.", "the analyst reads out 2 scores"),
+        (1, 2, "host", "Madrid won 89–87 with 94.8 points and 1,706 fans.", "3 numbers in one"),
+    ],
+)
+def test_each_style_rule_catches_its_sabotage(
+    segment: int, number: int, speaker: str, text: str, expected: str
+) -> None:
+    script = copy.deepcopy(GOOD)
+    script["segments"][segment]["turns"][number] = turn(speaker, text, "S1", "S2", "S3")
+
+    problems = style_problems(Script.model_validate(script), PLAN)
+
+    assert any(expected in problem for problem in problems), problems
+
+
+def test_stock_openers_and_markers_are_counted_per_episode() -> None:
+    script = copy.deepcopy(GOOD)
+    script["segments"][2]["turns"] = [
+        turn("host", "Absolutely, honestly."),
+        turn("analyst", "Exactly, honestly."),
+        turn("host", "[excited] Absolutely! Honestly, honestly."),
+    ]
+
+    problems = style_problems(Script.model_validate(script), PLAN)
+
+    assert "3 turns open with a stock phrase (Absolutely, Exactly…); at most 2." in problems
+    assert "4 spoken markers (I mean, honestly, look); at most 3." in problems
+
+
+def test_length_rules() -> None:
+    long = copy.deepcopy(GOOD)
+    long["segments"][1]["turns"].append(turn("analyst", "What a night it was for them. " * 5))
+    script = Script.model_validate(long)
+    assert any("over 1.5 times its share of 230" in p for p in style_problems(script, PLAN))
+    assert "Trim it: first the roundup lines" in length_problems(script, PLAN)[0]
+
+    short = copy.deepcopy(GOOD)
+    del short["segments"][1]["turns"][1:]
+    problems = length_problems(Script.model_validate(short), PLAN)
+    assert "Expand the lead story of euroleague" in problems[0]
 
 
 def test_unknown_source_ids_are_caught() -> None:
@@ -209,6 +263,6 @@ def test_structure_checks() -> None:
     long = copy.deepcopy(GOOD)
     long["segments"][2]["turns"] = [turn("host", "See you tomorrow, everyone. " * 15)] * 6
     assert any(
-        "the plan allows about 1310" in p
+        "the plan allows about 330" in p
         for p in code_problems(Script.model_validate(long), PLAN, SOURCES)
     )
