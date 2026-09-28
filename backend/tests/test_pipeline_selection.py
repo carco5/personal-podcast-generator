@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -162,6 +163,37 @@ def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
     assert run.episode.plan["coverage"] == "catch-up: the listener's first episode"
     assert details["stories"] == 6
     assert "Pick up to 3 stories" in run.llm.prompts[0][1]
+    assert "latest\n  result in each competition" in run.llm.instructions[0]
+
+
+def test_club_results_are_guaranteed_by_code(session: Session) -> None:
+    user, podcast, interests = make_listener(session, [("fc-barcelona", "high")])
+    scenario(session)
+    make_article(
+        session,
+        "acb-calendar",
+        "Barça beat Leyma",
+        ago(1),
+        meta={"competition": "liga-acb", "type": "result", "round": 1, "teams": ["Barça", "Leyma"]},
+    )
+
+    def news_only(prompt: str) -> Picks:
+        guard = re.search(r"^\[(C\d+)\] \([^)]*\) Barça sign a guard", prompt, re.MULTILINE)
+        story = {"source_ids": [guard.group(1)], "reason": "fake"}
+        block = {"key": "fc-barcelona-basketball", "stories": [story]}
+        return Picks.model_validate({"blocks": [block]})
+
+    run = make_run(session, user, podcast, interests, llm=FakeLlm({Picks: news_only}), now=NOW)
+
+    select_stories(run)
+
+    blocks = {block["key"]: block for block in run.episode.plan["blocks"]}
+    assert len(blocks["fc-barcelona-basketball"]["stories"]) == 1
+    assert stories_by_block(session, run.episode)["fc-barcelona-basketball"] == [
+        "Barça beat Leyma",
+        "Barça beat Dubai",
+        "Barça sign a guard",
+    ]
 
 
 def test_blocks_are_grouped_by_sport() -> None:

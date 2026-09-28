@@ -7,7 +7,7 @@ from app.schemas import InterestCreate, InterestRead, InterestUpdate
 
 router = APIRouter(prefix="/interests", tags=["interests"])
 
-MAX_INTERESTS = 5
+MAX_INTERESTS = 6
 
 NOT_FOUND = {404: {"description": "The interest does not exist or belongs to another user"}}
 
@@ -31,7 +31,7 @@ def list_interests(session: SessionDep, user: CurrentUser) -> list[InterestRead]
 @router.post(
     "",
     status_code=201,
-    responses={409: {"description": "The topic is already there, or there are already five"}},
+    responses={409: {"description": "The topic is already there, or there are already six"}},
 )
 def create_interest(body: InterestCreate, session: SessionDep, user: CurrentUser) -> InterestRead:
     owned = session.scalars(select(Interest.topic).where(Interest.user_id == user.id)).all()

@@ -42,12 +42,12 @@ def test_duplicate_interest_conflicts(client: TestClient) -> None:
     assert client.post("/api/v1/interests", json=body).status_code == 409
 
 
-def test_at_most_five_interests(client: TestClient) -> None:
-    for topic in ["fc-barcelona", "euroleague", "liga-acb", "nba", "laliga"]:
+def test_at_most_six_interests(client: TestClient) -> None:
+    for topic in ["fc-barcelona", "euroleague", "liga-acb", "nba", "laliga", "champions-league"]:
         assert client.post("/api/v1/interests", json={"kind": "catalog", "topic": topic}).is_success
 
     response = client.post(
-        "/api/v1/interests", json={"kind": "catalog", "topic": "champions-league"}
+        "/api/v1/interests", json={"kind": "custom", "topic": "tennis", "keywords": ["Alcaraz"]}
     )
 
     assert response.status_code == 409

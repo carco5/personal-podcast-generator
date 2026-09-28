@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 import tempfile
 import time
 from collections.abc import Sequence
@@ -105,8 +106,20 @@ class ToneVoice:
         return data, PaidCall("elevenlabs", self.model, 0.0, 0, characters=chars)
 
 
+SEASON_SLASH = re.compile(r"\b(\d{4})/(\d{2})\b")
+NAME_SLASH = re.compile(r"(?<=[^\W\d_])/(?=[^\W\d_])")
+
+
+def spoken_pair(match: re.Match[str]) -> str:
+    first, second = match.groups()
+    if len(first) == 4 and len(second) == 2:
+        return f"{first}-{second}"
+    return f"{first} to {second}"
+
+
 def speakable(text: str) -> str:
-    return SCORE.sub(r"\1 to \2", text).replace(" – ", ", ")
+    text = NAME_SLASH.sub(" ", SEASON_SLASH.sub(r"\1-\2", text))
+    return SCORE.sub(spoken_pair, text).replace(" – ", ", ").replace(" & ", " and ")
 
 
 def voice_requests(script: Script, voices: dict[str, str]) -> list[Request]:

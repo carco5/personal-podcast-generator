@@ -88,9 +88,9 @@ def check_script(run: Run) -> dict:
         sources = script_sources(run)
         script = Script.model_validate(run.episode.script)
         problems = code_problems(script, run.episode.plan, sources)
-        judged = not problems
+        judged = attempt == 1 or not problems
         if judged:
-            problems = judge_problems(run, script, sources)
+            problems += judge_problems(run, script, sources)
         rounds.append({"problems": problems, "judged": judged})
         if not problems:
             return {"rounds": rounds}

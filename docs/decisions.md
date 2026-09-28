@@ -408,8 +408,12 @@ normalisation, and it costs 3 characters per score.
   may cite any); the intro must cite the lead story; every planned story must be covered; turns
   stay under 500 characters; at most 6 audio tags from the allowed list; the script may not exceed
   the plan by more than 25%.
-- *Order.* The code checks run first, and the judge only if they pass, so a script already known
-  to be wrong is not paid for twice.
+- *Order* (revised in Step 7). In the first round the code checks and the judge both run, so the
+  single rewrite fixes every problem at once. In the second round the judge runs only if the code
+  checks pass, because a failed code check fails the episode anyway. Until Step 7 the judge ran
+  only after the code checks passed, to save its cost (about $0.002). In a sample test run
+  (episode 13) that meant its findings arrived in the second round, with no rewrite left, and an
+  episode worth about $0.08 failed.
 - *The judge.* Every turn must get a verdict, and a missing one is a problem. Talk about the
   episode itself (the welcome, what it covers) counts as a transition. The episode context lists
   the date of every day from a week before to a week after, so nobody has to work out which date
@@ -1226,15 +1230,20 @@ without shell scripts in the containers.
 - **Status codes:**
   - `422` for invalid input;
   - `404` for another user's rows, so the API does not reveal that they exist;
-  - `409` for a conflict with the current state: a duplicate interest, a sixth interest, no
+  - `409` for a conflict with the current state: a duplicate interest, a seventh interest, no
     interest to talk about, an episode already in flight, or a retry of an episode that did not
     fail;
   - `503` when the generation keys are missing, naming the variables (D10).
 - **The in-flight rule:** "generate now" relies on the partial unique index (D25), not on a prior
   `SELECT`, so two simultaneous clicks queue one episode. Only that index maps to `409`; any other
   integrity error surfaces as a `500`.
-- **At most five interests:** with 3 minutes, five blocks plus the introduction and the closing
-  already leave about 30 seconds each.
+- **At most six interests** (revised in Step 7; it was five): the whole catalog fits, and the
+  sample uses it. Five was chosen so that a 3-minute episode left about 30 seconds per block, but
+  since Step 5 the selection stage guarantees that: it never plans more stories than the length
+  allows, and in 3 minutes the lowest-weighted interests are left out (D19). The cap now only
+  bounds the selection prompt and what the user manages. Bounding per-user resources that cost
+  money follows [OWASP API4:2023, Unrestricted Resource Consumption](https://api-security.owasp.org/editions/2023/en/0xa4-unrestricted-resource-consumption);
+  the number six is a product choice, not a standard.
 - **Settings:** `PUT` replaces all the settings, because the form always sends every field.
 - **Style:** synchronous `def` endpoints with one session per request, `Annotated` dependency
   aliases and return types, as FastAPI's official skill recommends.

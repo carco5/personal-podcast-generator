@@ -64,6 +64,9 @@ given, most important first.
   source_ids, the official one first.
 - Less important results of the same round can share one roundup story: put up to 4 of them
   in its source_ids. Keep the most important games as stories of their own.
+- In a block about one club, the first story is the club's latest results: put its latest
+  result in each competition (league, European cup) together in that story, most recent first.
+  Its news come after.
 - Prefer substantial, fresh stories: results, signings, injuries, milestones, key statements.
 - Skip previews of games that have already been played, promotional items and trivia.
 - Use only the ids listed in that block, each id at most once.
@@ -296,8 +299,31 @@ def pick_stories(run: Run, blocks: list[Block]) -> dict[str, list[tuple[list[Art
                 stories.append(([ids[temp] for temp in valid], story.reason))
         if not stories:
             stories = [([a], "Chosen by recency") for a in candidates(block)[: block.wanted]]
-        chosen[block.key] = stories
+        chosen[block.key] = club_results(block, stories)
     return chosen
+
+
+def club_results(
+    block: Block, stories: list[tuple[list[Article], str]]
+) -> list[tuple[list[Article], str]]:
+    topic = CATALOG.get(block.interest)
+    results = [a for a in block.stories if a.kind == "data" and a.meta.get("type") == "result"]
+    if topic is None or topic.kind != "team" or not results or not stories:
+        return stories
+    latest = latest_per_competition(results)
+    told = {article.id for articles, _ in stories for article in articles}
+    missing = [article for article in latest if article.id not in told]
+    if not missing:
+        return stories
+    host = next((n for n, (articles, _) in enumerate(stories) if set(articles) & set(results)), 0)
+    articles, reason = stories[host]
+    story_results = sorted(
+        [a for a in articles if a in results] + missing, key=lambda a: a.published_at, reverse=True
+    )
+    others = [a for a in articles if a not in results]
+    fixed = list(stories)
+    fixed[host] = (story_results + others, reason)
+    return fixed
 
 
 def candidates(block: Block) -> list[Article]:

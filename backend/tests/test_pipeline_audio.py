@@ -61,6 +61,10 @@ def voiced_run(session: Session, tmp_path: Path, voice: ToneVoice | None = None)
 
 def test_scores_are_made_speakable() -> None:
     assert speakable("They won 89–82 – a big night.") == "They won 89 to 82, a big night."
+    assert speakable("Welcome to Barça & Beyond!") == "Welcome to Barça and Beyond!"
+    assert speakable("Tata Martino's side, in 2013/14.") == "Tata Martino's side, in 2013-14."
+    assert speakable("A player option for 2028–29.") == "A player option for 2028-29."
+    assert speakable("Bayern beat Bodø/Glimt 5–0.") == "Bayern beat Bodø Glimt 5 to 0."
 
 
 def test_one_request_per_segment_split_between_turns() -> None:
