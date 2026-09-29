@@ -2,6 +2,7 @@ from datetime import date
 
 from app.pipeline.editorial import (
     BRIEF_CHARS,
+    INSTRUCTIONS,
     EditorialPlan,
     budget_shares,
     next_games,
@@ -225,3 +226,7 @@ def test_without_a_team_there_is_no_next_up() -> None:
     upcoming = next_games(SAMPLE, METAS, frozenset(), MONDAY)
 
     assert set(upcoming.values()) == {None}
+
+
+def test_the_editor_keeps_the_scope_of_a_record() -> None:
+    assert "keeps its scope" in INSTRUCTIONS

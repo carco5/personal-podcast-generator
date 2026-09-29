@@ -104,24 +104,30 @@ Tone: {tone}.
 Write from the PLAN: exactly its segments, in its order, with their keys, and only what it gives.
 - "intro": {host} opens with the plan's hook in one sentence, says which day it is ("It's
   Monday"), welcomes the listener to {show} and introduces {host} and {analyst} by name;
-  {analyst} says a short hello. Tease two or three stories; never list every section.
+  {analyst} says a short hello. Tease two or three stories; never list every section. The intro
+  never compresses a record: say it with its scope ("the third-highest total in a league
+  opener") or leave the figure out.
 - Each section tells its lead story in depth through its angle and key facts, in about the
   number of turns the plan gives it; then its roundup, if any, in one line; then its next game,
   if the plan gives one. A brief section gets one short line.
 - Tell a result with its score before commenting on it ("Barça won 3–1 at Sevilla"), then who
   decided it.
-- Each section opens itself with a short, natural intro, the way radio hosts do ("And to
-  finish, one big story from the NBA."). Never end a section by announcing the next one ("Now,
-  LeBron in Philadelphia."), and never narrate transitions or the running order ("a clear jump
-  from the pitch to the court", "before Dubai, let's check the ACB", "first, let's look at").
+- Link each section to the conversation so far: its first turn picks up a thread from the plan,
+  a contrast or the listener's team, then moves into the new story. Vary how sections open;
+  never open two sections the same way (e.g. "In LaLiga…", "In the Champions League…").
+- The switch from one sport to the other (football to basketball) gets one natural bridge line,
+  through the club or the week. The closing gets a short lead-in ("Before we go…") before
+  looking ahead.
+- A bridge links content ("Barça's week wasn't only about football…"); it never describes the
+  show's structure ("now we jump to…", "first, let's look at"). Never end a section by
+  announcing the next one ("Now, LeBron in Philadelphia.").
 - When the listener's team has a section per sport, name the team's side once at the start of
   that section ("Barça's basketball team"), and then just the team's name.
 - A competition section follows its angle: what matters there to the listener's team. Never
-  repeat what an earlier section told; refer back to it instead. Use the plan's threads as hooks
-  when one fits.
+  repeat what an earlier section told; refer back to it instead.
 - Mention each upcoming game once in its section and once in the closing, no more.
-- "closing": what to watch next, starting with the nearest game of the listener's team, then a
-  short sign-off with the show's name; {analyst} says goodbye too.
+- "closing": after its lead-in, what to watch next, starting with the nearest game of the
+  listener's team, then a short sign-off with the show's name; {analyst} says goodbye too.
 Each segment has a target length: aim for its characters and turns, within 10%. Reach it with the
 plan's facts and your analysis of them: never pad and never invent.
 
@@ -133,6 +139,10 @@ Conversation:
   facts: no "stunning", "dominated" or "comeback" unless a source says it.
 - Every turn answers, builds on or pushes back on the one before: if two turns could swap places
   without losing meaning, rewrite them.
+- More back-and-forth inside each section: the analyst reacts to what the host just said before
+  adding something new, and the host builds on the analyst's point instead of moving straight to
+  the next fact. Never two fact-only turns in a row. Use callbacks to earlier moments in the
+  episode when they fit.
 - Each turn makes one point; don't stack unrelated facts in one turn.
 - Mix short reactions (3 to 8 words) with explanations of one to three sentences. At most two
   numbers per turn; a score counts as one. Use only stats that make a point; never read out a

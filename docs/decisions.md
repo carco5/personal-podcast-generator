@@ -1957,6 +1957,72 @@ attempts.
 
 ---
 
+## D44 · Records keep their scope, sections are linked, and a script can be re-checked
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7, D39, D42
+
+**Context.** Episode 22 was chosen as the base for the sample, with four problems left:
+- its intro said "an ACB opener with the third-highest score ever", while the source said the
+  third-highest total in a league opener. As with Punter (D42), summarising lost the scope and
+  changed the meaning, and the judge approved it;
+- sections started from scratch ("In LaLiga…", "In the Champions League…"), with few links
+  between them and little back-and-forth inside them;
+- to fix the intro without rewriting the script, the check had to run again, but the runner
+  skips it once it has passed;
+- in episodes 20 and 22, the judge's second look at a repaired LaLiga turn came back without a
+  verdict for it, and the turn was removed. In a re-check, the same thing could remove the
+  intro's welcome.
+
+**Decision.**
+- **Records keep their scope.** The judge is told that records and superlatives ("ever", "best",
+  "first", "record", "led", "only", "most") keep exactly the scope of their source, and that a
+  turn that widens or changes it is overstated. The editor keeps a record's scope when it
+  rephrases a fact, and the intro never compresses a record: it says it with its scope or leaves
+  the figure out.
+- **Linked sections and more back-and-forth.** Rewritten in place in the writer's prompt, with
+  the author's wording:
+  - each section's first turn picks up a thread, a contrast or the listener's team, and no two
+    sections open the same way;
+  - one bridge line when the episode moves from one sport to the other, and a short lead-in to
+    the closing;
+  - a bridge links content and never describes the show's structure;
+  - the analyst reacts before adding, the host builds on the analyst's point, and there are
+    never two fact-only turns in a row.
+
+  This replaces the short radio-style intro to each section (D42).
+- **`runner <id> --recheck`.** It checks an existing script again with the current checks in a
+  repair-only mode: one round of code checks and the judge; failing turns are repaired as usual
+  (D42); whole-script, style and length problems stay as warnings and never trigger a full
+  rewrite. There is no fetch; voice and master follow.
+- **A missing verdict is asked again.** When the judge leaves turns without a verdict, it is asked
+  once more about those turns only. If a verdict is still missing, the reason records the ids the
+  judge did return. Returned ids are also cleaned of brackets and spaces.
+- **A regenerated episode releases its audio while it runs.** The database requires "completed if
+  and only if it has audio" (D25), so an episode that already had audio clears it when it starts
+  again. The re-check test found this; the real voice for a script first voiced with the tone
+  would have hit the same error.
+
+**Alternatives considered.**
+- *Regenerating episode 22 to fix one sentence:* it would change everything else.
+- *Editing the sentence by hand:* the sample must come from the product.
+- *Reusing the normal check for a re-check:* its full rewrite would change the whole script as
+  soon as a style rule fired.
+- *A code check for superlatives:* comparing scopes needs language understanding; that is the
+  judge's job.
+
+**Trade-offs.** A second question to the judge costs about $0.002, and only when a verdict is
+missing. Conversation rules are still checked by reading, not by code. A re-check that fails
+leaves the episode without its previous audio pointer, although the file stays on disk until the
+new one is written.
+
+**Evidence.** Episode 22: intro "the third-highest score ever"; source S18 "3ª mayor anotación
+en un estreno liguero". Episodes 20 and 22: the partial judgement of the repaired turn returned 83
+and 123 output tokens and no verdict for it. Unit tests cover the scope rules in the prompts,
+the second question to the judge (including a bracketed id), the repair-only mode, and a
+re-check of a completed episode end to end.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the

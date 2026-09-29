@@ -72,9 +72,14 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     assert "Now, basketball" not in instructions
     assert "Tell a result with its score before commenting on it" in instructions
     assert "all 3 were Raphinha's:\n  a hat-trick." in instructions
-    assert "Never end a section by announcing the next one" in instructions
+    assert "Never end a section by\n  announcing the next one" in instructions
     assert "Each turn makes one point" in instructions
     assert '("Paris Basketball", never just "Paris")' in instructions
+    assert "never compresses a record" in instructions
+    assert "never open two sections the same way" in instructions
+    assert '("Before we go…")' in instructions
+    assert "Never two fact-only turns in a row" in instructions
+    assert "the way radio hosts do" not in instructions
     assert run.episode.title == "Barça win in Dubai"
     assert details["segments"] == 3 and not details["rewrite"]
 
@@ -89,6 +94,7 @@ def test_a_supported_script_passes(session: Session) -> None:
     assert details == {"rounds": [{"problems": [], "judged": True, "style": []}], "warnings": []}
     assert "compare the meaning across languages" in llm.instructions[0]
     assert '"triple" is a three-pointer' in llm.instructions[0]
+    assert "exactly the scope of their source" in llm.instructions[0]
 
 
 def test_flagged_turns_are_repaired_not_the_whole_script(session: Session) -> None:
@@ -169,3 +175,39 @@ def test_a_turn_the_judge_skips_is_a_problem(session: Session) -> None:
         check_script(run)
 
     assert "did not review this turn" in failure.value.details["rounds"][0]["problems"][0]
+
+
+def test_a_missing_verdict_is_asked_again(session: Session) -> None:
+    first = iter([True, False])
+
+    def forgetful_judge(prompt: str) -> Judgement:
+        verdicts = approve_all(prompt).verdicts
+        if next(first):
+            verdicts = [v for v in verdicts if v.turn != "euroleague.3"]
+            verdicts[0].turn = f"[{verdicts[0].turn}]"
+        return Judgement(verdicts=verdicts)
+
+    llm = FakeLlm({Judgement: forgetful_judge})
+    run = planned_run(session, llm)
+    run.episode.script = GOOD
+
+    details = check_script(run)
+
+    assert [schema for schema, _ in llm.prompts] == [Judgement, Judgement]
+    asked_again = llm.prompts[1][1].split("TURNS")[1]
+    assert "[euroleague.3]" in asked_again and "[intro.1]" not in asked_again
+    assert details["rounds"][0]["problems"] == []
+
+
+def test_recheck_mode_never_rewrites_the_script(session: Session) -> None:
+    bad = Script.model_validate(GOOD).model_dump()
+    bad["segments"].reverse()
+    llm = FakeLlm({Judgement: judge()})
+    run = planned_run(session, llm)
+    run.episode.script = bad
+
+    details = check_script(run, rewrite=False)
+
+    assert Script not in [schema for schema, _ in llm.prompts]
+    assert details["recheck"] is True
+    assert any("segments must be exactly" in warning for warning in details["warnings"])

@@ -55,10 +55,12 @@ def run_episode(
     fetcher: Fetcher,
     config: Settings,
     as_of: datetime | None = None,
+    recheck: bool = False,
 ) -> Episode:
     started = datetime.now(UTC)
     now = as_of or started
     episode.status, episode.status_reason = "in_progress", None
+    episode.audio_path = episode.duration_seconds = episode.chapters = None
     episode.attempts += 1
     episode.started_at, episode.finished_at = started, None
     session.commit()
@@ -79,9 +81,11 @@ def run_episode(
     try:
         result: dict = {}
         for name, function, pending in STAGES:
-            if name == "fetch" and as_of is not None:
+            if name == "fetch" and (as_of is not None or recheck):
                 continue
-            if pending(run):
+            if name == "check" and recheck:
+                result = run_stage(run, name, lambda run: check_script(run, rewrite=False))
+            elif pending(run):
                 result = run_stage(run, name, function)
         finish(session, episode, "completed", None, result)
     except EpisodeSkipped as skipped:
@@ -161,6 +165,11 @@ def main() -> None:
         type=datetime.fromisoformat,
         help="generate as of this ISO time, without fetching (to reproduce an episode's date)",
     )
+    parser.add_argument(
+        "--recheck",
+        action="store_true",
+        help="check an existing script again, repairing only the turns that fail",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     config = get_settings()
@@ -177,6 +186,8 @@ def main() -> None:
             session.commit()
         elif args.episode_id is None or (episode := session.get(Episode, args.episode_id)) is None:
             sys.exit("Give an existing episode id, or --new")
+        if args.recheck and episode.script is None:
+            sys.exit("--recheck needs an episode that already has a script")
         run_episode(
             session,
             episode,
@@ -185,6 +196,7 @@ def main() -> None:
             fetcher=Fetcher(),
             config=config,
             as_of=args.as_of,
+            recheck=args.recheck,
         )
         print(f"Episode {episode.id}: {episode.status} {episode.status_reason or ''}")
         stages = session.scalars(

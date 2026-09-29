@@ -104,7 +104,11 @@ Return exactly one verdict for every turn:
   reverse).
 Judge each turn only against its own cited sources and [CTX]. Opinions about sourced facts are
 fine, but a description of how a game went ("dominated", "late winner", "came from behind") is
-a fact. Statements about the episode itself (the welcome, the hosts' names, what it covers, the
+a fact. Records and superlatives ("ever", "best", "first", "record", "led", "only", "most") keep
+exactly the scope of their source: "the third-highest total in a league opener" is not "the
+third-highest score ever", and a team's best player by rating did not necessarily lead it in
+points. A turn that widens or changes that scope is overstated.
+Statements about the episode itself (the welcome, the hosts' names, what it covers, the
 sign-off) are transitions, not facts. Each date in the sources carries how to say it relative
 to today ([say: last Saturday]): a day said that way is right. Sources may be in Spanish:
 compare the meaning across languages, including the day of the week. {glossary}
@@ -112,7 +116,7 @@ Explain every verdict other than supported or opinion in one sentence.
 """
 
 
-def check_script(run: Run) -> dict:
+def check_script(run: Run, *, rewrite: bool = True) -> dict:
     rounds: list[dict] = []
     names = tuple(host["name"] for host in run.podcast.hosts)
     for attempt in (1, 2):
@@ -135,14 +139,16 @@ def check_script(run: Run) -> dict:
         )
         turn_list = [f"{turn_id}: {p}" for turn_id, problems in issues.items() for p in problems]
         rounds.append({"problems": hard + turn_list, "judged": judged, "style": style})
-        if attempt == 1 and (hard or style):
+        if rewrite and attempt == 1 and (hard or style):
             write_script(run, hard + turn_list + style)
             continue
         break
-    if hard:
+    if hard and rewrite:
         first = "; ".join(hard[:3])
         raise StageFailed(f"check: the script failed twice ({first})", {"rounds": rounds})
-    details: dict = {"rounds": rounds, "warnings": style}
+    details: dict = {"rounds": rounds, "warnings": hard + style}
+    if not rewrite:
+        details["recheck"] = True
     if issues:
         details |= surgical_repair(run, script, issues, sources, details)
     return details
@@ -479,6 +485,27 @@ def judge_prompt(
 def judge_issues(
     run: Run, script: Script, sources: dict[str, EpisodeSource], only: set[str] | None = None
 ) -> dict[str, list[str]]:
+    turn_ids, verdicts, answered = judge_verdicts(run, script, sources, only)
+    missing = {turn_id for turn_id in turn_ids if turn_id not in verdicts}
+    if missing:
+        _, again, answered_again = judge_verdicts(run, script, sources, missing)
+        verdicts |= again
+        answered += answered_again
+    issues: dict[str, list[str]] = {}
+    for turn_id in turn_ids:
+        verdict = verdicts.get(turn_id)
+        if verdict is None:
+            issues[turn_id] = [
+                f"the fact check did not review this turn (it answered for {answered})"
+            ]
+        elif verdict.verdict not in ("supported", "opinion"):
+            issues[turn_id] = [f"{verdict.verdict}: {verdict.explanation}"]
+    return issues
+
+
+def judge_verdicts(
+    run: Run, script: Script, sources: dict[str, EpisodeSource], only: set[str] | None
+) -> tuple[list[str], dict[str, TurnVerdict], list[str]]:
     turn_ids, prompt = judge_prompt(script, sources, only)
     judgement, call = run.llm.parse(
         model=run.config.openai_judge_model,
@@ -488,12 +515,6 @@ def judge_issues(
         effort=JUDGE_EFFORT,
     )
     run.calls.append(call)
-    verdicts = {verdict.turn: verdict for verdict in judgement.verdicts}
-    issues: dict[str, list[str]] = {}
-    for turn_id in turn_ids:
-        verdict = verdicts.get(turn_id)
-        if verdict is None:
-            issues[turn_id] = ["the fact check did not review this turn"]
-        elif verdict.verdict not in ("supported", "opinion"):
-            issues[turn_id] = [f"{verdict.verdict}: {verdict.explanation}"]
-    return issues
+    answered = [verdict.turn for verdict in judgement.verdicts]
+    verdicts = {verdict.turn.strip().strip("[]").strip(): verdict for verdict in judgement.verdicts}
+    return turn_ids, verdicts, answered

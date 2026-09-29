@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from app.config import Settings
 from app.models import Article, Episode, EpisodeArticle, ProviderCall, StageRun
 from app.pipeline import fetch, master, runner
+from app.pipeline.checks import Judgement
 from app.pipeline.common import Run
+from app.pipeline.repair import Repairs
 from app.pipeline.runner import run_episode
 from app.pipeline.script import Script
 from app.pipeline.voice import ToneVoice
 from app.sources.http import Fetcher
-from tests.fakes import FakeLlm, make_article, make_listener
+from tests.fakes import FakeLlm, approve_all, make_article, make_listener
 
 pytestmark = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is not installed")
 
@@ -138,6 +140,32 @@ def test_a_retry_resumes_without_paying_again(
         select(StageRun).where(StageRun.stage == "voice", StageRun.attempt == 2)
     ).one()
     assert voice_run.details["generated_characters"] == 0
+
+
+def test_recheck_repairs_turns_without_rewriting(session: Session, tmp_path: Path) -> None:
+    episode = generate(session, setup(session), FakeLlm(), tmp_path)
+    flags = iter([{"intro.1": "overstated"}, {}])
+    llm = FakeLlm({Judgement: lambda prompt: approve_all(prompt, next(flags))})
+    config = Settings(_env_file=None, openai_api_key=None, data_dir=tmp_path)
+
+    run_episode(
+        session, episode, llm=llm, voice=ToneVoice(), fetcher=Fetcher(), config=config, recheck=True
+    )
+
+    assert episode.status == "completed" and episode.attempts == 2
+    second = [stage for attempt, stage, _ in stages(session, episode) if attempt == 2]
+    assert second == ["check", "voice", "master"]
+    assert [schema for schema, _ in llm.prompts] == [Judgement, Repairs, Judgement]
+    check = session.scalars(
+        select(StageRun.details).where(
+            StageRun.episode_id == episode.id, StageRun.stage == "check", StageRun.attempt == 2
+        )
+    ).one()
+    assert check["recheck"] is True and check["repaired"] == ["intro.1"] and not check["removed"]
+    assert any("Expand the lead story" in warning for warning in check["warnings"])
+    assert Script.model_validate(episode.script).segments[0].turns[0].text == (
+        "That's the one to watch."
+    )
 
 
 def test_nothing_new_ends_as_skipped(session: Session, tmp_path: Path) -> None:

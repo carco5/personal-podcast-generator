@@ -75,7 +75,9 @@ For each section, in the given order:
   leader), a quote. Never a stat line. Give fewer when the sources hold fewer: never invent and
   never pad. A fact about a result states its score.
 - Keep each fact's framing exactly as its source frames it: a team's best player by rating is
-  not its top scorer, "reportedly" stays reportedly, a close game is not a comeback.
+  not its top scorer, "reportedly" stays reportedly, a close game is not a comeback, and a record
+  keeps its scope ("the third-highest total in a league opener" is not "a record-setting
+  opener").
 - roundup_ids: the source ids of at most {max_roundup} other results worth one line: only results
   that matter to the listener's team (a direct rival in the table, an upcoming opponent) or that
   are truly outstanding. Leave everything else out. Never the lead's sources.
