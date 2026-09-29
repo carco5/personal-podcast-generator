@@ -3,11 +3,12 @@ from sqlalchemy import select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models import Interest, User
+from app.pipeline.selection import running_order
 from app.schemas import InterestCreate, InterestRead, InterestUpdate
 
 router = APIRouter(prefix="/interests", tags=["interests"])
 
-MAX_INTERESTS = 6
+MAX_INTERESTS = 8
 
 NOT_FOUND = {404: {"description": "The interest does not exist or belongs to another user"}}
 
@@ -23,15 +24,13 @@ def get_own_interest(session: SessionDep, user: User, interest_id: int) -> Inter
 
 @router.get("")
 def list_interests(session: SessionDep, user: CurrentUser) -> list[InterestRead]:
-    return session.scalars(
-        select(Interest).where(Interest.user_id == user.id).order_by(Interest.id)
-    ).all()
+    return running_order(session.scalars(select(Interest).where(Interest.user_id == user.id)).all())
 
 
 @router.post(
     "",
     status_code=201,
-    responses={409: {"description": "The topic is already there, or there are already six"}},
+    responses={409: {"description": "The topic is already there, or there are already eight"}},
 )
 def create_interest(body: InterestCreate, session: SessionDep, user: CurrentUser) -> InterestRead:
     owned = session.scalars(select(Interest.topic).where(Interest.user_id == user.id)).all()

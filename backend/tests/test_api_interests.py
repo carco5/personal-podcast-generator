@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.catalog import CATALOG
 from app.models import Interest, User
 
 
@@ -42,13 +43,32 @@ def test_duplicate_interest_conflicts(client: TestClient) -> None:
     assert client.post("/api/v1/interests", json=body).status_code == 409
 
 
-def test_at_most_six_interests(client: TestClient) -> None:
-    for topic in ["fc-barcelona", "euroleague", "liga-acb", "nba", "laliga", "champions-league"]:
-        assert client.post("/api/v1/interests", json={"kind": "catalog", "topic": topic}).is_success
+def test_list_is_in_running_order(client: TestClient) -> None:
+    for topic, weight in [("nba", "low"), ("euroleague", "medium"), ("laliga", "medium")]:
+        client.post("/api/v1/interests", json={"kind": "catalog", "topic": topic, "weight": weight})
 
-    response = client.post(
-        "/api/v1/interests", json={"kind": "custom", "topic": "tennis", "keywords": ["Alcaraz"]}
-    )
+    def custom(topic: str, keyword: str, weight: str) -> dict:
+        return {"kind": "custom", "topic": topic, "keywords": [keyword], "weight": weight}
+
+    client.post("/api/v1/interests", json=custom("tennis", "Alcaraz", "high"))
+    topics = [interest["topic"] for interest in client.get("/api/v1/interests").json()]
+    assert topics == ["tennis", "laliga", "euroleague", "nba"]
+
+    client.delete(f"/api/v1/interests/{client.get('/api/v1/interests').json()[0]['id']}")
+    client.post("/api/v1/interests", json=custom("golf", "Rahm", "medium"))
+    topics = [interest["topic"] for interest in client.get("/api/v1/interests").json()]
+    assert topics == ["laliga", "euroleague", "nba", "golf"]
+
+
+def test_at_most_eight_interests(client: TestClient) -> None:
+    def custom(topic: str, keyword: str) -> dict:
+        return {"kind": "custom", "topic": topic, "keywords": [keyword]}
+
+    for topic in CATALOG:
+        assert client.post("/api/v1/interests", json={"kind": "catalog", "topic": topic}).is_success
+    assert client.post("/api/v1/interests", json=custom("tennis", "Alcaraz")).is_success
+
+    response = client.post("/api/v1/interests", json=custom("golf", "Rahm"))
 
     assert response.status_code == 409
 

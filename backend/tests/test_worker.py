@@ -21,7 +21,6 @@ from app.worker import (
     INTERRUPTED,
     Shutdown,
     claim_next,
-    latest_slot,
     process_next,
     recover_stale,
     schedule_due,
@@ -50,28 +49,6 @@ def scheduled_listener(session: Session, interests: bool = True) -> PodcastSetti
 def episodes_of(session: Session, user_id: int) -> list[tuple[str, datetime, str]]:
     rows = session.scalars(select(Episode).where(Episode.user_id == user_id).order_by(Episode.id))
     return [(row.trigger, row.scheduled_for, row.status) for row in rows]
-
-
-def test_the_slot_follows_the_listeners_time_zone() -> None:
-    podcast = PodcastSettings(
-        schedule_days=[1, 2, 3, 4, 5, 6, 7], schedule_time=clock(7, 0), timezone="Europe/Madrid"
-    )
-
-    assert latest_slot(podcast, NOW) == SEVEN_AM_MADRID
-    winter = datetime(2026, 10, 27, 10, 0, tzinfo=UTC)
-    assert latest_slot(podcast, winter) == datetime(2026, 10, 27, 6, 0, tzinfo=UTC)
-
-
-def test_the_slot_is_the_last_one_that_has_arrived() -> None:
-    podcast = PodcastSettings(
-        schedule_days=[1], schedule_time=clock(7, 0), timezone="Europe/Madrid"
-    )
-
-    assert latest_slot(podcast, NOW) == datetime(2026, 9, 28, 5, 0, tzinfo=UTC)
-    monday_early = datetime(2026, 9, 28, 4, 0, tzinfo=UTC)
-    assert latest_slot(podcast, monday_early) == datetime(2026, 9, 21, 5, 0, tzinfo=UTC)
-    podcast.schedule_days = []
-    assert latest_slot(podcast, NOW) is None
 
 
 def test_the_latest_slot_is_queued_once(session: Session) -> None:

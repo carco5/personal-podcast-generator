@@ -1,0 +1,1941 @@
+{
+ "episode": {
+  "title": "Barça One Win from Matching Their Best Start",
+  "trigger": "manual",
+  "scheduled_for": "2026-09-29T10:22:40.831431+00:00",
+  "created_at": "2026-09-29T10:22:40.790323+00:00",
+  "started_at": "2026-09-29T13:24:54.941269+00:00",
+  "finished_at": "2026-09-29T13:27:19.569300+00:00",
+  "attempts": 2,
+  "duration_seconds": 293.58,
+  "chapters": [
+   {
+    "key": "intro",
+    "start": 0.5
+   },
+   {
+    "key": "fc-barcelona-football",
+    "start": 21.86
+   },
+   {
+    "key": "laliga",
+    "start": 73.62
+   },
+   {
+    "key": "champions-league",
+    "start": 106.18
+   },
+   {
+    "key": "fc-barcelona-basketball",
+    "start": 141.06
+   },
+   {
+    "key": "liga-acb",
+    "start": 188.98
+   },
+   {
+    "key": "euroleague",
+    "start": 222.02
+   },
+   {
+    "key": "nba",
+    "start": 250.02
+   },
+   {
+    "key": "closing",
+    "start": 274.9
+   }
+  ],
+  "script": {
+   "title": "Barça One Win from Matching Their Best Start",
+   "segments": [
+    {
+     "key": "intro",
+     "turns": [
+      {
+       "text": "[excited] Today, Barça are one league win away from matching their best-ever start to a LaLiga season. It's Monday; welcome to Barça & Beyond. I'm George, here with Sarah.",
+       "speaker": "host",
+       "source_ids": [
+        "S3"
+       ]
+      },
+      {
+       "text": "Hi! Getafe is a big test.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S3",
+        "S7"
+       ]
+      },
+      {
+       "text": "We've also got Barça's basketball opener and LeBron's first appearance as a 76er.",
+       "speaker": "host",
+       "source_ids": [
+        "S18",
+        "S33"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "fc-barcelona-football",
+     "turns": [
+      {
+       "text": "That Getafe test carries a history chance: Barça have won all 7 league games, with Atlético and Betis 5 points back.",
+       "speaker": "host",
+       "source_ids": [
+        "S3"
+       ]
+      },
+      {
+       "text": "A win after the international break would match the club's best start, set by Tata Martino's side in 2013/14. That's a real marker.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S3"
+       ]
+      },
+      {
+       "text": "Barça have won their last 22 LaLiga home games, yet the club warns that the break and Getafe make this tough. Do you buy it?",
+       "speaker": "host",
+       "source_ids": [
+        "S3"
+       ]
+      },
+      {
+       "text": "I do. That home run raises expectations; it doesn't make another win automatic. The other encouraging sign is Raphinha's form.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S3",
+        "S1",
+        "S2"
+       ]
+      },
+      {
+       "text": "Barça won 3–1 at Sevilla, with a Raphinha hat-trick; they beat Feyenoord 5–1, with his brace leading the way. Barça host Getafe on Saturday the 10th.",
+       "speaker": "host",
+       "source_ids": [
+        "S1",
+        "S2",
+        "S7"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "laliga",
+     "turns": [
+      {
+       "text": "That lead looks especially valuable after the derby. Atlético beat Real Madrid 2–1 at home; Grimaldo and Jonathan David scored before Rüdiger's late reply.",
+       "speaker": "host",
+       "source_ids": [
+        "S8"
+       ]
+      },
+      {
+       "text": "And Atlético are 5 points behind Barça, while Madrid are 6 back. Alongside Betis, Atlético are the nearest challengers.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S5"
+       ]
+      },
+      {
+       "text": "So the record chance sits alongside a genuine race at the top.",
+       "speaker": "host",
+       "source_ids": [
+        "S3",
+        "S5"
+       ]
+      },
+      {
+       "text": "Yes. I'd keep an eye on Atlético after that derby, without forgetting Betis are level with them.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S5",
+        "S8"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "champions-league",
+     "turns": [
+      {
+       "text": "The contrast for Atlético is Europe: Liverpool beat Atleti 2–1 at home after Marcos Llorente had put them ahead.",
+       "speaker": "host",
+       "source_ids": [
+        "S13"
+       ]
+      },
+      {
+       "text": "That's a different opening from Barça's European win. Dominik Szoboszlai was named player of the match for Liverpool.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S2",
+        "S13"
+       ]
+      },
+      {
+       "text": "Elsewhere, PSG beat Slovan Bratislava 6–1, with a Ferran Torres hat-trick; Bayern beat Bodø/Glimt 5–0, with a Michael Olise brace.",
+       "speaker": "host",
+       "source_ids": [
+        "S14",
+        "S15"
+       ]
+      },
+      {
+       "text": "Barça's next European test is away: Galatasaray host them on Tuesday the 13th.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S6"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "fc-barcelona-basketball",
+     "turns": [
+      {
+       "text": "Barça's basketball team kept the club's winning week going: Barça beat Leyma Coruña 119–101 at home in their Liga ACB opener.",
+       "speaker": "host",
+       "source_ids": [
+        "S18",
+        "S19"
+       ]
+      },
+      {
+       "text": "[excited] Quite an opener for Aleksander Sekulic's new-look side. The club says it's Barça's highest league score since 2017/18.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S19"
+       ]
+      },
+      {
+       "text": "Olek Balcerowski stood out, matching his ACB career-high in points and setting a personal best performance rating. What carries over?",
+       "speaker": "host",
+       "source_ids": [
+        "S19"
+       ]
+      },
+      {
+       "text": "Confidence. Barça also beat Anadolu Efes 89–82 in their EuroLeague opener, giving this new-look group wins in both competitions.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S19",
+        "S20"
+       ]
+      },
+      {
+       "text": "They won't have long to savour it: Dubai Basketball host Barça tomorrow.",
+       "speaker": "host",
+       "source_ids": [
+        "S23"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "liga-acb",
+     "turns": [
+      {
+       "text": "Madrid's domestic opener was far tighter than Barça's: Real Madrid beat Unicaja 89–87 at home.",
+       "speaker": "host",
+       "source_ids": [
+        "S18",
+        "S24"
+       ]
+      },
+      {
+       "text": "Madrid needed a 12–1 run in the final period to come back. The league report named Maledon their standout.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S25"
+       ]
+      },
+      {
+       "text": "That makes Barça's opening score feel even more striking. Elsewhere, iLERNA Lleida beat Valencia Basket 105–100 away.",
+       "speaker": "host",
+       "source_ids": [
+        "S18",
+        "S26"
+       ]
+      },
+      {
+       "text": "Barça's domestic follow-up is this Sunday, away to UCAM Murcia.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S22"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "euroleague",
+     "turns": [
+      {
+       "text": "Beyond Barça's opening win, Eurohoops reports the NBA has sent EuroLeague an offer for possible collaboration.",
+       "speaker": "host",
+       "source_ids": [
+        "S20",
+        "S29"
+       ]
+      },
+      {
+       "text": "[curious] That could matter enormously to Barça's competition. But no details have emerged, and an offer isn't a deal.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S28",
+        "S29"
+       ]
+      },
+      {
+       "text": "Eurohoops says clubs and shareholders are expected to discuss it ahead of their meeting.",
+       "speaker": "host",
+       "source_ids": [
+        "S29"
+       ]
+      },
+      {
+       "text": "Neither organization commented on the report. For now, the questions are bigger than the answers.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S29"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "nba",
+     "turns": [
+      {
+       "text": "That NBA connection brings us to LeBron James: he appeared at 76ers media day today after signing with Philadelphia in July.",
+       "speaker": "host",
+       "source_ids": [
+        "S33",
+        "S34"
+       ]
+      },
+      {
+       "text": "James said his friendship with Tyrese Maxey and his desire to help Joel Embiid win his first title helped bring him there.",
+       "speaker": "analyst",
+       "source_ids": [
+        "S34"
+       ]
+      },
+      {
+       "text": "He'd envisioned finishing with the Knicks, but ruled it out after they won the title. That makes his choice of Philly fascinating.",
+       "speaker": "host",
+       "source_ids": [
+        "S33"
+       ]
+      }
+     ]
+    },
+    {
+     "key": "closing",
+     "turns": [
+      {
+       "text": "Before we go, Barça visit Dubai Basketball tomorrow and UCAM Murcia this Sunday. In football, they host Getafe on Saturday the 10th, then visit Galatasaray on Tuesday the 13th. Thanks for listening to Barça & Beyond!",
+       "speaker": "host",
+       "source_ids": [
+        "S23",
+        "S22",
+        "S7",
+        "S6"
+       ]
+      },
+      {
+       "text": "See you next time!",
+       "speaker": "analyst",
+       "source_ids": []
+      }
+     ]
+    }
+   ]
+  },
+  "plan": {
+   "today": "Monday 28 September 2026",
+   "blocks": [
+    {
+     "key": "fc-barcelona-football",
+     "chars": 614,
+     "sport": "football",
+     "title": "FC Barcelona · football",
+     "weight": "high",
+     "stories": [
+      {
+       "reason": "Barcelona’s latest league and Champions League results were emphatic wins, led by Raphinha’s hat-trick against Sevilla.",
+       "source_ids": [
+        "S1",
+        "S2"
+       ]
+      },
+      {
+       "reason": "Barcelona have won all seven league games and are one victory from their best-ever LaLiga start.",
+       "source_ids": [
+        "S3"
+       ]
+      }
+     ],
+     "interest": "fc-barcelona",
+     "context_ids": [
+      "S4",
+      "S5",
+      "S6",
+      "S7"
+     ]
+    },
+    {
+     "key": "laliga",
+     "chars": 409,
+     "sport": "football",
+     "title": "LaLiga",
+     "weight": "medium",
+     "stories": [
+      {
+       "reason": "Atlético’s 2–1 derby win over Real Madrid was the round’s biggest result.",
+       "source_ids": [
+        "S8"
+       ]
+      },
+      {
+       "reason": "A roundup of other standout Matchday 7 results, including Sociedad’s away win and Celta’s 5–0 thrashing.",
+       "source_ids": [
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+       ]
+      }
+     ],
+     "interest": "laliga",
+     "context_ids": [
+      "S5",
+      "S7"
+     ]
+    },
+    {
+     "key": "champions-league",
+     "chars": 409,
+     "sport": "football",
+     "title": "UEFA Champions League",
+     "weight": "medium",
+     "stories": [
+      {
+       "reason": "Liverpool edged Atlético 2–1 in a high-profile Matchday 1 clash.",
+       "source_ids": [
+        "S13"
+       ]
+      },
+      {
+       "reason": "A roundup of other notable openers, including big wins for PSG and Bayern and tight victories for Dortmund and Real Madrid.",
+       "source_ids": [
+        "S14",
+        "S15",
+        "S16",
+        "S17"
+       ]
+      }
+     ],
+     "interest": "champions-league",
+     "context_ids": [
+      "S4",
+      "S6"
+     ]
+    },
+    {
+     "key": "fc-barcelona-basketball",
+     "chars": 613,
+     "sport": "basketball",
+     "title": "FC Barcelona · basketball",
+     "weight": "high",
+     "stories": [
+      {
+       "reason": "Barça opened the ACB season with a 119-point win, following their EuroLeague victory over Anadolu Efes.",
+       "source_ids": [
+        "S18",
+        "S19",
+        "S20"
+       ]
+      }
+     ],
+     "interest": "fc-barcelona",
+     "context_ids": [
+      "S21",
+      "S22",
+      "S23"
+     ]
+    },
+    {
+     "key": "liga-acb",
+     "chars": 409,
+     "sport": "basketball",
+     "title": "Liga ACB",
+     "weight": "medium",
+     "stories": [
+      {
+       "reason": "Real Madrid rallied late to begin the season with a narrow win over Unicaja.",
+       "source_ids": [
+        "S24",
+        "S25"
+       ]
+      },
+      {
+       "reason": "Lleida pulled off a notable road upset at Valencia, setting a club Liga Endesa scoring record in the process.",
+       "source_ids": [
+        "S26",
+        "S27"
+       ]
+      }
+     ],
+     "interest": "liga-acb",
+     "context_ids": [
+      "S22"
+     ]
+    },
+    {
+     "key": "euroleague",
+     "chars": 409,
+     "sport": "basketball",
+     "title": "EuroLeague",
+     "weight": "medium",
+     "stories": [
+      {
+       "reason": "The NBA has reportedly put a concrete proposal for a joint European project to EuroLeague.",
+       "source_ids": [
+        "S28",
+        "S29"
+       ]
+      },
+      {
+       "reason": "Olympiacos brought back veteran center Bryant Dunston on a one-year deal.",
+       "source_ids": [
+        "S30",
+        "S31"
+       ]
+      }
+     ],
+     "interest": "euroleague",
+     "context_ids": [
+      "S21",
+      "S23"
+     ]
+    },
+    {
+     "key": "nba",
+     "chars": 307,
+     "sport": "basketball",
+     "title": "NBA",
+     "weight": "low",
+     "stories": [
+      {
+       "reason": "LeBron discussed his surprise move to Philadelphia, including his Knicks near-miss and his reasons for joining the 76ers.",
+       "source_ids": [
+        "S32",
+        "S33",
+        "S34"
+       ]
+      },
+      {
+       "reason": "Stephen Curry agreed to a two-year, $116 million extension that keeps him with Golden State through his 20th NBA season.",
+       "source_ids": [
+        "S35"
+       ]
+      }
+     ],
+     "interest": "nba",
+     "context_ids": []
+    }
+   ],
+   "coverage": "catch-up: the listener's first episode",
+   "editorial": {
+    "hook": {
+     "text": "Today, Barça are one league win away from matching their best-ever start to a LaLiga season.",
+     "source_ids": [
+      "S3"
+     ]
+    },
+    "threads": [
+     {
+      "link": {
+       "text": "Atlético’s win over Real Madrid leaves Atlético five points behind Barça and Madrid six points behind.",
+       "source_ids": [
+        "S8",
+        "S5"
+       ]
+      },
+      "to_key": "laliga",
+      "from_key": "fc-barcelona-football"
+     },
+     {
+      "link": {
+       "text": "Atlético beat Real Madrid in LaLiga but lost its Champions League opener at Liverpool.",
+       "source_ids": [
+        "S8",
+        "S13"
+       ]
+      },
+      "to_key": "champions-league",
+      "from_key": "laliga"
+     },
+     {
+      "link": {
+       "text": "Barça began its EuroLeague season with a win over Anadolu Efes as reports emerged of a possible NBA–EuroLeague collaboration.",
+       "source_ids": [
+        "S20",
+        "S28",
+        "S29"
+       ]
+      },
+      "to_key": "euroleague",
+      "from_key": "fc-barcelona-basketball"
+     }
+    ],
+    "sections": [
+     {
+      "key": "fc-barcelona-football",
+      "angle": "Barça return from the international break with a chance to turn their perfect start into club history.",
+      "brief": false,
+      "major": false,
+      "next_up": {
+       "text": "FC Barcelona host Getafe CF on Saturday 10 October 2026 [say: Saturday the 10th].",
+       "source_ids": [
+        "S7"
+       ]
+      },
+      "lead_ids": [
+       "S3"
+      ],
+      "key_facts": [
+       {
+        "text": "Barça have won all seven league games and are five points clear of Atlético Madrid and Betis.",
+        "source_ids": [
+         "S3"
+        ]
+       },
+       {
+        "text": "A win in their first league game back would match the club’s best start, set by Tata Martino’s side in 2013/14.",
+        "source_ids": [
+         "S3"
+        ]
+       },
+       {
+        "text": "Barça have won their last 22 LaLiga home games, but the club cautions that the international break and Getafe pose a tough test.",
+        "source_ids": [
+         "S3"
+        ]
+       }
+      ],
+      "roundup_ids": [
+       "S1",
+       "S2"
+      ]
+     },
+     {
+      "key": "laliga",
+      "angle": "Atlético’s derby win makes them Barça’s nearest challenger while pushing Real Madrid further behind.",
+      "brief": false,
+      "major": false,
+      "next_up": null,
+      "lead_ids": [
+       "S8"
+      ],
+      "key_facts": [
+       {
+        "text": "Atlético beat Real Madrid 2–1 at home, with Grimaldo and Jonathan David scoring before Rüdiger’s late reply.",
+        "source_ids": [
+         "S8"
+        ]
+       },
+       {
+        "text": "Atlético are five points behind leaders Barça; Real Madrid are six points behind.",
+        "source_ids": [
+         "S5"
+        ]
+       }
+      ],
+      "roundup_ids": []
+     },
+     {
+      "key": "champions-league",
+      "angle": "Barça’s closest domestic challenger opened its European campaign with a defeat, in contrast to Barça’s winning start.",
+      "brief": false,
+      "major": false,
+      "next_up": {
+       "text": "Galatasaray host Barcelona on Tuesday 13 October 2026 [say: Tuesday the 13th].",
+       "source_ids": [
+        "S6"
+       ]
+      },
+      "lead_ids": [
+       "S13"
+      ],
+      "key_facts": [
+       {
+        "text": "Liverpool beat Atleti 2–1 at home after Marcos Llorente had put Atleti ahead.",
+        "source_ids": [
+         "S13"
+        ]
+       },
+       {
+        "text": "Dominik Szoboszlai was named player of the match.",
+        "source_ids": [
+         "S13"
+        ]
+       }
+      ],
+      "roundup_ids": [
+       "S14",
+       "S15"
+      ]
+     },
+     {
+      "key": "fc-barcelona-basketball",
+      "angle": "Barça’s high-scoring ACB opener builds momentum for a new-look side ahead of tomorrow’s EuroLeague trip.",
+      "brief": false,
+      "major": false,
+      "next_up": {
+       "text": "Dubai Basketball host FC Barcelona on Tuesday 29 September 2026 [say: tomorrow].",
+       "source_ids": [
+        "S23"
+       ]
+      },
+      "lead_ids": [
+       "S18",
+       "S19"
+      ],
+      "key_facts": [
+       {
+        "text": "Barça beat Leyma Coruña 119–101 at home in their Liga ACB opener.",
+        "source_ids": [
+         "S18",
+         "S19"
+        ]
+       },
+       {
+        "text": "The club says it was Barça’s highest league score since 2017/18.",
+        "source_ids": [
+         "S19"
+        ]
+       },
+       {
+        "text": "Olek Balcerowski was the standout performer, matching his ACB career-high in points and setting a personal best performance rating.",
+        "source_ids": [
+         "S19"
+        ]
+       }
+      ],
+      "roundup_ids": [
+       "S20"
+      ]
+     },
+     {
+      "key": "liga-acb",
+      "angle": "Barça’s domestic rival needed a late rally just to survive its league opener.",
+      "brief": false,
+      "major": false,
+      "next_up": {
+       "text": "UCAM Murcia host Barça on Sunday 4 October 2026 [say: this Sunday].",
+       "source_ids": [
+        "S22"
+       ]
+      },
+      "lead_ids": [
+       "S24",
+       "S25"
+      ],
+      "key_facts": [
+       {
+        "text": "Real Madrid beat Unicaja 89–87 at home.",
+        "source_ids": [
+         "S24",
+         "S25"
+        ]
+       },
+       {
+        "text": "A 12–1 run in the final period powered Madrid’s comeback.",
+        "source_ids": [
+         "S25"
+        ]
+       },
+       {
+        "text": "The league report named Maledon Madrid’s standout player.",
+        "source_ids": [
+         "S25"
+        ]
+       }
+      ],
+      "roundup_ids": [
+       "S26"
+      ]
+     },
+     {
+      "key": "euroleague",
+      "angle": "A possible NBA–EuroLeague partnership could reshape the competition Barça play in, though no deal has been announced.",
+      "brief": false,
+      "major": false,
+      "next_up": null,
+      "lead_ids": [
+       "S28",
+       "S29"
+      ],
+      "key_facts": [
+       {
+        "text": "Eurohoops reports that the NBA has sent EuroLeague an offer for a possible collaboration; details have not emerged.",
+        "source_ids": [
+         "S28",
+         "S29"
+        ]
+       },
+       {
+        "text": "The offer is expected to be discussed with EuroLeague clubs and shareholders ahead of their October 5 meeting.",
+        "source_ids": [
+         "S28",
+         "S29"
+        ]
+       },
+       {
+        "text": "Both organizations declined to comment on Eurohoops’ information.",
+        "source_ids": [
+         "S29"
+        ]
+       }
+      ],
+      "roundup_ids": []
+     },
+     {
+      "key": "nba",
+      "angle": "LeBron’s first appearance as a 76er puts a blockbuster offseason move in focus.",
+      "brief": false,
+      "major": true,
+      "next_up": null,
+      "lead_ids": [
+       "S32",
+       "S33",
+       "S34"
+      ],
+      "key_facts": [
+       {
+        "text": "LeBron James appeared at 76ers media day today after signing with Philadelphia in July.",
+        "source_ids": [
+         "S32",
+         "S33",
+         "S34"
+        ]
+       },
+       {
+        "text": "James said his friendship with Tyrese Maxey and desire to help Joel Embiid win his first title influenced his decision.",
+        "source_ids": [
+         "S34"
+        ]
+       },
+       {
+        "text": "James said he had envisioned finishing his career with the Knicks, but ruled that out after they won the title.",
+        "source_ids": [
+         "S33"
+        ]
+       }
+      ],
+      "roundup_ids": []
+     }
+    ]
+   },
+   "intro_chars": 300,
+   "selected_at": "2026-09-28T21:32:30+00:00",
+   "target_chars": 3720,
+   "closing_chars": 250,
+   "plan_fallback": false
+  }
+ },
+ "sources": [
+  {
+   "source_id": "S1",
+   "block": "fc-barcelona-football",
+   "rank": 1,
+   "reason": "Barcelona’s latest league and Champions League results were emphatic wins, led by Raphinha’s hat-trick against Sevilla.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102316",
+    "title": "LaLiga Matchday 7: FC Barcelona beat Sevilla FC 3–1 away",
+    "body": "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: FC Barcelona beat Sevilla FC 3–1 away. FC Barcelona goals: Raphinha 3, a hat-trick (22', 52', 69'). Assists: Christensen 1, Lamine Yamal 2. Sevilla FC goals: Fofana 1 (19'). Assists: Felix 1.",
+    "published_at": "2026-09-19T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-19",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "Sevilla FC",
+      "FC Barcelona"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S2",
+   "block": "fc-barcelona-football",
+   "rank": 1,
+   "reason": "Barcelona’s latest league and Champions League results were emphatic wins, led by Raphinha’s hat-trick against Sevilla.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049561/",
+    "title": "Champions League Matchday 1: Barcelona beat Feyenoord 5–1 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: Barcelona beat Feyenoord 5–1 at home. Barcelona goals: Raphinha 2, a brace (3', 57'), Karim Adeyemi 1 (22'), Lamine Yamal 1 (77'), Gabriel Jesus 1 (85'). Feyenoord goals: Sem Steijn 1 (82'). Player of the match: Raphinha (Barcelona).",
+    "published_at": "2026-09-09T16:45:00+00:00",
+    "meta": {
+     "date": "2026-09-09",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Barcelona",
+      "Feyenoord"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S3",
+   "block": "fc-barcelona-football",
+   "rank": 2,
+   "reason": "Barcelona have won all seven league games and are one victory from their best-ever LaLiga start.",
+   "article": {
+    "source": "fcbarcelona",
+    "kind": "article",
+    "official": true,
+    "language": "en",
+    "url": "https://www.fcbarcelona.com/en/football/first-team/news/4581481/one-win-away-from-best-ever-start-to-laliga",
+    "title": "One win away from best ever start to LaLiga",
+    "body": "",
+    "published_at": "2026-09-28T16:19:29+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S4",
+   "block": "fc-barcelona-football",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/standings/#played-36",
+    "title": "Champions League standings after Matchday 1",
+    "body": "Official UEFA Champions League league phase standings after Matchday 1: 1. PSG, 3 points from 1 game (1 win, 0 draws, 0 losses). 2. Bayern München, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 3. Barcelona, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 4. Man Utd, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 5. Como, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 6. Sporting CP, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 6. Stuttgart, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 8. Man City, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 9. Aston Villa, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 9. Lens, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 9. Real Betis, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 12. Dortmund, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 13. Liverpool, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 13. Real Madrid, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 15. Arsenal, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 16. AEK Athens, 3 points from 1 game (1 win, 0 draws, 0 losses), level on points with the leader. 17. Roma, 1 point from 1 game (0 wins, 1 draw, 0 losses), 2 points behind the leader. 17. Shakhtar, 1 point from 1 game (0 wins, 1 draw, 0 losses), 2 points behind the leader. 19. Fenerbahçe, 1 point from 1 game (0 wins, 1 draw, 0 losses), 2 points behind the leader. 19. PSV, 1 point from 1 game (0 wins, 1 draw, 0 losses), 2 points behind the leader. 21. Villarreal, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 22. Club Brugge, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 22. Lille, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 22. Slavia Praha, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 25. Atleti, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 25. Inter, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 27. LASK, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 27. Napoli, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 29. Galatasaray, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 29. Viking, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 31. Porto, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 32. Leipzig, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 33. Feyenoord, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 34. Sabah, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 35. Slovan Bratislava, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader. 36. Bodø/Glimt, 0 points from 1 game (0 wins, 0 draws, 1 loss), 3 points behind the leader.",
+    "published_at": "2026-09-29T09:27:13.607332+00:00",
+    "meta": {
+     "type": "standings",
+     "teams": [
+      "PSG",
+      "Bayern München",
+      "Barcelona",
+      "Man Utd",
+      "Como",
+      "Sporting CP",
+      "Stuttgart",
+      "Man City",
+      "Aston Villa",
+      "Lens",
+      "Real Betis",
+      "Dortmund",
+      "Liverpool",
+      "Real Madrid",
+      "Arsenal",
+      "AEK Athens",
+      "Roma",
+      "Shakhtar",
+      "Fenerbahçe",
+      "PSV",
+      "Villarreal",
+      "Club Brugge",
+      "Lille",
+      "Slavia Praha",
+      "Atleti",
+      "Inter",
+      "LASK",
+      "Napoli",
+      "Galatasaray",
+      "Viking",
+      "Porto",
+      "Leipzig",
+      "Feyenoord",
+      "Sabah",
+      "Slovan Bratislava",
+      "Bodø/Glimt"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S5",
+   "block": "fc-barcelona-football",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/standing#played-138",
+    "title": "LaLiga standings after Matchday 7",
+    "body": "Official LaLiga EA Sports standings after Matchday 7: 1. FC Barcelona, 21 points from 7 games (7 wins, 0 draws, 0 losses). 2. Atlético de Madrid, 16 points from 7 games (5 wins, 1 draw, 1 loss), 5 points behind the leader. 3. Real Betis, 16 points from 7 games (5 wins, 1 draw, 1 loss), 5 points behind the leader. 4. Real Madrid, 15 points from 7 games (5 wins, 0 draws, 2 losses), 6 points behind the leader. 5. Sevilla FC, 13 points from 7 games (4 wins, 1 draw, 2 losses), 8 points behind the leader. 6. Deportivo Alavés, 11 points from 7 games (3 wins, 2 draws, 2 losses), 10 points behind the leader. 7. RC Deportivo, 10 points from 7 games (2 wins, 4 draws, 1 loss), 11 points behind the leader. 8. Real Sociedad, 10 points from 7 games (3 wins, 1 draw, 3 losses), 11 points behind the leader. 9. Villarreal CF, 8 points from 7 games (2 wins, 2 draws, 3 losses), 13 points behind the leader. 10. Athletic Club, 8 points from 6 games (2 wins, 2 draws, 2 losses), 13 points behind the leader. 11. Getafe CF, 8 points from 7 games (2 wins, 2 draws, 3 losses), 13 points behind the leader. 12. Rayo Vallecano, 8 points from 7 games (2 wins, 2 draws, 3 losses), 13 points behind the leader. 13. CA Osasuna, 8 points from 7 games (2 wins, 2 draws, 3 losses), 13 points behind the leader. 14. Celta, 7 points from 7 games (1 win, 4 draws, 2 losses), 14 points behind the leader. 15. RCD Espanyol de Barcelona, 7 points from 7 games (2 wins, 1 draw, 4 losses), 14 points behind the leader. 16. R. Racing Club, 7 points from 7 games (2 wins, 1 draw, 4 losses), 14 points behind the leader. 17. Levante UD, 5 points from 6 games (1 win, 2 draws, 3 losses), 16 points behind the leader. 18. Elche CF, 5 points from 7 games (1 win, 2 draws, 4 losses), 16 points behind the leader. 19. Valencia CF, 4 points from 7 games (1 win, 1 draw, 5 losses), 17 points behind the leader. 20. Málaga CF, 3 points from 7 games (0 wins, 3 draws, 4 losses), 18 points behind the leader.",
+    "published_at": "2026-09-28T23:00:24.998037+00:00",
+    "meta": {
+     "type": "standings",
+     "teams": [
+      "FC Barcelona",
+      "Atlético de Madrid",
+      "Real Betis",
+      "Real Madrid",
+      "Sevilla FC",
+      "Deportivo Alavés",
+      "RC Deportivo",
+      "Real Sociedad",
+      "Villarreal CF",
+      "Athletic Club",
+      "Getafe CF",
+      "Rayo Vallecano",
+      "CA Osasuna",
+      "Celta",
+      "RCD Espanyol de Barcelona",
+      "R. Racing Club",
+      "Levante UD",
+      "Elche CF",
+      "Valencia CF",
+      "Málaga CF"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S6",
+   "block": "fc-barcelona-football",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/fixtures-results/#matchday-2",
+    "title": "Champions League Matchday 2 fixtures",
+    "body": "UEFA Champions League Matchday 2 fixtures (official schedule). Tuesday 13 October 2026: Lens host Sporting CP, Sabah host Slavia Praha, Inter host Club Brugge, Arsenal host Lille, Atleti host Man Utd, Leipzig host PSV, Villarreal host Napoli, Galatasaray host Barcelona, Viking host Bayern München. Wednesday 14 October 2026: Feyenoord host Como, LASK host Liverpool, Man City host PSG, Roma host Real Madrid, Aston Villa host Fenerbahçe, Real Betis host Porto, Bodø/Glimt host Dortmund, Shakhtar host AEK Athens, Slovan Bratislava host Stuttgart.",
+    "published_at": "2026-09-29T09:27:13.608663+00:00",
+    "meta": {
+     "type": "fixtures",
+     "games": [
+      {
+       "away": "Sporting CP",
+       "date": "2026-10-13",
+       "home": "Lens"
+      },
+      {
+       "away": "Slavia Praha",
+       "date": "2026-10-13",
+       "home": "Sabah"
+      },
+      {
+       "away": "Club Brugge",
+       "date": "2026-10-13",
+       "home": "Inter"
+      },
+      {
+       "away": "Lille",
+       "date": "2026-10-13",
+       "home": "Arsenal"
+      },
+      {
+       "away": "Man Utd",
+       "date": "2026-10-13",
+       "home": "Atleti"
+      },
+      {
+       "away": "PSV",
+       "date": "2026-10-13",
+       "home": "Leipzig"
+      },
+      {
+       "away": "Napoli",
+       "date": "2026-10-13",
+       "home": "Villarreal"
+      },
+      {
+       "away": "Barcelona",
+       "date": "2026-10-13",
+       "home": "Galatasaray"
+      },
+      {
+       "away": "Bayern München",
+       "date": "2026-10-13",
+       "home": "Viking"
+      },
+      {
+       "away": "Como",
+       "date": "2026-10-14",
+       "home": "Feyenoord"
+      },
+      {
+       "away": "Liverpool",
+       "date": "2026-10-14",
+       "home": "LASK"
+      },
+      {
+       "away": "PSG",
+       "date": "2026-10-14",
+       "home": "Man City"
+      },
+      {
+       "away": "Real Madrid",
+       "date": "2026-10-14",
+       "home": "Roma"
+      },
+      {
+       "away": "Fenerbahçe",
+       "date": "2026-10-14",
+       "home": "Aston Villa"
+      },
+      {
+       "away": "Porto",
+       "date": "2026-10-14",
+       "home": "Real Betis"
+      },
+      {
+       "away": "Dortmund",
+       "date": "2026-10-14",
+       "home": "Bodø/Glimt"
+      },
+      {
+       "away": "AEK Athens",
+       "date": "2026-10-14",
+       "home": "Shakhtar"
+      },
+      {
+       "away": "Stuttgart",
+       "date": "2026-10-14",
+       "home": "Slovan Bratislava"
+      }
+     ],
+     "round": 2,
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S7",
+   "block": "fc-barcelona-football",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-8",
+    "title": "LaLiga Matchday 8 fixtures",
+    "body": "LaLiga EA Sports Matchday 8 fixtures (official schedule). Friday 9 October 2026: Málaga CF host RCD Espanyol de Barcelona. Saturday 10 October 2026: Rayo Vallecano host Athletic Club, Deportivo Alavés host Atlético de Madrid, FC Barcelona host Getafe CF, Real Madrid host Villarreal CF. Sunday 11 October 2026: Elche CF host Celta, Real Sociedad host RC Deportivo, Real Betis host CA Osasuna, R. Racing Club host Valencia CF. Monday 12 October 2026: Levante UD host Sevilla FC.",
+    "published_at": "2026-09-28T09:51:04.491545+00:00",
+    "meta": {
+     "type": "fixtures",
+     "games": [
+      {
+       "away": "RCD Espanyol de Barcelona",
+       "date": "2026-10-09",
+       "home": "Málaga CF"
+      },
+      {
+       "away": "Athletic Club",
+       "date": "2026-10-10",
+       "home": "Rayo Vallecano"
+      },
+      {
+       "away": "Atlético de Madrid",
+       "date": "2026-10-10",
+       "home": "Deportivo Alavés"
+      },
+      {
+       "away": "Getafe CF",
+       "date": "2026-10-10",
+       "home": "FC Barcelona"
+      },
+      {
+       "away": "Villarreal CF",
+       "date": "2026-10-10",
+       "home": "Real Madrid"
+      },
+      {
+       "away": "Celta",
+       "date": "2026-10-11",
+       "home": "Elche CF"
+      },
+      {
+       "away": "RC Deportivo",
+       "date": "2026-10-11",
+       "home": "Real Sociedad"
+      },
+      {
+       "away": "CA Osasuna",
+       "date": "2026-10-11",
+       "home": "Real Betis"
+      },
+      {
+       "away": "Valencia CF",
+       "date": "2026-10-11",
+       "home": "R. Racing Club"
+      },
+      {
+       "away": "Sevilla FC",
+       "date": "2026-10-12",
+       "home": "Levante UD"
+      }
+     ],
+     "round": 8,
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S8",
+   "block": "laliga",
+   "rank": 1,
+   "reason": "Atlético’s 2–1 derby win over Real Madrid was the round’s biggest result.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102310",
+    "title": "LaLiga Matchday 7: Atlético de Madrid beat Real Madrid 2–1 at home",
+    "body": "LaLiga EA Sports, Matchday 7, Sunday 20 September 2026: Atlético de Madrid beat Real Madrid 2–1 at home. Atlético de Madrid goals: Grimaldo 1 (53' penalty), Jonathan David 1 (59'). Assists: Giuliano 1. Real Madrid goals: Rüdiger 1 (89'). Assists: Bernardo 1.",
+    "published_at": "2026-09-20T14:15:00+00:00",
+    "meta": {
+     "date": "2026-09-20",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "Atlético de Madrid",
+      "Real Madrid"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S9",
+   "block": "laliga",
+   "rank": 2,
+   "reason": "A roundup of other standout Matchday 7 results, including Sociedad’s away win and Celta’s 5–0 thrashing.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102317",
+    "title": "LaLiga Matchday 7: Real Sociedad beat Valencia CF 3–2 away",
+    "body": "LaLiga EA Sports, Matchday 7, Sunday 20 September 2026: Real Sociedad beat Valencia CF 3–2 away. Real Sociedad goals: Sucic 1 (26'), Carlos Soler 1 (75' penalty), Barrene 1 (91'). Assists: Ochieng 1, Carlos Soler 1. Valencia CF goals: Mayol 1 (57'). Assists: Hugo Duro 1. Own goals: Beitia (84').",
+    "published_at": "2026-09-20T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-20",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "Valencia CF",
+      "Real Sociedad"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S10",
+   "block": "laliga",
+   "rank": 2,
+   "reason": "A roundup of other standout Matchday 7 results, including Sociedad’s away win and Celta’s 5–0 thrashing.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102311",
+    "title": "LaLiga Matchday 7: Celta beat R. Racing Club 5–0 at home",
+    "body": "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: Celta beat R. Racing Club 5–0 at home. Celta goals: Hugo González 1 (32' penalty), Moriba 1 (43'), Miguel Román 1 (69'), Pablo Durán 2, a brace (78', 92'). Assists: Miguel Román 1, Hugo Álvarez 2.",
+    "published_at": "2026-09-19T16:30:00+00:00",
+    "meta": {
+     "date": "2026-09-19",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "Celta",
+      "R. Racing Club"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S11",
+   "block": "laliga",
+   "rank": 2,
+   "reason": "A roundup of other standout Matchday 7 results, including Sociedad’s away win and Celta’s 5–0 thrashing.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102318",
+    "title": "LaLiga Matchday 7: Villarreal CF beat Levante UD 3–1 at home",
+    "body": "LaLiga EA Sports, Matchday 7, Sunday 20 September 2026: Villarreal CF beat Levante UD 3–1 at home. Villarreal CF goals: Ayoze 1 (41'), Alberto Moleiro 1 (54'), Mikautadze 1 (86'). Assists: Alberto Moleiro 2, Ilias Akhomach 1. Levante UD goals: Iván Romero 1 (42'). Assists: Toljan 1.",
+    "published_at": "2026-09-20T16:30:00+00:00",
+    "meta": {
+     "date": "2026-09-20",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "Villarreal CF",
+      "Levante UD"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S12",
+   "block": "laliga",
+   "rank": 2,
+   "reason": "A roundup of other standout Matchday 7 results, including Sociedad’s away win and Celta’s 5–0 thrashing.",
+   "article": {
+    "source": "laliga-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.laliga.com/en-GB/laliga-easports/results/2026-27/gameweek-7#match-102313",
+    "title": "LaLiga Matchday 7: Elche CF beat RCD Espanyol de Barcelona 3–1 away",
+    "body": "LaLiga EA Sports, Matchday 7, Friday 18 September 2026: Elche CF beat RCD Espanyol de Barcelona 3–1 away. Elche CF goals: Fer Niño 2, a brace (26', 29'), Germán Valera 1 (78'). Assists: Revivo 2, José Antonio Morente Oliva 1. Own goals: Victor Chust (72').",
+    "published_at": "2026-09-18T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-18",
+     "type": "result",
+     "round": 7,
+     "teams": [
+      "RCD Espanyol de Barcelona",
+      "Elche CF"
+     ],
+     "competition": "laliga"
+    }
+   }
+  },
+  {
+   "source_id": "S13",
+   "block": "champions-league",
+   "rank": 1,
+   "reason": "Liverpool edged Atlético 2–1 in a high-profile Matchday 1 clash.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049560/",
+    "title": "Champions League Matchday 1: Liverpool beat Atleti 2–1 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: Liverpool beat Atleti 2–1 at home. Liverpool goals: Dominik Szoboszlai 1 (40'), Alexis Mac Allister 1 (50'). Atleti goals: Marcos Llorente 1 (17'). Player of the match: Dominik Szoboszlai (Liverpool).",
+    "published_at": "2026-09-09T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-09",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Liverpool",
+      "Atleti"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S14",
+   "block": "champions-league",
+   "rank": 2,
+   "reason": "A roundup of other notable openers, including big wins for PSG and Bayern and tight victories for Dortmund and Real Madrid.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049559/",
+    "title": "Champions League Matchday 1: PSG beat Slovan Bratislava 6–1 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: PSG beat Slovan Bratislava 6–1 at home. PSG goals: Ousmane Dembélé 2, a brace (17', 23'), Ferran Torres 3, a hat-trick (31', 47', 57'), Fabián Ruiz 1 (88'). Slovan Bratislava goals: Suleiman Camara 1 (59'). Player of the match: Ferran Torres (PSG).",
+    "published_at": "2026-09-09T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-09",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "PSG",
+      "Slovan Bratislava"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S15",
+   "block": "champions-league",
+   "rank": 2,
+   "reason": "A roundup of other notable openers, including big wins for PSG and Bayern and tight victories for Dortmund and Real Madrid.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049565/",
+    "title": "Champions League Matchday 1: Bayern München beat Bodø/Glimt 5–0 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Thursday 10 September 2026: Bayern München beat Bodø/Glimt 5–0 at home. Bayern München goals: Jamal Musiala 1 (47'), Harry Kane 1 (61'), Alphonso Davies 1 (77'), Michael Olise 2, a brace (83', 90'). Player of the match: Michael Olise (Bayern München).",
+    "published_at": "2026-09-10T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-10",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Bayern München",
+      "Bodø/Glimt"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S16",
+   "block": "champions-league",
+   "rank": 2,
+   "reason": "A roundup of other notable openers, including big wins for PSG and Bayern and tight victories for Dortmund and Real Madrid.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049554/",
+    "title": "Champions League Matchday 1: Dortmund beat Villarreal 3–2 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Tuesday 8 September 2026: Dortmund beat Villarreal 3–2 at home. Dortmund goals: Serhou Guirassy 2, a brace (80', 85' penalty). Villarreal goals: Santiago Mouriño 1 (66'). Own goals: Renato Veiga (53'), Serhou Guirassy (90'). Player of the match: Serhou Guirassy (Dortmund).",
+    "published_at": "2026-09-08T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-08",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Dortmund",
+      "Villarreal"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S17",
+   "block": "champions-league",
+   "rank": 2,
+   "reason": "A roundup of other notable openers, including big wins for PSG and Bayern and tight victories for Dortmund and Real Madrid.",
+   "article": {
+    "source": "uefa-data",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.uefa.com/uefachampionsleague/match/2049553/",
+    "title": "Champions League Matchday 1: Real Madrid beat Inter 2–1 at home",
+    "body": "UEFA Champions League, league phase Matchday 1, Tuesday 8 September 2026: Real Madrid beat Inter 2–1 at home. Real Madrid goals: Kylian Mbappé 1 (14'), Federico Valverde 1 (23'). Inter goals: Carlos Augusto 1 (77'). Player of the match: Federico Valverde (Real Madrid).",
+    "published_at": "2026-09-08T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-08",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Real Madrid",
+      "Inter"
+     ],
+     "competition": "champions-league"
+    }
+   }
+  },
+  {
+   "source_id": "S18",
+   "block": "fc-barcelona-basketball",
+   "rank": 1,
+   "reason": "Barça opened the ACB season with a 119-point win, following their EuroLeague victory over Anadolu Efes.",
+   "article": {
+    "source": "acb-calendar",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.acb.com/es/calendario#match-105377",
+    "title": "Liga ACB Round 1: Barça beat Leyma Coruña 119–101 at home",
+    "body": "Liga ACB (Liga Endesa), Round 1, Saturday 26 September 2026: Barça beat Leyma Coruña 119–101 at home.",
+    "published_at": "2026-09-26T19:00:00+00:00",
+    "meta": {
+     "date": "2026-09-26",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Barça",
+      "Leyma Coruña"
+     ],
+     "competition": "liga-acb"
+    }
+   }
+  },
+  {
+   "source_id": "S19",
+   "block": "fc-barcelona-basketball",
+   "rank": 1,
+   "reason": "Barça opened the ACB season with a 119-point win, following their EuroLeague victory over Anadolu Efes.",
+   "article": {
+    "source": "fcbarcelona",
+    "kind": "article",
+    "official": true,
+    "language": "en",
+    "url": "https://www.fcbarcelona.com/en/basketball/first-team/news/4582205/barca-119-101-leyma-coruna-attacking-masterclass",
+    "title": "Barça 119-101 Leyma Coruña: Attacking masterclass",
+    "body": "",
+    "published_at": "2026-09-26T22:03:02+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S20",
+   "block": "fc-barcelona-basketball",
+   "rank": 1,
+   "reason": "Barça opened the ACB season with a 119-point win, following their EuroLeague victory over Anadolu Efes.",
+   "article": {
+    "source": "euroleague-api",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://api-live.euroleague.net/v3/competitions/E/seasons/E2026/games/4/stats",
+    "title": "EuroLeague Round 1: FC Barcelona beat Anadolu Efes 89–82",
+    "body": "EuroLeague Round 1, Thursday 24 September 2026: FC Barcelona beat Anadolu Efes 89–82 at home, winning by 7 points. Points by quarter: FC Barcelona 16, 29, 18, 26; Anadolu Efes 25, 19, 23, 15. Best player of each team by valuation (PIR): Kevin Punter (FC Barcelona): 19 points, 1 rebound, 1 assist, PIR 22; Dario Saric (Anadolu Efes): 17 points, 5 rebounds, 2 assists, PIR 26.",
+    "published_at": "2026-09-24T18:30:00+00:00",
+    "meta": {
+     "date": "2026-09-24",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "FC Barcelona",
+      "Anadolu Efes"
+     ],
+     "competition": "euroleague"
+    }
+   }
+  },
+  {
+   "source_id": "S21",
+   "block": "fc-barcelona-basketball",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "euroleague-api",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://feeds.incrowdsports.com/provider/euroleague-feeds/v3/competitions/E/seasons/E2026/rounds/1/basicstandings",
+    "title": "EuroLeague standings after Round 1",
+    "body": "Official EuroLeague standings after Round 1: 1. Panathinaikos, 1 win and 0 losses. 2. Olympiacos, 1 win and 0 losses. 3. Partizan, 1 win and 0 losses. 4. LDLC ASVEL, 1 win and 0 losses. 5. Fenerbahce, 1 win and 0 losses. 6. FC Barcelona, 1 win and 0 losses. 7. Zalgiris, 1 win and 0 losses. 8. Valencia Basket, 1 win and 0 losses. 9. Bayern Munich, 1 win and 0 losses. 10. Dubai Basketball, 1 win and 0 losses. 11. Real Madrid, 0 wins and 1 loss. 12. Besiktas, 0 wins and 1 loss. 13. Hapoel TLV, 0 wins and 1 loss. 14. Crvena Zvezda, 0 wins and 1 loss. 15. Anadolu Efes, 0 wins and 1 loss. 16. Maccabi, 0 wins and 1 loss. 17. Virtus Bologna, 0 wins and 1 loss. 18. Milan, 0 wins and 1 loss. 19. Baskonia, 0 wins and 1 loss. 20. Paris Basketball, 0 wins and 1 loss.",
+    "published_at": "2026-09-25T18:45:00+00:00",
+    "meta": {
+     "type": "standings",
+     "round": 1,
+     "teams": [
+      "Panathinaikos",
+      "Olympiacos",
+      "Partizan",
+      "LDLC ASVEL",
+      "Fenerbahce",
+      "FC Barcelona",
+      "Zalgiris",
+      "Valencia Basket",
+      "Bayern Munich",
+      "Dubai Basketball",
+      "Real Madrid",
+      "Besiktas",
+      "Hapoel TLV",
+      "Crvena Zvezda",
+      "Anadolu Efes",
+      "Maccabi",
+      "Virtus Bologna",
+      "Milan",
+      "Baskonia",
+      "Paris Basketball"
+     ],
+     "competition": "euroleague"
+    }
+   }
+  },
+  {
+   "source_id": "S22",
+   "block": "fc-barcelona-basketball",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "acb-calendar",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.acb.com/es/calendario#round-2",
+    "title": "Liga ACB Round 2 fixtures",
+    "body": "Liga ACB (Liga Endesa) Round 2 fixtures (official schedule). Saturday 3 October 2026: Asisa Joventut host MoraBanc Andorra, Unicaja host La Laguna Tenerife, Kids&Us Manresa host Río Breogán. Sunday 4 October 2026: iLERNA Lleida host Recoletas Salud San Pablo Burgos, Leyma Coruña host Surne Bilbao, Monbus Obradoiro host Real Madrid, Casademont Zaragoza host Valencia Basket, Kosner Baskonia host FIATC Girona, UCAM Murcia host Barça.",
+    "published_at": "2026-09-28T09:50:46.175380+00:00",
+    "meta": {
+     "type": "fixtures",
+     "games": [
+      {
+       "away": "MoraBanc Andorra",
+       "date": "2026-10-03",
+       "home": "Asisa Joventut"
+      },
+      {
+       "away": "La Laguna Tenerife",
+       "date": "2026-10-03",
+       "home": "Unicaja"
+      },
+      {
+       "away": "Río Breogán",
+       "date": "2026-10-03",
+       "home": "Kids&Us Manresa"
+      },
+      {
+       "away": "Recoletas Salud San Pablo Burgos",
+       "date": "2026-10-04",
+       "home": "iLERNA Lleida"
+      },
+      {
+       "away": "Surne Bilbao",
+       "date": "2026-10-04",
+       "home": "Leyma Coruña"
+      },
+      {
+       "away": "Real Madrid",
+       "date": "2026-10-04",
+       "home": "Monbus Obradoiro"
+      },
+      {
+       "away": "Valencia Basket",
+       "date": "2026-10-04",
+       "home": "Casademont Zaragoza"
+      },
+      {
+       "away": "FIATC Girona",
+       "date": "2026-10-04",
+       "home": "Kosner Baskonia"
+      },
+      {
+       "away": "Barça",
+       "date": "2026-10-04",
+       "home": "UCAM Murcia"
+      }
+     ],
+     "round": 2,
+     "competition": "liga-acb"
+    }
+   }
+  },
+  {
+   "source_id": "S23",
+   "block": "fc-barcelona-basketball",
+   "rank": 0,
+   "reason": null,
+   "article": {
+    "source": "euroleague-api",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2026/games?round=2",
+    "title": "EuroLeague Round 2 fixtures",
+    "body": "EuroLeague Round 2 fixtures (official schedule). Tuesday 29 September 2026: Paris Basketball host Partizan, Milan host Virtus Bologna, Valencia Basket host Baskonia, Crvena Zvezda host Hapoel TLV, Fenerbahce host Bayern Munich, Zalgiris host Olympiacos, Anadolu Efes host Real Madrid, Dubai Basketball host FC Barcelona. Wednesday 30 September 2026: Panathinaikos host LDLC ASVEL, Maccabi host Besiktas.",
+    "published_at": "2026-09-29T09:33:26.582419+00:00",
+    "meta": {
+     "type": "fixtures",
+     "games": [
+      {
+       "away": "Partizan",
+       "date": "2026-09-29",
+       "home": "Paris Basketball"
+      },
+      {
+       "away": "Virtus Bologna",
+       "date": "2026-09-29",
+       "home": "Milan"
+      },
+      {
+       "away": "Baskonia",
+       "date": "2026-09-29",
+       "home": "Valencia Basket"
+      },
+      {
+       "away": "Hapoel TLV",
+       "date": "2026-09-29",
+       "home": "Crvena Zvezda"
+      },
+      {
+       "away": "Bayern Munich",
+       "date": "2026-09-29",
+       "home": "Fenerbahce"
+      },
+      {
+       "away": "Olympiacos",
+       "date": "2026-09-29",
+       "home": "Zalgiris"
+      },
+      {
+       "away": "Real Madrid",
+       "date": "2026-09-29",
+       "home": "Anadolu Efes"
+      },
+      {
+       "away": "FC Barcelona",
+       "date": "2026-09-29",
+       "home": "Dubai Basketball"
+      },
+      {
+       "away": "LDLC ASVEL",
+       "date": "2026-09-30",
+       "home": "Panathinaikos"
+      },
+      {
+       "away": "Besiktas",
+       "date": "2026-09-30",
+       "home": "Maccabi"
+      }
+     ],
+     "round": 2,
+     "competition": "euroleague"
+    }
+   }
+  },
+  {
+   "source_id": "S24",
+   "block": "liga-acb",
+   "rank": 1,
+   "reason": "Real Madrid rallied late to begin the season with a narrow win over Unicaja.",
+   "article": {
+    "source": "acb-calendar",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.acb.com/es/calendario#match-105383",
+    "title": "Liga ACB Round 1: Real Madrid beat Unicaja 89–87 at home",
+    "body": "Liga ACB (Liga Endesa), Round 1, Sunday 27 September 2026: Real Madrid beat Unicaja 89–87 at home.",
+    "published_at": "2026-09-27T17:00:00+00:00",
+    "meta": {
+     "date": "2026-09-27",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Real Madrid",
+      "Unicaja"
+     ],
+     "competition": "liga-acb"
+    }
+   }
+  },
+  {
+   "source_id": "S25",
+   "block": "liga-acb",
+   "rank": 1,
+   "reason": "Real Madrid rallied late to begin the season with a narrow win over Unicaja.",
+   "article": {
+    "source": "acb-news",
+    "kind": "article",
+    "official": true,
+    "language": "es",
+    "url": "https://acb.com/es/liga/noticias/el-real-madrid-suda-para-derrotar-a-un-gran-unicaja-89-87-146132",
+    "title": "El Real Madrid suda para derrotar a un gran Unicaja (89-87)",
+    "body": "",
+    "published_at": "2026-09-27T19:25:57.885811+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S26",
+   "block": "liga-acb",
+   "rank": 2,
+   "reason": "Lleida pulled off a notable road upset at Valencia, setting a club Liga Endesa scoring record in the process.",
+   "article": {
+    "source": "acb-calendar",
+    "kind": "data",
+    "official": true,
+    "language": "en",
+    "url": "https://www.acb.com/es/calendario#match-105382",
+    "title": "Liga ACB Round 1: iLERNA Lleida beat Valencia Basket 105–100 away",
+    "body": "Liga ACB (Liga Endesa), Round 1, Sunday 27 September 2026: iLERNA Lleida beat Valencia Basket 105–100 away.",
+    "published_at": "2026-09-27T16:00:00+00:00",
+    "meta": {
+     "date": "2026-09-27",
+     "type": "result",
+     "round": 1,
+     "teams": [
+      "Valencia Basket",
+      "iLERNA Lleida"
+     ],
+     "competition": "liga-acb"
+    }
+   }
+  },
+  {
+   "source_id": "S27",
+   "block": "liga-acb",
+   "rank": 2,
+   "reason": "Lleida pulled off a notable road upset at Valencia, setting a club Liga Endesa scoring record in the process.",
+   "article": {
+    "source": "acb-news",
+    "kind": "article",
+    "official": true,
+    "language": "es",
+    "url": "https://acb.com/es/liga/noticias/batemon-y-mcghee-se-alian-para-conquistar-el-roig-arena-100-105-146131",
+    "title": "Batemon y McGhee se alían para conquistar el Roig Arena (100-105)",
+    "body": "",
+    "published_at": "2026-09-27T18:49:15.199827+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S28",
+   "block": "euroleague",
+   "rank": 1,
+   "reason": "The NBA has reportedly put a concrete proposal for a joint European project to EuroLeague.",
+   "article": {
+    "source": "sportando-euroleague",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://sportando.basketball/en/nba-reportedly-sends-euroleague-concrete-proposal-for-joint-european-project/",
+    "title": "NBA Reportedly Sends EuroLeague Concrete Proposal for Joint European Project",
+    "body": "",
+    "published_at": "2026-09-27T13:05:54+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S29",
+   "block": "euroleague",
+   "rank": 1,
+   "reason": "The NBA has reportedly put a concrete proposal for a joint European project to EuroLeague.",
+   "article": {
+    "source": "eurohoops-euroleague",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.eurohoops.net/en/euroleague/2012892/the-nba-offer-for-a-joint-project-in-europe-is-on-the-euroleague-table/",
+    "title": "The NBA offer for a joint project in Europe is on the EuroLeague table",
+    "body": "",
+    "published_at": "2026-09-27T10:26:30+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S30",
+   "block": "euroleague",
+   "rank": 2,
+   "reason": "Olympiacos brought back veteran center Bryant Dunston on a one-year deal.",
+   "article": {
+    "source": "sportando-euroleague",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://sportando.basketball/en/olympiacos-officially-brings-bryant-dunston-back/",
+    "title": "Olympiacos officially brings Bryant Dunston back",
+    "body": "",
+    "published_at": "2026-09-28T07:26:57+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S31",
+   "block": "euroleague",
+   "rank": 2,
+   "reason": "Olympiacos brought back veteran center Bryant Dunston on a one-year deal.",
+   "article": {
+    "source": "eurohoops-euroleague",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.eurohoops.net/en/euroleague/2013287/bryant-dunston-to-olympiacos-euroleague/",
+    "title": "Bryant Dunston returns to Olympiacos for the rest of the season",
+    "body": "",
+    "published_at": "2026-09-28T07:29:10+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S32",
+   "block": "nba",
+   "rank": 1,
+   "reason": "LeBron discussed his surprise move to Philadelphia, including his Knicks near-miss and his reasons for joining the 76ers.",
+   "article": {
+    "source": "cbs-nba",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.cbssports.com/nba/news/lebron-james-begins-76ers-era/",
+    "title": "LeBron James begins his 76ers era by making the stakes clear in Philly",
+    "body": "",
+    "published_at": "2026-09-28T20:41:35+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S33",
+   "block": "nba",
+   "rank": 1,
+   "reason": "LeBron discussed his surprise move to Philadelphia, including his Knicks near-miss and his reasons for joining the 76ers.",
+   "article": {
+    "source": "cbs-nba",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.cbssports.com/nba/news/lebron-james-knicks-live-new-york-76ers/",
+    "title": "LeBron James confirms he nearly joined the Knicks, will live part-time in New York while playing for 76ers",
+    "body": "",
+    "published_at": "2026-09-28T18:18:36+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S34",
+   "block": "nba",
+   "rank": 1,
+   "reason": "LeBron discussed his surprise move to Philadelphia, including his Knicks near-miss and his reasons for joining the 76ers.",
+   "article": {
+    "source": "espn-nba",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.espn.com/nba/story/_/id/50027833/lebron-james-maxey-friendship-helping-embiid-were-76ers-factors",
+    "title": "LeBron: Maxey friendship, desire to help Embiid drove 76ers decision",
+    "body": "",
+    "published_at": "2026-09-27T05:47:59+00:00",
+    "meta": {}
+   }
+  },
+  {
+   "source_id": "S35",
+   "block": "nba",
+   "rank": 2,
+   "reason": "Stephen Curry agreed to a two-year, $116 million extension that keeps him with Golden State through his 20th NBA season.",
+   "article": {
+    "source": "espn-nba",
+    "kind": "article",
+    "official": false,
+    "language": "en",
+    "url": "https://www.espn.com/nba/story/_/id/50030670/sources-warriors-curry-reach-2-year-extension-worth-116-million",
+    "title": "Sources: Warriors, Curry reach 2-year extension worth $116 million",
+    "body": "",
+    "published_at": "2026-09-27T05:47:59+00:00",
+    "meta": {}
+   }
+  }
+ ]
+}

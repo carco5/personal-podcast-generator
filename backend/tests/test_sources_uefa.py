@@ -97,7 +97,7 @@ def test_uefa_results_standings_and_next_matchday() -> None:
 
 def test_barca_is_found_in_uefa_data_but_not_confused_with_espanyol() -> None:
     items = list(UefaChampionsSource().items(fake_uefa().fetcher(), set()))
-    barca = TOPIC_FEEDS["fc-barcelona"]
+    barca = TOPIC_FEEDS["fc-barcelona-football"]
 
     assert all(belongs_to_team(item, barca) for item in items if "Inter" not in item.title)
     espanyol = items[0].model_copy(

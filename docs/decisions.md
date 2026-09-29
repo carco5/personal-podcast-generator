@@ -6,15 +6,15 @@ record supersedes the old one and both stay here.
 
 | # | Decision | Status |
 |---|---|---|
-| D1 | [Stack: FastAPI + PostgreSQL + React/TypeScript](#d1--stack-fastapi--postgresql--reacttypescript) | Accepted |
+| D1 | [Stack: FastAPI + PostgreSQL + React/TypeScript](#d1--stack-fastapi--postgresql--reacttypescript) | Accepted, revised in Step 8 |
 | D2 | [The `episodes` table is the job queue, drained by one worker](#d2--the-episodes-table-is-the-job-queue-drained-by-one-worker) | Accepted, built in Step 6 |
 | D3 | [A staged pipeline with checkpoints, using the provider SDKs directly](#d3--a-staged-pipeline-with-checkpoints-using-the-provider-sdks-directly) | Accepted |
 | D4 | [News sources behind a `NewsProvider` interface](#d4--news-sources-behind-a-newsprovider-interface) | Accepted |
 | D5 | [One OpenAI model per task](#d5--one-openai-model-per-task) | Accepted |
 | D6 | [Voice: ElevenLabs v3 text-to-dialogue](#d6--voice-elevenlabs-v3-text-to-dialogue) | Accepted, validated in Step 3 |
 | D7 | [Check the script before paying for voice](#d7--check-the-script-before-paying-for-voice) | Accepted |
-| D8 | [Internal dashboard: product and operations](#d8--internal-dashboard-product-and-operations) | Accepted |
-| D9 | [Frontend: a single-page app served by FastAPI](#d9--frontend-a-single-page-app-served-by-fastapi) | Accepted |
+| D8 | [Internal dashboard: product and operations](#d8--internal-dashboard-product-and-operations) | Accepted, refined in Step 8 |
+| D9 | [Frontend: a single-page app served by FastAPI](#d9--frontend-a-single-page-app-served-by-fastapi) | Accepted, built in Step 8 |
 | D10 | [Runs locally with Docker Compose, including without API keys](#d10--runs-locally-with-docker-compose-including-without-api-keys) | Accepted, revised in Step 6 |
 | D11 | [Cost-aware development](#d11--cost-aware-development) | Accepted |
 | D12 | [REST conventions aligned with Prosper's public API](#d12--rest-conventions-aligned-with-prospers-public-api) | Accepted |
@@ -24,17 +24,17 @@ record supersedes the old one and both stay here.
 | D16 | [Configuration and secrets](#d16--configuration-and-secrets) | Accepted |
 | D17 | [PostgreSQL 18 in Compose](#d17--postgresql-18-in-compose) | Accepted |
 | D18 | [Measure with a throwaway spike before building the pipeline](#d18--measure-with-a-throwaway-spike-before-building-the-pipeline) | Accepted |
-| D19 | [An episode is shorter rather than padded](#d19--an-episode-is-shorter-rather-than-padded) | Accepted |
+| D19 | [An episode is shorter rather than padded](#d19--an-episode-is-shorter-rather-than-padded) | Accepted, revised in Step 8 |
 | D20 | [Every check is proven by a sabotage test, and the judge is measured](#d20--every-check-is-proven-by-a-sabotage-test-and-the-judge-is-measured) | Accepted, measured in Step 5 |
 | D21 | [Episodes of 3, 5 or 7 minutes, and a 5-minute sample](#d21--episodes-of-3-5-or-7-minutes-and-a-5-minute-sample) | Accepted |
-| D22 | [The episode follows the listener's priorities](#d22--the-episode-follows-the-listeners-priorities) | Accepted |
+| D22 | [The episode follows the listener's priorities](#d22--the-episode-follows-the-listeners-priorities) | Accepted, revised in Step 8 |
 | D23 | [What an episode covers: what is new, or a catch-up the first time](#d23--what-an-episode-covers-what-is-new-or-a-catch-up-the-first-time) | Accepted |
 | D24 | [Sources are ingested on a schedule and stored](#d24--sources-are-ingested-on-a-schedule-and-stored) | Accepted, built in Step 5 |
 | D25 | [The data model grows step by step, and PostgreSQL enforces it](#d25--the-data-model-grows-step-by-step-and-postgresql-enforces-it) | Accepted |
 | D26 | [Migrations with Alembic, applied by a prestart job](#d26--migrations-with-alembic-applied-by-a-prestart-job) | Accepted |
 | D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted |
 | D28 | [Tests run against a real PostgreSQL](#d28--tests-run-against-a-real-postgresql) | Accepted |
-| D29 | [One backend Dockerfile with a cached dependency layer and two targets](#d29--one-backend-dockerfile-with-a-cached-dependency-layer-and-two-targets) | Accepted, revised in Step 6 |
+| D29 | [One backend Dockerfile with a cached dependency layer and two targets](#d29--one-backend-dockerfile-with-a-cached-dependency-layer-and-two-targets) | Accepted, revised in Steps 6 and 8 |
 | D30 | [Sources are downloaded like a responsible crawler](#d30--sources-are-downloaded-like-a-responsible-crawler) | Accepted |
 | D31 | [Official data is read from the data inside official pages](#d31--official-data-is-read-from-the-data-inside-official-pages) | Accepted |
 | D32 | [The pipeline runs as recorded stages, behind small provider interfaces](#d32--the-pipeline-runs-as-recorded-stages-behind-small-provider-interfaces) | Accepted |
@@ -54,12 +54,17 @@ record supersedes the old one and both stay here.
 | D46 | [Audio: ElevenLabs MP3 at 128 kbps, mastered in one pass](#d46--audio-elevenlabs-mp3-at-128-kbps-mastered-in-one-pass) | Accepted |
 | D47 | [The worker: one polling loop, a short claim and a graceful stop](#d47--the-worker-one-polling-loop-a-short-claim-and-a-graceful-stop) | Accepted |
 | D48 | [When episodes are made, and how much they may spend](#d48--when-episodes-are-made-and-how-much-they-may-spend) | Accepted |
+| D49 | [The web app is served by FastAPI from the same image](#d49--the-web-app-is-served-by-fastapi-from-the-same-image) | Accepted |
+| D50 | [Two screens and a minimal custom player](#d50--two-screens-and-a-minimal-custom-player) | Accepted |
+| D51 | [Barça football and basketball are two sections of the catalogue](#d51--barça-football-and-basketball-are-two-sections-of-the-catalogue) | Accepted |
+| D52 | [Listening events: one heartbeat per 15-second slot actually played](#d52--listening-events-one-heartbeat-per-15-second-slot-actually-played) | Accepted |
+| D53 | [A fresh install shows the sample episode, without keys](#d53--a-fresh-install-shows-the-sample-episode-without-keys) | Accepted |
 
 ---
 
 ## D1 · Stack: FastAPI + PostgreSQL + React/TypeScript
 
-**Status:** Accepted · **Date:** 2026-09-26
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** The product needs a user-facing UI, a backend that pulls news and generates audio on
 a schedule, and an internal dashboard. Prosper's own stack is FastAPI, PostgreSQL and
@@ -81,6 +86,10 @@ tiny, and FastAPI runs plain `def` endpoints in a thread pool.
 **Evidence.** Prosper's job postings and its public OpenAPI document, which is served by FastAPI.
 PyPI (SQLModel 0.0.47, SQLAlchemy 2.1). The FastAPI SQL tutorial points to Alembic for
 production migrations.
+
+**Revised on 2026-09-29 (Step 8).** The web app uses shadcn/ui on Base UI (the CLI's current
+default style), React Router 8 in declarative mode, and Vitest only for the listening counter;
+type checking, ESLint, Prettier and the build cover the rest. See D49 and D50.
 
 ---
 
@@ -463,7 +472,7 @@ Evidence from the real runs on 2026-09-28:
 
 ## D8 · Internal dashboard: product and operations
 
-**Status:** Accepted · **Date:** 2026-09-26
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** The brief asks for "an internal dashboard that shows usage metrics to understand the
 product's success", and allows mocked data.
@@ -493,11 +502,14 @@ The data is synthetic and flagged as such. Real player events use the same table
 engagement metrics" (a stream is 60 seconds or more).
 [Amplitude on North Star metrics](https://amplitude.com/blog/product-north-star-metric).
 
+**Refined on 2026-09-29 (Step 8).** The listening events are defined in D52: one heartbeat per
+15-second slot actually played, and simulated data marked on the user rather than on each event.
+
 ---
 
 ## D9 · Frontend: a single-page app served by FastAPI
 
-**Status:** Accepted · **Date:** 2026-09-26
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** There are two audiences: listeners, who use the app, and the internal team, who use
 the dashboard.
@@ -517,6 +529,10 @@ with a one-off `npx openapi-typescript@7` run.
 **Evidence.** Vite and FastAPI documentation. `openapi-typescript` 7 declares a TypeScript 5 peer
 dependency, while the Vite template uses TypeScript 6, so a one-off `npx` run avoids an install
 conflict.
+
+**Built on 2026-09-29 (Step 8), see D49.** FastAPI serves the build with `app.frontend()`, which
+falls back to `index.html` only for browser navigations, and the image is built from the
+repository root with an allowlist `.dockerignore`.
 
 ---
 
@@ -834,7 +850,7 @@ therefore needs about 3,700 characters, and script length is planned from this f
 
 ## D19 · An episode is shorter rather than padded
 
-**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4), 2026-09-28 (Step 5)
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-27 (Step 4), 2026-09-28 (Step 5), 2026-09-29 (Step 8)
 
 **Context.** The user chooses an episode length, but some days bring little news for an interest.
 A model asked to fill a fixed length with thin material pads it out: it repeats itself or adds
@@ -882,6 +898,11 @@ Barça took 5 of the 8. Without roundups, a catch-up told only 2 of the EuroLeag
 limit was time, not material. The first real script came out at 2,956 of the 3,590 planned
 characters, about 4 of the 5 minutes: the writer reads "never pad" as leave to be short, which is
 tuned with the sample (Step 7).
+
+**Revised on 2026-09-29 (Step 8).** Barça football and basketball became two sections (D51), each
+with its own weight, so the quotient is now counted per block, with the same tie-break. With the
+sample's weights and news in all seven sections, the 5-minute allocation is unchanged (a test
+proves it).
 
 ---
 
@@ -971,7 +992,7 @@ The sample is the one episode the reviewers will listen to.
 
 ## D22 · The episode follows the listener's priorities
 
-**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-28 (Step 5)
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-28 (Step 5), 2026-09-29 (Step 8)
 
 **Context.** The listener's main interest can be a team, such as FC Barcelona, that plays in
 competitions covered by other interests: the EuroLeague, the Liga ACB and LaLiga. Without a rule,
@@ -1017,6 +1038,10 @@ first and basketball after, so the listener always knows which Barça is meant.
   it means. Time is still shared per interest (D19), so splitting a team does not give it more.
 - Data is matched to a team by exact official names, never as text: UEFA names the club
   "Barcelona", and "Barcelona" must not match "RCD Espanyol de Barcelona".
+
+**Revised on 2026-09-29 (Step 8).** A team is followed per sport (D51): each catalogue topic has
+one sport. The order is still derived from the weights and the order the sections were added,
+grouped by sport, and the app shows it as the pipeline computes it.
 
 ---
 
@@ -1325,7 +1350,7 @@ end of Step 4, the 52 tests took about 2.5 seconds.
 
 ## D29 · One backend Dockerfile with a cached dependency layer and two targets
 
-**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-29 (Step 6)
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-29 (Step 6), 2026-09-29 (Step 8)
 
 **Context.** `prestart`, the API and the worker share code. Rebuilds must be fast while developing,
 and reviewers only need Docker.
@@ -1374,6 +1399,10 @@ static ffmpeg binary copied from a third-party image (about a third of the size,
 binary from outside the distribution instead of Debian's signed, patched package). *Trade-off:* a
 few more lines of Dockerfile and two image names. Measured: `ffmpeg -version` in the worker image
 reports 7.1.5 from Debian 13, and an episode mastered with it measured −16.5 LUFS (target −16 ± 1).
+
+**Revised on 2026-09-29 (Step 8).** The build context is the repository root, with an allowlist
+`.dockerignore`; a `node:24-slim` stage builds the web app; and the image keeps the repository
+layout under `/app` (D49). The `api` image is 456 MB.
 
 ---
 
@@ -1854,7 +1883,7 @@ counters must separate real voice, cached segments and the development voice.
 
 ## D41 · Episodes can be regenerated as of a past moment
 
-**Status:** Accepted · **Date:** 2026-09-29
+**Status:** Accepted · **Date:** 2026-09-29 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** To judge a pipeline change, the author wanted the episode 14 script regenerated with
 the same date and the same news window, and compared with the original.
@@ -1884,6 +1913,9 @@ new results and standings enter a catch-up. Before the worker ingested anything 
 of the development database was taken and restored as a separate database. Running the same
 runner against it with `--as-of` reproduces the sample's inputs (D45). The alternative rejected
 above, a snapshot, became necessary once new rounds would be ingested; it needs no product code.
+
+**Note, 2026-09-29 (Step 8).** The app shows when an episode's news was selected (`news_as_of`),
+so a regenerated episode shows its past moment rather than the day it was generated (D53).
 
 ---
 
@@ -2359,6 +2391,254 @@ runs unattended.
 
 ---
 
+## D49 · The web app is served by FastAPI from the same image
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** The brief asks for a UI where the user sets their interests and customises the
+podcast. D1 and D9 chose a React SPA served by FastAPI. Step 8 had to decide how it is built,
+typed, served and shipped in Docker, so that a reviewer still only runs `docker compose up`.
+
+**Decision.**
+- **Stack (D1):** React 19, TypeScript, Vite 8, Tailwind 4 and shadcn/ui, created with the shadcn
+  CLI (Vite template, `base-nova` style on Base UI). TanStack Query for server state, React Router
+  8 in declarative mode, Vitest for the one piece of pure logic that needs tests (D52).
+- **Typed client:** `openapi-typescript@7` generates `src/api/schema.d.ts` from FastAPI's OpenAPI
+  document, run with `npx` (`npm run api:types`) and committed, so building the image needs no
+  running API. A thin `fetch` wrapper (`src/api/client.ts`) uses those types; it asks for JSON and
+  turns FastAPI errors (`detail` as text or as a validation list) into one message.
+- **Serving:** `app.frontend("/", directory=…)` (FastAPI 0.141). Its routes rank below the API:
+  a built file is served as is, and an unknown path falls back to `index.html` only for browser
+  navigations (`Accept: text/html`). Opening or refreshing `/settings` or `/internal` loads the
+  app, while an unknown `/api/…` fetch still gets a JSON 404. It is registered only if the build
+  exists, so tests and the Vite dev server still work.
+- **Docker:** the build context is the repository root, and a root `.dockerignore` is an
+  **allowlist** (`*`, then only `backend/app`, `backend/migrations`, `backend/pyproject.toml`,
+  `frontend` and `sample.mp3`), so `.env` and `data/` can never reach a build. A `node:24-slim`
+  stage runs `npm ci` and `npm run build` (type check included) and only `dist/` is copied into
+  the `api` image. The image keeps the repository layout under `/app` (`/app/backend`,
+  `/app/frontend/dist`, `/app/sample.mp3`), so one `ROOT` constant resolves the same paths inside
+  and outside Docker.
+- **Development:** `npm run dev` proxies `/api` to `http://127.0.0.1:8000` (not `localhost`,
+  which tries IPv6 first on Windows).
+
+**Alternatives considered.**
+- *`openapi-fetch`:* it would also type the paths, but it is one more dependency for about twelve
+  calls kept in one file.
+- *`StaticFiles` plus a catch-all route:* the manual version of what `app.frontend()` does, and
+  easy to get wrong for API 404s.
+- *A second build context (`additional_contexts`) instead of building from the root:* keeps
+  `backend/` as the context but is less familiar and still needs `sample.mp3`.
+- *A denylist `.dockerignore`:* a new file in the root would be sent by default.
+- *Committing `dist/`:* generated code in the repository, out of date after every change.
+
+**Trade-offs.**
+- The first `docker compose up` also installs npm packages and builds the web app (about a
+  minute, once; cached afterwards). The `api` image grows from 445 MB to 456 MB.
+- The generated types must be regenerated when the API changes; a CI job diffing them is a
+  future improvement.
+- No hot reload inside Docker; the Vite dev server provides it.
+
+**Evidence.** FastAPI 0.141.1's `_is_frontend_navigation_request` (read in its source) and three
+tests (`test_frontend.py`). Playwright with the system Chrome: `/`, `/settings`, `/internal` and
+an unknown path, opened directly and refreshed, on desktop and mobile: 16 of 16, with no console
+errors. JavaScript bundle: 388 KB, 124 KB gzipped. The template's `tsc --noEmit` checked nothing
+(a solution-style `tsconfig.json` with `"files": []`), so `typecheck` runs `tsc -b`.
+
+---
+
+## D50 · Two screens and a minimal custom player
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** A listener opens the app to hear today's episode, trust it and tune it. The owner
+approved a visual direction on a static mock before the screens were built.
+
+**Decision.**
+- **Episodes (`/`):** the show header with "Generate now" and the next scheduled time; the player
+  of the chosen episode; the episode list; then the transcript and its sources. The list is
+  polled every 3 seconds only while an episode is queued or in progress, and it shows the running
+  stage ("writing the script"), the reason of a skipped or failed episode, "Retry", and a hint to
+  start the worker if an episode stays queued for over a minute.
+- **"Generate now" knows before the click** (`GET /api/v1/generation`): without keys it is
+  disabled and says which key is missing; with the default test-tone voice (D48) it says so. The
+  API still enforces both.
+- **Settings (`/settings`):** the sections first (switch and weight per catalogue topic, own
+  keyword topics, and the running order computed by the API), saved as they change; then the show,
+  the two hosts and the schedule, saved with one button (`PUT`), with the API's validation message
+  shown when it rejects a field.
+- **Player:** play/pause, current time and length, and the **chapter track** as the progress bar
+  and the way to jump. Each chapter is a segment as wide as its duration and coloured by sport.
+  An invisible native range input sits over the segments: click, drag and keyboard work (arrows
+  jump 5 seconds). Nothing else: no speed, volume or download controls.
+- **Design:** one family, Archivo, with its width axis (condensed for titles, like broadcast
+  captions); ink `#16213a`, paper `#f6f7f9`, pitch green `#2e7d5b` for football, court orange
+  `#c9702c` for basketball. The colour means the sport everywhere: track, transcript, settings and
+  running order. Light theme only. Fonts are self-hosted (fontsource, OFL).
+- **Transcript and sources:** speaker names from the settings, audio tags removed, and each
+  citation (S3) linked to its source; only cited sources are listed, marked "Official data" or
+  "Official".
+
+**Alternatives considered.**
+- *The browser's `<audio controls>`:* simpler, but it looks different in every browser, clashes
+  with the dark player and cannot show chapters.
+- *Server-sent events or WebSockets for progress:* a live channel for a list that changes a few
+  times per episode; polling only while something runs is enough.
+- *Toasts for errors:* one more component; an inline alert next to the action is clearer.
+- *A dark mode:* the template's theme provider was about 150 lines for no product need.
+
+**Trade-offs.**
+- Host names come from the current settings: renaming a host later also renames them in old
+  transcripts (the script stores the role, not the name).
+- Polling costs a request every 3 seconds per open tab while an episode runs.
+- The chapter labels are hidden on narrow screens; the player then shows the current chapter.
+
+**Evidence.** Playwright runs against the real API: play sends a `play` event, 16 seconds of
+audio send one heartbeat; the arrow key jumps 5 seconds; clicks land in the right chapter (78.6 s
+→ 79 s after the 1 px thumb fix; 1–2 s early before it); keyboard focus is visible on the button
+and the track. Every settings action was exercised and the data restored. The pressed toggle
+state was invisible with the light palette, so `toggle.tsx` was adapted (pressed = ink).
+
+---
+
+## D51 · Barça football and basketball are two sections of the catalogue
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** FC Barcelona was one catalogue topic with two sports, which code split into a
+football block and a basketball block, sharing one weight. The owner wanted to follow each one on
+its own.
+
+**Decision.**
+- **Every catalogue topic has one sport** (`Topic.sport`). FC Barcelona becomes
+  `fc-barcelona-football` and `fc-barcelona-basketball`, the same keys its blocks already had, so
+  the sample's chapters and sources keep matching. Each section reads the club's official site
+  filtered to its sport and the competitions of its sport (LaLiga and the Champions League, or the
+  EuroLeague and the ACB).
+- **A data migration** turns each `fc-barcelona` interest into both sections, with the same
+  weight and the same creation time, so they stay next to each other. Its downgrade merges them
+  back without losing someone who follows only basketball. The limit goes from 6 to 8 interests
+  (the 7 topics plus one of the listener's own).
+- **Sharing airtime is per section** (D19): the D'Hondt quotient is counted per block, with the
+  same tie-break as before.
+- **The running order is derived, not chosen:** weight, then the order the sections were added,
+  grouped by sport (D22). `GET /api/v1/interests` returns the list in that order, computed by the
+  pipeline's own functions (`by_priority`, `sport_order`), so the app never shows an order the
+  episode does not follow.
+
+**Alternatives considered.**
+- *One topic with a sports option:* a new column and a more complex form for one club.
+- *Keeping the two sections as one "club" for airtime:* it would ignore the weights the listener
+  sets on each section.
+- *A manual order with up and down arrows:* a `position` column, an endpoint and changes in
+  selection, for control that weights already give.
+
+**Trade-offs.**
+- Two sections at high weight can take more airtime than the old single interest. With the
+  sample's weights and news in all seven sections, the 5-minute allocation is identical (a test
+  proves it); if a section had no news, its spare slot could go to a Barça section instead of a
+  competition.
+- The Monday snapshot used to reproduce the sample (D45) must be migrated after restoring it
+  (`alembic upgrade head`).
+
+**Evidence.** Tests for the new registry rule, the sample allocation and the data migration with
+real rows (a sabotaged migration fails it). The development database was migrated: the demo
+listener's order and chapters still match the sample.
+
+---
+
+## D52 · Listening events: one heartbeat per 15-second slot actually played
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** The product metrics (D8) need to know what was actually heard: a stream is at least
+60 seconds, an engaged listen at least 40 % of the episode, counting distinct 15-second slots of
+the episode (`position // 15`).
+
+**Decision.**
+- **Table `listen_events`:** `episode_id` (cascade delete, indexed), `kind` (`play` or
+  `heartbeat`), `position_seconds` (a check keeps it non-negative) and `created_at`. It stores no
+  `user_id` (the listener is the episode's owner) and no `is_synthetic` flag (simulated data will
+  be marked on the user, Step 9), so nothing is stored twice. Confirmed by the owner.
+- **`POST /api/v1/episodes/{id}/listen-events`** returns 204, only for completed episodes (409
+  otherwise). The path is kebab-case, like Prosper's `rerun-failed` (D12).
+- **The player's counter** (`src/lib/listening.ts`) splits the episode into the same fixed
+  15-second slots the dashboard counts. It remembers which whole seconds of the episode have
+  actually played (a set, so a second is remembered once), and when all the seconds of a slot
+  have played, allowing one missing second, it sends **one** heartbeat with the **slot's start**
+  (0, 15, 30…). Only steps of up to 5 seconds count as playback, and a seek resets the baseline,
+  so it measures audio time (double speed counts the same) and pauses and jumps add nothing.
+  `play` is sent when playback starts.
+- **Replays never count twice:** remembered seconds are not added again, two partial passes over
+  the same seconds do not complete a slot, and a slot is sent once per session. Across sessions
+  the same slot arrives with the same position, and the dashboard counts distinct slots.
+
+**Alternatives considered.**
+- *A heartbeat every 15 seconds of wall clock* (the Step 1 wording): at double speed it would
+  skip half the slots.
+- *A heartbeat every 15 seconds of accumulated audio, with the current position* (the first
+  version in this step): after a jump back, its positions no longer line up with the fixed slots,
+  so replaying could add one extra slot, and two partial passes could add up to a full one.
+- *A heartbeat on entering each slot:* pressing play and pausing at once would count a slot.
+- *Batching events or `sendBeacon` on page close:* more robust delivery, more code; not needed
+  for a demo with simulated volumes.
+
+**Trade-offs.** Only whole slots count: a slot heard for 10 of its 15 seconds adds nothing, so a
+session can under-count by up to one slot at each end. Events are fire-and-forget: one lost on a
+network error is not retried. Without authentication, any client could post events;
+authentication is a future improvement (D27).
+
+**Evidence.** Eight Vitest tests: slots reported once with their start, audio time at double
+speed, a replayed slot counted once, two partial passes not adding up, a small jump, big or
+backward steps, a pause, and the shorter last slot. Removing the sent-slot memory fails six of
+them, including the replay test; removing `seek()` fails the small-jump test. In the browser,
+with the real audio: after 16.19 s, one heartbeat at 0; after jumping back to 0.47 s and playing
+the same slot to 16.12 s, no new heartbeat.
+---
+
+## D53 · A fresh install shows the sample episode, without keys
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** A reviewer runs `docker compose up` with no `.env`. The app must show something real
+at once, without spending, and only generating should need keys (D10).
+
+**Decision.**
+- **Prestart seeds the demo listener only on a fresh database:** "Barça & Beyond" (5 minutes,
+  casual, daily at 07:00 Madrid time), its seven sections in the sample's order, and the sample
+  episode. If the demo user already exists, nothing is touched, so a deleted interest does not come
+  back on restart.
+- **The episode comes from the real one:** `scripts/export_sample.py` exports episode 23 (title,
+  times, script, chapters, plan and its 35 linked sources) to `app/sample_episode.json`, and the
+  seed copies `sample.mp3` into the data volume (`demo/sample.mp3`).
+- **Sources are stored without the outlets' text:** headline, link, date and outlet only; the text
+  of official *data* (results, standings, fixtures, written by this project's code from official
+  data) is kept. Selection ignores any article without text, so a seeded source can never back a
+  claim.
+- **`news_as_of`:** the API exposes when an episode's news was selected (the plan's
+  `selected_at`). The sample was generated on Tuesday as of Monday 23:32 in Madrid (D41), and its
+  script says "It's Monday", so the app shows that moment instead of the generation time.
+
+**Alternatives considered.**
+- *A database dump as the seed:* opaque and tied to one schema version.
+- *Storing the full article text:* it redistributes outlets' content in a public repository.
+- *A special demo mode:* a code path production never takes.
+- *Reseeding on every start:* it would undo the reviewer's own changes.
+
+**Trade-offs.**
+- A seeded news URL is never rewritten by ingestion (news rows are insert-only), so that article
+  stays without text. Those stories are days old by the time anyone runs the app.
+- The export must be run again if the sample changes. Ids differ from the development database
+  (the sample is episode 1 in a fresh install, 23 here).
+
+**Evidence.** Three tests (`test_demo.py`): a fresh database serves the sample through the API
+with chapters in the running order and the same audio bytes; seeding twice changes nothing; an
+existing demo user is left alone. A clean run of the public copy with no `.env` showed the
+sample, 4,698,322 audio bytes (the size of `sample.mp3`), the missing key, and a 503 on
+"Generate".
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -2369,6 +2649,8 @@ useful.
 |---|---|---|---|---|
 | `documentation-and-adrs` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) · MIT · 42.6K installs | 2, kept in 3 to 5 | Writing these records | The Status and Date fields, and the rule to supersede records instead of deleting them. It adapted to this file's existing format. |
 | `fastapi` | [fastapi/fastapi](https://github.com/fastapi/fastapi/tree/master/fastapi/.agents/skills/fastapi) · MIT · official · 10.7K installs | 4 | Current conventions from FastAPI's maintainers | `Annotated` dependency aliases (`SessionDep`, `CurrentUser`), return types instead of `response_model`, the prefix and tags on each `APIRouter`, `def` endpoints for blocking database code, and when a `yield` dependency closes. Its SQLModel, uv and ty advice was set aside on purpose (D1, D15). |
+| `shadcn` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui/tree/main/skills/shadcn) · MIT · official · 351K installs | 8 | Using shadcn/ui components the way their authors intend | Forms built from `FieldSet`, `Field` and `FieldLabel`; `ToggleGroup` for 2 to 7 options (length, tone, weight, days); `Badge` and `Alert` instead of custom markup; semantic colour tokens. Its preset name `base-nova` was out of date: the current CLI accepts `nova` and records `base-nova`. |
+| `frontend-design` | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) · 934K installs | 8 | A design direction that does not look templated | A token plan (palette, one type family, layout) reviewed against common generated looks; one bold element (the chapter track) with everything else quiet; self-critique from screenshots, which found the unreadable pressed state and the episode list lost below a long transcript. |
 
 **Evaluated and not installed:**
 - `github/awesome-copilot@create-architectural-decision-record` (MIT, 10.1K installs): it
@@ -2404,3 +2686,11 @@ useful.
   `affaan-m/ecc@docker-patterns` (12.4K installs) is generic and says nothing about signals or
   profiles. `github/awesome-copilot@multi-stage-dockerfile` (27.4K installs) is about compiling in
   one stage and shipping from another, while here the stages only split what each service needs.
+- Step 8: `shadcn` and `frontend-design` were installed (above). `vercel-labs/agent-skills@web-design-guidelines`
+  (680K installs) was left out by the owner; `vercel-react-best-practices` (753K) targets Next.js;
+  the TanStack Query skills are community-made with few installs (11.8K and 8.9K); and
+  `antfu/skills@vite` (36.6K) covers a configuration of a few lines. For visual checks,
+  `anthropics/skills@webapp-testing` and `microsoft/playwright-cli@playwright-cli` were read: the
+  first amounts to writing Python Playwright scripts, plus a server helper that Docker makes
+  unnecessary; the second is a 0.x CLI that grants itself shell permissions. Playwright's Python
+  API was used directly, with the system Chrome.

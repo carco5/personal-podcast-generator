@@ -20,6 +20,7 @@ from app.pipeline.selection import (
 from tests.fakes import FakeLlm, make_article, make_listener, make_run
 
 NOW = datetime(2026, 10, 1, 10, 0, tzinfo=UTC)
+BARCA = [("fc-barcelona-football", "high"), ("fc-barcelona-basketball", "high")]
 
 
 def ago(days: float) -> datetime:
@@ -123,26 +124,19 @@ def test_allocation_covers_every_interest_then_follows_weight() -> None:
     assert [b.wanted for b in small] == [1, 7]
 
 
-def test_a_split_interest_shares_its_weight() -> None:
-    def block(key: str, weight: str, available: int, interest: str = "") -> Block:
-        return Block(key, key, weight, stories=list(range(available)), interest=interest)
-
+def test_the_sample_allocation_is_unchanged_by_the_split() -> None:
+    weights = ["high", "high", "medium", "medium", "medium", "medium", "low"]
     blocks = [
-        block("barca-football", "high", 10, "barca"),
-        block("barca-basketball", "high", 10, "barca"),
-        block("euroleague", "medium", 10),
-        block("acb", "medium", 10),
-        block("nba", "low", 1),
+        Block(str(n), "", weight, stories=list(range(10))) for n, weight in enumerate(weights)
     ]
-    allocate(blocks, 8)
 
-    assert [b.wanted for b in blocks] == [2, 1, 2, 2, 1]
+    allocate(blocks, story_slots(5))
+
+    assert [b.wanted for b in blocks] == [2, 1, 1, 1, 1, 1, 1]
 
 
 def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
-    user, podcast, interests = make_listener(
-        session, [("fc-barcelona", "high"), ("euroleague", "medium")]
-    )
+    user, podcast, interests = make_listener(session, [*BARCA, ("euroleague", "medium")])
     scenario(session)
     run = make_run(session, user, podcast, interests, now=NOW)
 
@@ -158,7 +152,7 @@ def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
     ]
     assert sorted(blocks["euroleague"]) == ["Paris beat Partizan", "Real Madrid injury"]
     football, basketball, euroleague = run.episode.plan["blocks"]
-    assert (football["sport"], football["title"]) == ("football", "FC Barcelona · football")
+    assert (football["sport"], football["title"]) == ("football", "FC Barcelona football")
     assert football["context_ids"] == []
     assert basketball["context_ids"] == euroleague["context_ids"]
     assert len(basketball["context_ids"]) == 2
@@ -170,9 +164,7 @@ def test_catch_up_assigns_each_story_to_one_block(session: Session) -> None:
 
 
 def test_select_saves_the_editorial_plan_and_the_shares(session: Session) -> None:
-    user, podcast, interests = make_listener(
-        session, [("fc-barcelona", "high"), ("euroleague", "medium")]
-    )
+    user, podcast, interests = make_listener(session, [*BARCA, ("euroleague", "medium")])
     scenario(session)
     run = make_run(session, user, podcast, interests, now=NOW)
 
@@ -189,9 +181,7 @@ def test_select_saves_the_editorial_plan_and_the_shares(session: Session) -> Non
 
 
 def test_an_invalid_editorial_plan_is_retried_then_replaced(session: Session) -> None:
-    user, podcast, interests = make_listener(
-        session, [("fc-barcelona", "high"), ("euroleague", "medium")]
-    )
+    user, podcast, interests = make_listener(session, [*BARCA, ("euroleague", "medium")])
     scenario(session)
 
     def broken(prompt: str) -> EditorialPlan:
@@ -230,7 +220,7 @@ def test_the_same_article_under_two_urls_is_kept_once(session: Session) -> None:
 
 
 def test_club_results_are_guaranteed_by_code(session: Session) -> None:
-    user, podcast, interests = make_listener(session, [("fc-barcelona", "high")])
+    user, podcast, interests = make_listener(session, BARCA)
     scenario(session)
     make_article(
         session,
@@ -307,6 +297,17 @@ def test_update_covers_only_what_is_new_and_untold(session: Session) -> None:
 
 def test_nothing_new_skips_the_episode(session: Session) -> None:
     user, podcast, interests = make_listener(session, [("nba", "high")])
+    llm = FakeLlm()
+    run = make_run(session, user, podcast, interests, llm=llm, now=NOW)
+
+    with pytest.raises(EpisodeSkipped, match="No fresh news for your interests"):
+        select_stories(run)
+    assert llm.prompts == []
+
+
+def test_an_article_without_text_is_never_a_candidate(session: Session) -> None:
+    user, podcast, interests = make_listener(session, [("nba", "high")])
+    make_article(session, "espn-nba", "Only a headline", ago(0.5), body="")
     llm = FakeLlm()
     run = make_run(session, user, podcast, interests, llm=llm, now=NOW)
 

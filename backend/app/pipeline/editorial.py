@@ -160,7 +160,7 @@ def next_games(
         )
         mine = [game for game in games if {game[1], game[2]} & names]
         pick = next((game for game in mine if game[:3] not in told), None)
-        topic = CATALOG.get(block.get("interest", ""))
+        topic = CATALOG.get(block["key"])
         if not mine and (topic is None or topic.kind != "team"):
             rivals = table_neighbours(block, metas, names)
             pick = next((game for game in games if {game[1], game[2]} & rivals), None)

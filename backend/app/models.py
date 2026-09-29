@@ -35,6 +35,7 @@ Language = Literal["en", "es"]
 Stage = Literal["fetch", "select", "write", "check", "voice", "master"]
 StageStatus = Literal["in_progress", "completed", "failed"]
 Provider = Literal["openai", "elevenlabs"]
+ListenKind = Literal["play", "heartbeat"]
 
 # Deterministic constraint names, so migrations can refer to them.
 NAMING_CONVENTION = {
@@ -233,4 +234,22 @@ class ProviderCall(Base):
             name="usage",
         ),
         Index(None, "stage_run_id"),
+    )
+
+
+class ListenEvent(Base):
+    __tablename__ = "listen_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    episode_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("episodes.id", ondelete="CASCADE")
+    )
+    kind: Mapped[str] = mapped_column(Text)
+    position_seconds: Mapped[float] = mapped_column(Double)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        allowed_values("kind", ListenKind),
+        CheckConstraint("position_seconds >= 0", name="position"),
+        Index(None, "episode_id"),
     )

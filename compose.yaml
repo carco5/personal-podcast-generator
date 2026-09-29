@@ -1,6 +1,7 @@
 x-backend: &backend
   build:
-    context: ./backend
+    context: .
+    dockerfile: backend/Dockerfile
     target: api
   image: podcast-backend
   env_file:
@@ -50,7 +51,8 @@ services:
   worker:
     <<: *backend
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: worker
     image: podcast-worker
     profiles: ["worker"]

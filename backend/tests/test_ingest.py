@@ -11,7 +11,13 @@ from app.models import Article, Episode, EpisodeArticle, User
 from app.sources.base import Source, SourceItem
 from app.sources.http import Fetcher
 from app.sources.ingest import ingest
-from app.sources.registry import BARCA_HEADLINE, SOURCE_NAMES, TOPIC_FEEDS, catalogue_sources
+from app.sources.registry import (
+    BARCA_HEADLINE,
+    SOURCE_NAMES,
+    TOPIC_FEEDS,
+    catalogue_sources,
+    source_sport,
+)
 
 
 class FakeSource(Source):
@@ -149,6 +155,16 @@ def test_every_catalogue_topic_is_wired_to_existing_sources() -> None:
     assert {key for feed in TOPIC_FEEDS.values() for key in feed.sources} <= set(with_key)
     assert not any(key.startswith("guardian") for key in without_key)
     assert set(with_key) | {"guardian-search"} == set(SOURCE_NAMES)
+
+
+def test_team_sections_follow_the_competitions_of_their_sport() -> None:
+    for key, feed in TOPIC_FEEDS.items():
+        topic = CATALOG[key]
+        assert (topic.kind == "team") == bool(feed.competitions), key
+        assert all(CATALOG[c].sport == topic.sport for c in feed.competitions), key
+        if feed.headline is None:
+            assert all(source_sport(source, "") == topic.sport for source in feed.sources), key
+    assert TOPIC_FEEDS["fc-barcelona-basketball"].competitions == ("euroleague", "liga-acb")
 
 
 def test_team_headline_pattern() -> None:

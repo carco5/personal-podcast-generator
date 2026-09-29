@@ -28,8 +28,9 @@ def test_catalog_lists_the_topics(client: TestClient) -> None:
     topics = client.get("/api/v1/catalog").json()
 
     keys = {topic["key"] for topic in topics}
-    assert {"fc-barcelona", "euroleague", "liga-acb", "nba"} <= keys
+    assert {"fc-barcelona-football", "fc-barcelona-basketball", "euroleague", "nba"} <= keys
     assert {topic["kind"] for topic in topics} == {"team", "competition"}
+    assert {topic["sport"] for topic in topics} == {"football", "basketball"}
 
 
 def test_default_settings(client: TestClient) -> None:
@@ -70,4 +71,4 @@ def test_invalid_settings_are_rejected(client: TestClient, field: str, bad_value
     response = client.put("/api/v1/settings", json=body)
 
     assert response.status_code == 422
-    assert client.get("/api/v1/settings").json()["show_name"] == "Daily Briefing"
+    assert client.get("/api/v1/settings").json()["show_name"] == "Barça & Beyond"

@@ -9,7 +9,6 @@ from contextlib import AbstractContextManager, closing
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from types import FrameType
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -21,6 +20,7 @@ from app.models import Episode, Interest, PodcastSettings, ProviderCall, StageRu
 from app.pipeline.llm import Llm, OpenAILlm
 from app.pipeline.runner import finish, run_episode
 from app.pipeline.voice import ElevenLabsVoice, ToneVoice, Voice
+from app.schedule import latest_slot
 from app.sources.http import Fetcher
 from app.sources.ingest import ingest
 from app.sources.registry import catalogue_sources
@@ -34,18 +34,6 @@ STALE_AFTER = timedelta(minutes=30)
 BUDGET_WINDOW = timedelta(hours=24)
 
 INTERRUPTED = "Interrupted: the worker stopped while generating. Retry to resume where it stopped."
-
-
-def latest_slot(podcast: PodcastSettings, now: datetime) -> datetime | None:
-    zone = ZoneInfo(podcast.timezone)
-    today = now.astimezone(zone).date()
-    for days_back in range(8):
-        day = today - timedelta(days=days_back)
-        if day.isoweekday() in podcast.schedule_days:
-            slot = datetime.combine(day, podcast.schedule_time, tzinfo=zone)
-            if slot <= now:
-                return slot
-    return None
 
 
 def recover_stale(session: Session, now: datetime) -> list[int]:

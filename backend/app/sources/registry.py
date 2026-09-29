@@ -1,8 +1,8 @@
 import re
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from app.catalog import CATALOG, SPORTS, Sport
 from app.config import Settings
 from app.sources.acb import AcbCalendarSource
 from app.sources.base import Source
@@ -14,8 +14,6 @@ from app.sources.sitemaps import NewsSitemapSource
 from app.sources.uefa import UefaChampionsSource
 
 FCB_NOISE = re.compile(r"label\.aria")
-Sport = Literal["football", "basketball"]
-SPORTS: tuple[Sport, ...] = ("football", "basketball")
 UEFA_NOISE = re.compile(r"^Article (summary|top media content|body)$")
 
 
@@ -105,39 +103,41 @@ class TopicFeed(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     sources: tuple[str, ...]
-    sports: tuple[Sport, ...]
     headline: re.Pattern[str] | None = None
     data_names: frozenset[str] = frozenset()
     competitions: tuple[str, ...] = ()
 
 
 BARCA_HEADLINE = re.compile(r"\bBar[cç]a\b|\bFC Barcelona\b|(?<!Espanyol de )\bBarcelona\b")
+BARCA_NAMES = frozenset({"FC Barcelona", "Barça", "Barcelona"})
 
 TOPIC_FEEDS: dict[str, TopicFeed] = {
-    "fc-barcelona": TopicFeed(
+    "fc-barcelona-football": TopicFeed(
         sources=("fcbarcelona",),
-        sports=("football", "basketball"),
         headline=BARCA_HEADLINE,
-        data_names=frozenset({"FC Barcelona", "Barça", "Barcelona"}),
-        competitions=("euroleague", "liga-acb", "laliga", "champions-league"),
+        data_names=BARCA_NAMES,
+        competitions=("laliga", "champions-league"),
     ),
+    "fc-barcelona-basketball": TopicFeed(
+        sources=("fcbarcelona",),
+        headline=BARCA_HEADLINE,
+        data_names=BARCA_NAMES,
+        competitions=("euroleague", "liga-acb"),
+    ),
+    "laliga": TopicFeed(sources=("laliga-data", "guardian-laliga")),
+    "champions-league": TopicFeed(sources=("uefa-data", "uefa-news", "guardian-champions-league")),
     "euroleague": TopicFeed(
-        sources=("euroleague-api", "eurohoops-euroleague", "sportando-euroleague"),
-        sports=("basketball",),
+        sources=("euroleague-api", "eurohoops-euroleague", "sportando-euroleague")
     ),
-    "liga-acb": TopicFeed(sources=("acb-calendar", "acb-news"), sports=("basketball",)),
-    "nba": TopicFeed(sources=("espn-nba", "cbs-nba"), sports=("basketball",)),
-    "laliga": TopicFeed(sources=("laliga-data", "guardian-laliga"), sports=("football",)),
-    "champions-league": TopicFeed(
-        sources=("uefa-data", "uefa-news", "guardian-champions-league"), sports=("football",)
-    ),
+    "liga-acb": TopicFeed(sources=("acb-calendar", "acb-news")),
+    "nba": TopicFeed(sources=("espn-nba", "cbs-nba")),
 }
 
 
 def source_sport(source: str, url: str) -> Sport | None:
     if source == "fcbarcelona":
         return next((sport for sport in SPORTS if f"/{sport}/" in url), None)
-    for feed in TOPIC_FEEDS.values():
+    for key, feed in TOPIC_FEEDS.items():
         if feed.headline is None and source in feed.sources:
-            return feed.sports[0]
+            return CATALOG[key].sport
     return None

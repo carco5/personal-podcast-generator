@@ -1,0 +1,10 @@
+# Allowlist: only what the Dockerfile copies can reach the build (never .env or data/).
+*
+!backend/app
+!backend/migrations
+!backend/pyproject.toml
+!frontend
+!sample.mp3
+frontend/node_modules
+frontend/dist
+**/__pycache__

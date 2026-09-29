@@ -12,7 +12,17 @@ from pydantic import (
 )
 
 from app.catalog import CATALOG
-from app.models import EpisodeLength, EpisodeStatus, EpisodeTrigger, InterestKind, Tone, Weight
+from app.models import (
+    EpisodeLength,
+    EpisodeStatus,
+    EpisodeTrigger,
+    InterestKind,
+    ListenKind,
+    SourceKind,
+    Stage,
+    Tone,
+    Weight,
+)
 
 ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
 
@@ -116,6 +126,56 @@ class EpisodeRead(ReadModel):
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+    title: str | None
+    duration_seconds: float | None
+    stage: Stage | None = None
+    news_as_of: datetime | None = None
+
+
+class Chapter(BaseModel):
+    key: str
+    title: str
+    start_seconds: float
+
+
+class Turn(BaseModel):
+    speaker: Literal["host", "analyst"]
+    text: str
+    source_ids: list[str]
+
+
+class Section(BaseModel):
+    key: str
+    title: str
+    turns: list[Turn]
+
+
+class CitedSource(BaseModel):
+    source_id: str
+    section: str
+    outlet: str
+    official: bool
+    kind: SourceKind
+    title: str
+    url: str
+    published_at: datetime
+
+
+class EpisodeDetail(EpisodeRead):
+    chapters: list[Chapter]
+    transcript: list[Section]
+    sources: list[CitedSource]
+
+
+class ListenEventCreate(BaseModel):
+    kind: ListenKind
+    position_seconds: float = Field(ge=0, le=3600)
+
+
+class Generation(BaseModel):
+    missing_keys: list[str]
+    voice: Literal["tone", "elevenlabs"]
+    next_episode_at: datetime | None
 
 
 class EpisodePage(BaseModel):

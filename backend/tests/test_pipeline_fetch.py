@@ -10,13 +10,13 @@ from tests.fakes import make_listener, make_run
 
 
 def test_a_team_brings_the_sources_of_its_competitions(session: Session) -> None:
-    user, podcast, interests = make_listener(session, [("fc-barcelona", "high")])
+    user, podcast, interests = make_listener(session, [("fc-barcelona-basketball", "high")])
     run = make_run(session, user, podcast, interests)
 
     sources = set(episode_sources(run))
 
-    assert {"fcbarcelona", "euroleague-api", "acb-calendar", "acb-news", "laliga-data"} <= sources
-    assert "uefa-news" in sources and "espn-nba" not in sources
+    assert {"fcbarcelona", "euroleague-api", "acb-calendar", "acb-news"} <= sources
+    assert not {"laliga-data", "uefa-news", "espn-nba"} & sources
     assert not any(key.startswith("guardian") for key in sources)
 
 

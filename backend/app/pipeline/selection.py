@@ -7,13 +7,13 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel
 from sqlalchemy import delete, select
 
-from app.catalog import CATALOG
+from app.catalog import CATALOG, SPORTS, Sport
 from app.models import Article, Episode, EpisodeArticle, Interest
 from app.pipeline.common import EpisodeSkipped, Run
 from app.pipeline.editorial import plan_episode
 from app.pipeline.fetch import episode_sources
 from app.sources.base import spoken_date
-from app.sources.registry import SPORTS, TOPIC_FEEDS, Sport, TopicFeed, source_sport
+from app.sources.registry import TOPIC_FEEDS, TopicFeed, source_sport
 
 CHARS_PER_SECOND = 12.4
 INTRO_CHARS = 300
@@ -36,10 +36,6 @@ class Block:
     stories: list[Article] = field(default_factory=list)
     context: list[Article] = field(default_factory=list)
     wanted: int = 0
-    interest: str = ""
-
-    def __post_init__(self) -> None:
-        self.interest = self.interest or self.key
 
 
 class PickedStory(BaseModel):
@@ -84,7 +80,7 @@ def select_stories(run: Run) -> dict:
     since = previous_selection(run)
     told = told_articles(run)
     pool = run.session.scalars(
-        select(Article).where(Article.source.in_(episode_sources(run)))
+        select(Article).where(Article.source.in_(episode_sources(run)), Article.body != "")
     ).all()
     pool, told = unique_articles(list(pool), told)
     blocks = build_blocks(run.interests, pool, since, run.now, told)
@@ -155,39 +151,36 @@ def build_blocks(
     now: datetime,
     told: set[int],
 ) -> list[Block]:
-    ordered = sorted(interests, key=lambda i: (-WEIGHT_POINTS[i.weight], i.created_at, i.id))
     blocks: list[Block] = []
     taken: set[int] = set()
-    for interest in ordered:
+    for interest in by_priority(interests):
         mine = interest_pool(interest, pool)
-        for key, title, sport, items in by_sport(interest, mine):
-            stories = [a for a in fresh_stories(items, since, now, told) if a.id not in taken]
-            taken |= {article.id for article in stories}
-            context = context_sources(items, told)
-            blocks.append(
-                Block(key, title, interest.weight, sport, stories, context, interest=interest.topic)
-            )
+        stories = [a for a in fresh_stories(mine, since, now, told) if a.id not in taken]
+        taken |= {article.id for article in stories}
+        context = context_sources(mine, told)
+        title, sport = describe_interest(interest)
+        blocks.append(Block(interest.topic, title, interest.weight, sport, stories, context))
     return blocks
 
 
-def by_sport(
-    interest: Interest, items: list[Article]
-) -> list[tuple[str, str, Sport | None, list[Article]]]:
+def by_priority(interests: list[Interest]) -> list[Interest]:
+    return sorted(interests, key=lambda i: (-WEIGHT_POINTS[i.weight], i.created_at, i.id))
+
+
+def describe_interest(interest: Interest) -> tuple[str, Sport | None]:
     if interest.kind == "custom":
-        return [(interest.topic, interest.topic, None, items)]
-    name = CATALOG[interest.topic].name
-    sports = TOPIC_FEEDS[interest.topic].sports
-    if len(sports) == 1:
-        return [(interest.topic, name, sports[0], items)]
-    return [
-        (
-            f"{interest.topic}-{sport}",
-            f"{name} · {sport}",
-            sport,
-            [a for a in items if source_sport(a.source, a.url) == sport],
-        )
-        for sport in sports
-    ]
+        return interest.topic, None
+    topic = CATALOG[interest.topic]
+    return topic.name, topic.sport
+
+
+def running_order(interests: list[Interest]) -> list[Interest]:
+    by_key = {interest.topic: interest for interest in interests}
+    blocks = []
+    for interest in by_priority(interests):
+        title, sport = describe_interest(interest)
+        blocks.append(Block(interest.topic, title, interest.weight, sport))
+    return [by_key[block.key] for block in sport_order(blocks)]
 
 
 def sport_order(blocks: list[Block]) -> list[Block]:
@@ -202,7 +195,8 @@ def interest_pool(interest: Interest, pool: list[Article]) -> list[Article]:
     if interest.kind == "custom":
         return [a for a in pool if a.kind == "article" and mentions(a, interest.keywords)]
     feed = TOPIC_FEEDS[interest.topic]
-    own = [article for article in pool if article.source in feed.sources]
+    sport = CATALOG[interest.topic].sport
+    own = [a for a in pool if a.source in feed.sources and source_sport(a.source, a.url) == sport]
     if feed.headline is None:
         return own
     league = {key for c in feed.competitions for key in TOPIC_FEEDS[c].sources}
@@ -280,15 +274,11 @@ def allocate(blocks: list[Block], slots: int) -> None:
         if slots > 0 and block.stories:
             block.wanted, slots = 1, slots - 1
 
-    def quotient(block: Block) -> float:
-        used = sum(b.wanted for b in blocks if b.interest == block.interest)
-        return WEIGHT_POINTS[block.weight] / (used + 1)
-
     while slots > 0:
         open_blocks = [b for b in blocks if b.stories and b.wanted < len(b.stories)]
         if not open_blocks:
             return
-        best = max(open_blocks, key=lambda b: (quotient(b), -b.wanted))
+        best = max(open_blocks, key=lambda b: (WEIGHT_POINTS[b.weight] / (b.wanted + 1), -b.wanted))
         best.wanted, slots = best.wanted + 1, slots - 1
 
 
@@ -334,7 +324,7 @@ def pick_stories(run: Run, blocks: list[Block]) -> dict[str, list[tuple[list[Art
 def club_results(
     block: Block, stories: list[tuple[list[Article], str]]
 ) -> list[tuple[list[Article], str]]:
-    topic = CATALOG.get(block.interest)
+    topic = CATALOG.get(block.key)
     results = [a for a in block.stories if a.kind == "data" and a.meta.get("type") == "result"]
     if topic is None or topic.kind != "team" or not results or not stories:
         return stories
@@ -409,7 +399,6 @@ def save_plan(
                 "title": block.title,
                 "weight": block.weight,
                 "sport": block.sport,
-                "interest": block.interest,
                 "chars": len(stories) * STORY_CHARS,
                 "stories": stories,
                 "context_ids": context,

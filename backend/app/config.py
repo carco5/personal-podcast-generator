@@ -6,9 +6,11 @@ from typing import Literal
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The repository root; the Docker image keeps the same layout under /app.
+ROOT = Path(__file__).resolve().parents[2]
 # The repo-level .env. In Docker it does not exist: Compose injects the variables, and
 # pydantic-settings ignores a missing env file.
-ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+ENV_FILE = ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -27,7 +29,7 @@ class Settings(BaseSettings):
     openai_judge_model: str = "gpt-6-luna"
 
     # Audio files (episodes and the voice cache), outside git.
-    data_dir: Path = ENV_FILE.parent / "data"
+    data_dir: Path = ROOT / "data"
 
     # ElevenLabs default voices: George (host) and Sarah (analyst).
     elevenlabs_host_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"

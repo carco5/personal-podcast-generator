@@ -30,3 +30,50 @@ def test_downgrade_then_upgrade(engine: Engine) -> None:
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
         command.upgrade(config, "head")
+
+
+def test_barca_data_migration_splits_and_merges_back(engine: Engine) -> None:
+    def rows() -> list[tuple]:
+        return connection.exec_driver_sql(
+            "SELECT user_id, topic, weight, created_at FROM interests ORDER BY user_id, id"
+        ).all()
+
+    def add_user(email: str) -> int:
+        sql = f"INSERT INTO users (email, name) VALUES ('{email}', 'Fan') RETURNING id"
+        return connection.exec_driver_sql(sql).scalar_one()
+
+    with engine.connect() as connection:
+        transaction = connection.begin()
+        config = alembic_config()
+        config.attributes["connection"] = connection
+        command.downgrade(config, "e3d606ed94cd")
+        fan = add_user("fan@example.com")
+        connection.exec_driver_sql(
+            "INSERT INTO interests (user_id, kind, topic, weight) VALUES "
+            f"({fan}, 'catalog', 'fc-barcelona', 'high'), ({fan}, 'catalog', 'nba', 'low')"
+        )
+        joined = rows()[0][3]
+
+        command.upgrade(config, "b07edd4c08e6")
+
+        after = rows()
+        assert [row[:3] for row in after] == [
+            (fan, "fc-barcelona-football", "high"),
+            (fan, "nba", "low"),
+            (fan, "fc-barcelona-basketball", "high"),
+        ]
+        assert after[0][3] == after[2][3] == joined
+        hoops = add_user("hoops@example.com")
+        connection.exec_driver_sql(
+            "INSERT INTO interests (user_id, kind, topic, weight) VALUES "
+            f"({hoops}, 'catalog', 'fc-barcelona-basketball', 'medium')"
+        )
+
+        command.downgrade(config, "e3d606ed94cd")
+
+        assert [row[:3] for row in rows()] == [
+            (fan, "fc-barcelona", "high"),
+            (fan, "nba", "low"),
+            (hoops, "fc-barcelona", "medium"),
+        ]
+        transaction.rollback()

@@ -146,14 +146,10 @@ TEAM = frozenset({"FC Barcelona", "Barça", "Barcelona"})
 MONDAY = date(2026, 9, 28)
 SAMPLE = {
     "blocks": [
-        {
-            "key": "fc-barcelona-football",
-            "interest": "fc-barcelona",
-            "context_ids": ["S5", "S6", "S7", "S8"],
-        },
-        {"key": "laliga", "interest": "laliga", "context_ids": ["S6", "S8"]},
-        {"key": "champions-league", "interest": "champions-league", "context_ids": ["S5", "S7"]},
-        {"key": "nba", "interest": "nba", "context_ids": []},
+        {"key": "fc-barcelona-football", "context_ids": ["S5", "S6", "S7", "S8"]},
+        {"key": "laliga", "context_ids": ["S6", "S8"]},
+        {"key": "champions-league", "context_ids": ["S5", "S7"]},
+        {"key": "nba", "context_ids": []},
     ]
 }
 METAS = {
@@ -206,12 +202,8 @@ def test_without_a_team_game_next_up_is_a_direct_rival() -> None:
     }
     plan = {
         "blocks": [
-            {
-                "key": "fc-barcelona-football",
-                "interest": "fc-barcelona",
-                "context_ids": ["S6", "S9"],
-            },
-            {"key": "laliga", "interest": "laliga", "context_ids": ["S6", "S9"]},
+            {"key": "fc-barcelona-football", "context_ids": ["S6", "S9"]},
+            {"key": "laliga", "context_ids": ["S6", "S9"]},
         ]
     }
 
