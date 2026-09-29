@@ -16,6 +16,7 @@ ALLOWED_TAGS = ("excited", "laughs", "curious", "sarcastic")
 MAX_TAGS = 8
 MAX_WRITE_CHARS = 3_000
 WRITE_EFFORT = "low"
+CHARS_PER_TURN = 115
 
 
 class Turn(BaseModel):
@@ -78,11 +79,12 @@ def episode_source(source_id: str, article: Article, zone: ZoneInfo, today: date
     else:
         kind = "Official" if article.official else "Outlet"
     published = spoken_date(article.published_at.astimezone(zone).date())
+    header = article.title if article.kind == "data" else f"{article.title}\nPublished: {published}"
     return EpisodeSource(
         source_id,
         f"{kind} · {SOURCE_NAMES.get(article.source, article.source)}",
         article.language,
-        with_day_labels(f"{article.title}\nPublished: {published}\n{article.body}", today),
+        with_day_labels(f"{header}\n{article.body}", today),
         article.kind == "data",
     )
 
@@ -101,31 +103,36 @@ Tone: {tone}.
 
 Write from the PLAN: exactly its segments, in its order, with their keys, and only what it gives.
 - "intro": {host} opens with the plan's hook in one sentence, says which day it is ("It's
-  Monday"), welcomes the listener to {show} and introduces {host} and {analyst} by name. Tease
-  two or three stories; never list every section.
-- Each section tells its lead story in depth, in 3 to 5 turns, through its angle and key facts;
-  then its roundup, if any, in one line; then what comes next. A brief section gets one short
-  line.
+  Monday"), welcomes the listener to {show} and introduces {host} and {analyst} by name;
+  {analyst} says a short hello. Tease two or three stories; never list every section.
+- Each section tells its lead story in depth through its angle and key facts, in about the
+  number of turns the plan gives it; then its roundup, if any, in one line; then what comes next.
+  A brief section gets one short line.
+- Open each section with a short, natural intro, the way radio hosts do ("And to finish, one big
+  story from the NBA."). Never narrate transitions or the running order ("a clear jump from the
+  pitch to the court", "before Dubai, let's check the ACB", "first, let's look at").
 - When the listener's team has a section per sport, name the team's side once at the start of
   that section ("Barça's basketball team"), and then just the team's name.
 - A competition section follows its angle: what matters there to the listener's team. Never
-  repeat what an earlier section told; refer back to it instead.
-- Bridge sections with the plan's threads when one fits; otherwise with a short, plain handoff.
-  No pun-based transitions. The move from one sport to the other is the biggest jump: make it
-  clear and smooth.
+  repeat what an earlier section told; refer back to it instead. Use the plan's threads as hooks
+  when one fits.
+- Mention each upcoming game once in its section and once in the closing, no more.
 - "closing": what to watch next, starting with the nearest game of the listener's team, then a
-  short sign-off with the show's name.
-Each segment has a target length in characters: aim for it, within 10%. Reach it with the plan's
-facts and your analysis of them: never pad and never invent.
+  short sign-off with the show's name; {analyst} says goodbye too.
+Each segment has a target length: aim for its characters and turns, within 10%. Reach it with the
+plan's facts and your analysis of them: never pad and never invent.
 
 Conversation:
 - Every turn answers, builds on or pushes back on the one before: if two turns could swap places
   without losing meaning, rewrite them.
 - Mix short reactions (3 to 8 words) with explanations of one to three sentences. At most two
-  numbers per turn; a score counts as one.
-- In each section the host asks at least one genuine question, never one the host obviously
-  knows the answer to.
-- One or two moments of mild disagreement in the episode.
+  numbers per turn; a score counts as one. Use only stats that make a point; never read out a
+  stat line ("1 rebound and 1 assist").
+- The host asks at most one or two questions per section, never one the host obviously knows the
+  answer to; the host's other turns react, add a fact or push back. Sometimes {analyst} asks
+  {host}. Each host says the other's name at most twice in the episode, besides the intro.
+- {analyst} takes clear positions, like a fan who knows the game, with at most one hedge in the
+  whole episode ("it's early", "only one game"). One or two moments of mild disagreement.
 - Opinions, reactions, feelings and predictions are welcome, but they never add facts.
 - At most two stock openers in the whole episode ("Absolutely", "Exactly", "Great point",
   "You're spot on") and at most three light spoken markers ("I mean", "honestly", "look").
@@ -188,6 +195,10 @@ def instructions(run: Run) -> str:
     )
 
 
+def target(chars: int) -> str:
+    return f"about {chars} characters, about {max(1, round(chars / CHARS_PER_TURN))} turns"
+
+
 def cited(fact: dict) -> str:
     return f"{fact['text']} (sources {', '.join(fact['source_ids'])})"
 
@@ -197,13 +208,11 @@ def prompt(run: Run, sources: dict[str, EpisodeSource]) -> str:
     editorial = plan["editorial"]
     used: set[str] = set(editorial["hook"]["source_ids"])
     lines = [f"[CTX] {sources['CTX'].text}", "", "PLAN", f"Hook: {cited(editorial['hook'])}"]
-    lines.append(f'- Segment "intro": about {plan["intro_chars"]} characters.')
+    lines.append(f'- Segment "intro": {target(plan["intro_chars"])}.')
     blocks = {block["key"]: block for block in plan["blocks"]}
     for section in editorial["sections"]:
         block = blocks[section["key"]]
-        lines.append(
-            f'- Segment "{block["key"]}" ({block["title"]}): about {block["chars"]} characters.'
-        )
+        lines.append(f'- Segment "{block["key"]}" ({block["title"]}): {target(block["chars"])}.')
         if section["brief"]:
             lines.append("  Brief: one short line.")
         if section["major"]:
@@ -219,7 +228,7 @@ def prompt(run: Run, sources: dict[str, EpisodeSource]) -> str:
         if section["next_up"]:
             lines.append(f"  Next up: {cited(section['next_up'])}")
             used |= set(section["next_up"]["source_ids"])
-    lines.append(f'- Segment "closing": about {plan["closing_chars"]} characters.')
+    lines.append(f'- Segment "closing": {target(plan["closing_chars"])}.')
     if editorial["threads"]:
         lines.append("Threads:")
         for thread in editorial["threads"]:

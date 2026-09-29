@@ -1822,6 +1822,70 @@ runs, the plan carries the given time, and later news stays out.
 
 ---
 
+## D42 · The plan keeps the source's framing, and a rejected turn is repaired, not the episode
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (what fails an episode), D37
+
+**Context.** The second regeneration of episode 14 failed on one sentence: "Kevin Punter led
+Barça with 19 points". The source said Punter was Barça's best player by valuation (PIR 22), with
+19 points; it did not say he was the top scorer. The editorial plan had changed the meaning while
+rephrasing, the sentence read well even to a person, the writer copied it, and the judge rejected
+it, rightly. One unsupported turn failed a whole episode whose other turns were checked and
+correct.
+
+**Decision.**
+- **The plan keeps the source's framing.** The editor is told that a fact is stated exactly as
+  its source frames it (a best player by rating is not a top scorer; "reportedly" stays), with at
+  most two numbers per fact and three facts per section (five for a major story), so it gives
+  points, not stat lines.
+- **A rejected turn is repaired, not the episode.** Problems are split in two. Problems of the
+  whole script (segment order, too many tags, the hook or a lead story not covered, more than 25%
+  over the length) still ask for one full rewrite and fail the episode if they stay. Problems of
+  one turn (a number or a score not in its cited sources, a verdict from the judge) no longer do:
+  only those turns are rewritten, with their reasons, their sources and the turns around them,
+  and the judge checks only those turns again. A turn that is still wrong is removed and
+  recorded. The episode fails only if a section loses its lead story, or a segment is left
+  empty. An unsupported fact still never reaches the voice: it is fixed or its turn goes.
+
+**Alternatives considered.**
+- *Checking the plan with the judge before writing:* one more paid call on every episode, for a
+  problem the turn check already catches.
+- *A second full rewrite:* about $0.04 more each time, and a full rewrite brings new errors: the
+  Punter sentence itself survived one.
+- *Removing rejected turns without trying to repair them:* it would drop facts that only needed
+  rewording, such as "Punter was Barça's best performer, with 19 points".
+
+**Trade-offs.** A removed turn can leave a small gap in the conversation. The repair adds a small
+paid call (a few turns and their sources) and a partial judgement, only when a turn fails.
+
+**Evidence.** Episode 18: plan fact "Kevin Punter led Barça with 19 points, one rebound, one
+assist and a PIR of 22" [S14]; source S14: "Best player of each team by valuation (PIR): Kevin
+Punter (FC Barcelona): 19 points, 1 rebound, 1 assist, PIR 22". Unit tests cover a repaired turn,
+a removed one (for each failing verdict), a lost lead story that fails the episode, and a
+whole-script problem that still fails after the rewrite.
+
+**Revised elsewhere on the same day, after episode 18:**
+- *D37:* the roundup keeps at most two results, and only those that matter to the listener's team
+  (a direct rival, an upcoming opponent) or are truly outstanding. Select passes one more
+  candidate per section to the plan, so a club's report or the freshest story is not lost for
+  lack of a slot: episode 18 missed the club's report of the 119–101 win, and the NBA section
+  took a Friday story over Monday's media day.
+- *D39:* each section's target is given in characters and in turns, computed by code (about 115
+  characters per turn, a target between the 93 of episode 14 and the 146 to 171 of episodes 13,
+  16 and 18). Episode 18 came out at 129% of the target. New rules: a short radio-style intro to
+  each section instead of narrated transitions; at most one or two questions from the host per
+  section; each host says the other's name at most twice; clear positions, one hedge per episode;
+  each upcoming game once in its section and once in the closing; only stats that make a point;
+  the analyst also says hello and goodbye.
+- *D40:* the lint checks the hedges, the host's questions, the names and the analyst in the
+  intro and the closing.
+- Official data no longer shows a "Published" date: for data, that date is when it was stored, not
+  what it describes, and a table refreshed on the 29th read as "tomorrow" in a run as of the 28th.
+- LaLiga player names that are abbreviations with a dot ("J.david") are replaced by the full name
+  ("Jonathan David").
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the

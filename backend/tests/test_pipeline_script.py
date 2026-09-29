@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models import EpisodeArticle
 from app.pipeline.checks import Judgement, check_script
 from app.pipeline.common import Run, StageFailed
+from app.pipeline.repair import Repairs
 from app.pipeline.script import Script, write_script
 from tests.fakes import FakeLlm, approve_all, make_article, make_listener, make_run
 from tests.test_pipeline_checks import GOOD, PLAN, SOURCES
@@ -54,10 +55,12 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     instructions = llm.instructions[0]
     assert "[CTX] Today is Thursday 1 October 2026 [say: today]." in prompt
     assert "Hook: Barça won in Dubai. (sources S1)" in prompt
-    assert 'Segment "euroleague" (EuroLeague): about 230 characters.' in prompt
+    assert 'Segment "euroleague" (EuroLeague): about 230 characters, about 2 turns.' in prompt
     assert "    - Punter scored 19 points. (sources S1)" in prompt
     assert "  Roundup: S2" in prompt
     assert "Friday 2 October 2026 [say: tomorrow]: Besiktas host FC Barcelona" in prompt
+    assert "Besiktas host FC Barcelona.\nEuroLeague Round 3 fixtures." in prompt
+    assert "Published: Thursday 1 October 2026 [say: today]" in prompt
     assert "[S2] Official · Liga ACB" in prompt
     assert '"Test Show"' in instructions
     assert "introduces George and Sarah by name" in instructions
@@ -83,54 +86,9 @@ def test_a_supported_script_passes(session: Session) -> None:
     assert '"triple" is a three-pointer' in llm.instructions[0]
 
 
-def test_a_flagged_turn_is_rewritten_once(session: Session) -> None:
-    verdicts = iter([judge({"euroleague.2": "unsupported"}), judge()])
-    llm = FakeLlm(
-        {
-            Judgement: lambda prompt: next(verdicts)(prompt),
-            Script: lambda prompt: Script.model_validate(GOOD),
-        }
-    )
-    run = planned_run(session, llm)
-    run.episode.script = GOOD
-
-    details = check_script(run)
-
-    assert [schema for schema, _ in llm.prompts] == [Judgement, Script, Judgement]
-    rewrite_prompt = llm.prompts[1][1]
-    assert "YOUR PREVIOUS SCRIPT" in rewrite_prompt
-    assert "euroleague.2: unsupported: fake" in rewrite_prompt
-    assert len(details["rounds"]) == 2 and details["rounds"][1]["problems"] == []
-
-
-@pytest.mark.parametrize(
-    "verdict", ["unsupported", "contradicted", "overstated", "misattributed", "wrong_time"]
-)
-def test_a_second_judge_failure_fails_the_episode(session: Session, verdict: str) -> None:
-    llm = FakeLlm(
-        {
-            Judgement: judge({"euroleague.3": verdict}),
-            Script: lambda prompt: Script.model_validate(GOOD),
-        }
-    )
-    run = planned_run(session, llm)
-    run.episode.script = GOOD
-
-    with pytest.raises(StageFailed, match="failed twice") as failure:
-        check_script(run)
-
-    assert len(failure.value.details["rounds"]) == 2
-    assert f"euroleague.3: {verdict}" in failure.value.details["rounds"][1]["problems"][0]
-
-
-def test_the_first_round_judges_even_with_code_problems(session: Session) -> None:
+def test_flagged_turns_are_repaired_not_the_whole_script(session: Session) -> None:
     verdicts = iter([judge({"euroleague.3": "unsupported"}), judge()])
-    llm = FakeLlm(
-        {
-            Judgement: lambda prompt: next(verdicts)(prompt),
-            Script: lambda prompt: Script.model_validate(GOOD),
-        }
-    )
+    llm = FakeLlm({Judgement: lambda prompt: next(verdicts)(prompt)})
     run = planned_run(session, llm)
     bad = Script.model_validate(GOOD).model_dump()
     bad["segments"][1]["turns"][1]["text"] = "Kevin Punter scored 21 points."
@@ -138,17 +96,50 @@ def test_the_first_round_judges_even_with_code_problems(session: Session) -> Non
 
     details = check_script(run)
 
-    assert details["rounds"][0]["judged"] is True
-    assert [schema for schema, _ in llm.prompts] == [Judgement, Script, Judgement]
-    rewrite_prompt = llm.prompts[1][1]
-    assert "the numbers ['21']" in rewrite_prompt
-    assert "euroleague.3: unsupported: fake" in rewrite_prompt
-    assert details["rounds"][1]["problems"] == []
+    assert [schema for schema, _ in llm.prompts] == [Judgement, Repairs, Judgement]
+    repair_prompt = llm.prompts[1][1]
+    assert "the numbers ['21']" in repair_prompt
+    assert "unsupported: fake" in repair_prompt
+    rejudged = llm.prompts[2][1].split("TURNS")[1]
+    assert "[euroleague.2]" in rejudged and "[euroleague.3]" in rejudged
+    assert "[euroleague.1]" not in rejudged
+    assert details["repaired"] == ["euroleague.2", "euroleague.3"] and details["removed"] == []
+    fixed = Script.model_validate(run.episode.script)
+    assert fixed.segments[1].turns[1].text == "That's the one to watch."
 
 
-def test_the_second_round_skips_the_judge_after_code_problems(session: Session) -> None:
+@pytest.mark.parametrize(
+    "verdict", ["unsupported", "contradicted", "overstated", "misattributed", "wrong_time"]
+)
+def test_a_turn_that_stays_wrong_is_removed(session: Session, verdict: str) -> None:
+    llm = FakeLlm({Judgement: judge({"euroleague.3": verdict})})
+    run = planned_run(session, llm)
+    run.episode.script = GOOD
+
+    details = check_script(run)
+
+    assert [removed["turn"] for removed in details["removed"]] == ["euroleague.3"]
+    assert verdict in details["removed"][0]["problems"][0]
+    turns = Script.model_validate(run.episode.script).segments[1].turns
+    assert len(turns) == len(GOOD["segments"][1]["turns"]) - 1
+
+
+def test_losing_a_lead_story_fails_the_episode(session: Session) -> None:
+    flags = {"euroleague.1": "unsupported", "euroleague.2": "unsupported"}
+    llm = FakeLlm({Judgement: judge(flags)})
+    run = planned_run(session, llm)
+    run.episode.script = GOOD
+
+    with pytest.raises(StageFailed, match="the lead story was lost") as failure:
+        check_script(run)
+
+    removed = [item["turn"] for item in failure.value.details["removed"]]
+    assert removed == ["euroleague.1", "euroleague.2"]
+
+
+def test_a_script_problem_is_rewritten_and_fails_if_it_stays(session: Session) -> None:
     bad = Script.model_validate(GOOD).model_dump()
-    bad["segments"][1]["turns"][1]["text"] = "Kevin Punter scored 21 points."
+    bad["segments"].reverse()
     llm = FakeLlm({Judgement: judge(), Script: lambda prompt: Script.model_validate(bad)})
     run = planned_run(session, llm)
     run.episode.script = bad
@@ -158,13 +149,14 @@ def test_the_second_round_skips_the_judge_after_code_problems(session: Session) 
 
     assert failure.value.details["rounds"][1]["judged"] is False
     assert [schema for schema, _ in llm.prompts] == [Judgement, Script]
+    assert "segments must be exactly" in llm.prompts[1][1]
 
 
 def test_a_turn_the_judge_skips_is_a_problem(session: Session) -> None:
     def lazy_judge(prompt: str) -> Judgement:
         return Judgement.model_validate({"verdicts": []})
 
-    llm = FakeLlm({Judgement: lazy_judge, Script: lambda prompt: Script.model_validate(GOOD)})
+    llm = FakeLlm({Judgement: lazy_judge})
     run = planned_run(session, llm)
     run.episode.script = GOOD
 

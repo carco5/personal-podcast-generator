@@ -35,9 +35,12 @@ def match(number: int, home: str, away: str, score: tuple[int, int] | None, day:
 
 def event(kind: str, club: str, player: str, clock: int, assist: str | None = None) -> dict:
     collection = "goal" if kind in ("Goal", "Own", "Penalty Goal") else "booking"
+    person = {"nickname": player}
+    if player == "J.david":
+        person["name"] = "Jonathan David"
     return {
         "match_event_kind": {"name": kind, "collection": collection},
-        "lineup": {"team": {"id": len(club)}, "person": {"nickname": player}},
+        "lineup": {"team": {"id": len(club)}, "person": person},
         "time": clock,
         "assist": {"person": {"nickname": assist}} if assist else None,
     }
@@ -72,7 +75,7 @@ def fake_laliga() -> FakeWeb:
             f"{BASE}/results/2026-27/gameweek-7": next_page(
                 {
                     "matches": [
-                        match(1, "Sevilla FC", "FC Barcelona", (1, 4), "2026-09-19"),
+                        match(1, "Sevilla FC", "FC Barcelona", (2, 4), "2026-09-19"),
                         match(2, "CA Osasuna", "Rayo Vallecano", (1, 1), "2026-09-19"),
                     ]
                 }
@@ -89,6 +92,7 @@ def fake_laliga() -> FakeWeb:
                         event("Goal", "FC Barcelona", "Raphinha", 52, "Lamine Yamal"),
                         event("Own", "Sevilla FC", "Badé", 80),
                         event("Penalty Goal", "FC Barcelona", "Lewandowski", 88),
+                        event("Goal", "Sevilla FC", "J.david", 90),
                     ]
                 }
             ),
@@ -102,9 +106,9 @@ def test_laliga_results_standings_and_next_matchday() -> None:
 
     assert bodies[0] == (
         "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: "
-        "FC Barcelona beat Sevilla FC 4–1 away. FC Barcelona goals: Raphinha 2 (22', 52'), "
+        "FC Barcelona beat Sevilla FC 4–2 away. FC Barcelona goals: Raphinha 2 (22', 52'), "
         "Lewandowski 1 (88' penalty). Assists: Christensen 1, Lamine Yamal 1. Sevilla FC goals: "
-        "Fofana 1 (19'). Assists: Felix 1. Own goals: Badé (80')."
+        "Fofana 1 (19'), Jonathan David 1 (90'). Assists: Felix 1. Own goals: Badé (80')."
     )
     assert bodies[1].endswith("CA Osasuna and Rayo Vallecano drew 1–1.")
     assert items[2].title == "LaLiga standings after Matchday 7"

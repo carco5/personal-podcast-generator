@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from app.models import Language
 from app.pipeline.common import Run, StageFailed
 from app.pipeline.days import MONTHS
+from app.pipeline.repair import remove_turns, repair_turns
 from app.pipeline.script import (
     ALLOWED_TAGS,
     MAX_TAGS,
@@ -50,8 +51,16 @@ STOCK_OPENER = re.compile(
 SPOKEN_MARKER = re.compile(
     r"\b(?:i mean|honestly)\b|(?:^|[.!?]\s)(?:\[\w+\]\s*)?look,", re.IGNORECASE
 )
+HEDGE = re.compile(
+    r"\b(?:it's early|it is early|early days|too early|only one game|just one game|one game"
+    r"|small sample|only an opener)\b",
+    re.IGNORECASE,
+)
 MAX_OPENERS = 2
 MAX_MARKERS = 3
+MAX_HEDGES = 1
+MAX_HOST_QUESTIONS = 2
+MAX_NAME_MENTIONS = 2
 MAX_NUMBERS_PER_TURN = 2
 SECTION_CAP = 1.5
 LENGTH_BAND = 0.10
@@ -105,43 +114,93 @@ Explain every verdict other than supported or opinion in one sentence.
 
 def check_script(run: Run) -> dict:
     rounds: list[dict] = []
+    names = tuple(host["name"] for host in run.podcast.hosts)
     for attempt in (1, 2):
         sources = script_sources(run)
         script = Script.model_validate(run.episode.script)
         plan = run.episode.plan
-        problems = code_problems(script, plan, sources)
-        judged = attempt == 1 or not problems
+        hard = order_problems(script, plan)
+        issues: dict[str, list[str]] = {}
+        if not hard:
+            hard = script_problems(script, plan)
+            issues = turn_issues(script, sources)
+        judged = attempt == 1 or not hard
         if judged:
-            problems += judge_problems(run, script, sources)
-        style = style_problems(script, plan) + length_problems(script, plan)
-        rounds.append({"problems": problems, "judged": judged, "style": style})
-        if not problems and (not style or attempt == 2):
-            return {"rounds": rounds, "warnings": style}
-        if attempt == 1:
-            write_script(run, problems + style)
-    first = "; ".join(rounds[-1]["problems"][:3])
-    raise StageFailed(f"check: the script failed twice ({first})", {"rounds": rounds})
+            for turn_id, problems in judge_issues(run, script, sources).items():
+                issues.setdefault(turn_id, []).extend(problems)
+        style = style_problems(script, plan, names) + length_problems(script, plan)
+        turn_list = [f"{turn_id}: {p}" for turn_id, problems in issues.items() for p in problems]
+        rounds.append({"problems": hard + turn_list, "judged": judged, "style": style})
+        if attempt == 1 and (hard or style):
+            write_script(run, hard + turn_list + style)
+            continue
+        break
+    if hard:
+        first = "; ".join(hard[:3])
+        raise StageFailed(f"check: the script failed twice ({first})", {"rounds": rounds})
+    details: dict = {"rounds": rounds, "warnings": style}
+    if issues:
+        details |= surgical_repair(run, script, issues, sources, details)
+    return details
 
 
-def code_problems(script: Script, plan: dict, sources: dict[str, EpisodeSource]) -> list[str]:
-    problems: list[str] = []
+def surgical_repair(
+    run: Run,
+    script: Script,
+    issues: dict[str, list[str]],
+    sources: dict[str, EpisodeSource],
+    details: dict,
+) -> dict:
+    fixed = repair_turns(run, script, issues, sources)
+    still = {tid: p for tid, p in turn_issues(fixed, sources).items() if tid in issues}
+    for turn_id, problems in judge_issues(run, fixed, sources, only=set(issues)).items():
+        still.setdefault(turn_id, []).extend(problems)
+    removed = [{"turn": turn_id, "problems": problems} for turn_id, problems in still.items()]
+    if still:
+        fixed = remove_turns(fixed, list(still))
+    run.episode.script = fixed.model_dump()
+    run.session.flush()
+    outcome = {"repaired": sorted(issues), "removed": removed}
+    lost = lead_problems(fixed, run.episode.plan)
+    if lost:
+        raise StageFailed(f"check: {'; '.join(lost[:3])}", {**details, **outcome})
+    return outcome
+
+
+def order_problems(script: Script, plan: dict) -> list[str]:
     expected = ["intro", *[block["key"] for block in plan["blocks"]], "closing"]
     keys = [segment.key for segment in script.segments]
     if keys != expected:
         return [f"The segments must be exactly {expected}, in that order; got {keys}."]
-    tags = 0
+    return []
+
+
+def turn_issues(script: Script, sources: dict[str, EpisodeSource]) -> dict[str, list[str]]:
+    issues = {}
+    allowed = set(sources)
     for segment in script.segments:
-        allowed = allowed_ids(segment.key, plan, sources)
         for number, turn in enumerate(segment.turns, start=1):
-            where = f"{segment.key} turn {number}"
-            tags += len(TAG.findall(turn.text))
-            problems += [
-                f"{where}: {p}" for p in turn_problems(turn.text, turn.source_ids, allowed, sources)
-            ]
+            found = turn_problems(turn.text, turn.source_ids, allowed, sources)
+            if found:
+                issues[f"{segment.key}.{number}"] = found
+    return issues
+
+
+def script_problems(script: Script, plan: dict) -> list[str]:
+    problems = []
+    tags = sum(len(TAG.findall(t.text)) for s in script.segments for t in s.turns)
     if tags > MAX_TAGS:
         problems.append(f"The script has {tags} audio tags; the maximum is {MAX_TAGS}.")
-    problems += structure_problems(script, plan)
-    return problems
+    return problems + structure_problems(script, plan)
+
+
+def code_problems(script: Script, plan: dict, sources: dict[str, EpisodeSource]) -> list[str]:
+    order = order_problems(script, plan)
+    if order:
+        return order
+    issues = turn_issues(script, sources)
+    turn_list = [f"{turn_id}: {p}" for turn_id, problems in issues.items() for p in problems]
+    return turn_list + script_problems(script, plan)
 
 
 def allowed_ids(key: str, plan: dict, sources: dict[str, EpisodeSource]) -> set[str]:
@@ -208,12 +267,35 @@ def structure_problems(script: Script, plan: dict) -> list[str]:
     return problems
 
 
-def style_problems(script: Script, plan: dict) -> list[str]:
+def lead_problems(script: Script, plan: dict) -> list[str]:
+    problems = [f"{s.key}: every turn was removed" for s in script.segments if not s.turns]
+    cited = {s.key: {sid for t in s.turns for sid in t.source_ids} for s in script.segments}
+    for section in plan["editorial"]["sections"]:
+        if not section["brief"] and not cited[section["key"]] & set(section["lead_ids"]):
+            problems.append(f"{section['key']}: the lead story was lost in the repair")
+    return problems
+
+
+def style_problems(script: Script, plan: dict, names: tuple[str, ...] = ()) -> list[str]:
     problems: list[str] = []
-    openers = markers = 0
+    openers = markers = hedges = mentions = 0
     shares = {block["key"]: block["chars"] for block in plan["blocks"]}
+    named = re.compile(rf"\b(?:{'|'.join(map(re.escape, names))})\b") if names else None
     for segment in script.segments:
+        questions = sum(t.text.count("?") for t in segment.turns if t.speaker == "host")
+        if segment.key not in ("intro", "closing") and questions > MAX_HOST_QUESTIONS:
+            problems.append(
+                f"{segment.key}: the host asks {questions} questions; at most "
+                f"{MAX_HOST_QUESTIONS}, the other turns react, add a fact or push back."
+            )
+        if segment.key in ("intro", "closing") and all(
+            t.speaker != "analyst" for t in segment.turns
+        ):
+            problems.append(f"{segment.key}: the analyst must speak here too (hello or goodbye).")
         for number, turn in enumerate(segment.turns, start=1):
+            hedges += len(HEDGE.findall(turn.text))
+            if named and segment.key != "intro":
+                mentions += len(named.findall(turn.text))
             where = f"{segment.key} turn {number}"
             if FULL_DATE.search(turn.text):
                 problems.append(f"{where}: say the day as its source labels it, never a full date.")
@@ -243,6 +325,15 @@ def style_problems(script: Script, plan: dict) -> list[str]:
     if markers > MAX_MARKERS:
         problems.append(
             f"{markers} spoken markers (I mean, honestly, look); at most {MAX_MARKERS}."
+        )
+    if hedges > MAX_HEDGES:
+        problems.append(
+            f"{hedges} hedges (it's early, only one game…); at most {MAX_HEDGES}: take positions."
+        )
+    if mentions > 2 * MAX_NAME_MENTIONS:
+        problems.append(
+            f"The hosts say each other's names {mentions} times after the intro; at most "
+            f"{MAX_NAME_MENTIONS} each."
         )
     return problems
 
@@ -337,11 +428,14 @@ def score_pairs(text: str) -> set[tuple[int, int]]:
     return {(int(a), int(b)) for a, b in SCORE.findall(text)}
 
 
-def judge_prompt(script: Script, sources: dict[str, EpisodeSource]) -> tuple[list[str], str]:
+def judge_prompt(
+    script: Script, sources: dict[str, EpisodeSource], only: set[str] | None = None
+) -> tuple[list[str], str]:
     turns = {
         f"{segment.key}.{number}": turn
         for segment in script.segments
         for number, turn in enumerate(segment.turns, start=1)
+        if only is None or f"{segment.key}.{number}" in only
     }
     lines = ["SOURCES"]
     for source in sources.values():
@@ -352,8 +446,10 @@ def judge_prompt(script: Script, sources: dict[str, EpisodeSource]) -> tuple[lis
     return list(turns), "\n".join(lines)
 
 
-def judge_problems(run: Run, script: Script, sources: dict[str, EpisodeSource]) -> list[str]:
-    turn_ids, prompt = judge_prompt(script, sources)
+def judge_issues(
+    run: Run, script: Script, sources: dict[str, EpisodeSource], only: set[str] | None = None
+) -> dict[str, list[str]]:
+    turn_ids, prompt = judge_prompt(script, sources, only)
     judgement, call = run.llm.parse(
         model=run.config.openai_judge_model,
         instructions=JUDGE_INSTRUCTIONS.format(glossary=SPANISH_GLOSSARY),
@@ -363,11 +459,11 @@ def judge_problems(run: Run, script: Script, sources: dict[str, EpisodeSource]) 
     )
     run.calls.append(call)
     verdicts = {verdict.turn: verdict for verdict in judgement.verdicts}
-    problems = []
+    issues: dict[str, list[str]] = {}
     for turn_id in turn_ids:
         verdict = verdicts.get(turn_id)
         if verdict is None:
-            problems.append(f"{turn_id}: the fact check did not review this turn")
+            issues[turn_id] = ["the fact check did not review this turn"]
         elif verdict.verdict not in ("supported", "opinion"):
-            problems.append(f"{turn_id}: {verdict.verdict}: {verdict.explanation}")
-    return problems
+            issues[turn_id] = [f"{verdict.verdict}: {verdict.explanation}"]
+    return issues

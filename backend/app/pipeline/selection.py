@@ -24,6 +24,7 @@ WEIGHT_POINTS = {"high": 3, "medium": 2, "low": 1}
 PREVIEW_CHARS = 300
 MAX_CANDIDATES = 25
 SELECT_EFFORT = "low"
+EXTRA_CANDIDATES = 1
 
 
 @dataclass
@@ -70,6 +71,8 @@ given, most important first.
   (league, European cup), most recent first. Its place in the block does not matter: an editor
   decides later which story leads.
 - Prefer substantial, fresh stories: results, signings, injuries, milestones, key statements.
+  Between stories of similar weight, prefer the freshest.
+- A club's official report of a game goes with that game's result, in the same story.
 - Skip previews of games that have already been played, promotional items and trivia.
 - Use only the ids listed in that block, each id at most once.
 - Give a one-sentence reason for each story.
@@ -294,7 +297,8 @@ def pick_stories(run: Run, blocks: list[Block]) -> dict[str, list[tuple[list[Art
     allowed: dict[str, set[str]] = {}
     lines: list[str] = []
     for block in blocks:
-        lines.append(f"\n## Block {block.key}: {block.title}. Pick up to {block.wanted} stories.")
+        limit = block.wanted + EXTRA_CANDIDATES
+        lines.append(f"\n## Block {block.key}: {block.title}. Pick up to {limit} stories.")
         allowed[block.key] = set()
         for article in candidates(block):
             temp_id = f"C{len(ids) + 1}"
@@ -313,15 +317,16 @@ def pick_stories(run: Run, blocks: list[Block]) -> dict[str, list[tuple[list[Art
     used: set[str] = set()
     chosen: dict[str, list[tuple[list[Article], str]]] = {}
     for block in blocks:
+        limit = block.wanted + EXTRA_CANDIDATES
         stories: list[tuple[list[Article], str]] = []
         picked = answered.get(block.key)
         for story in picked.stories if picked else []:
             valid = [t for t in story.source_ids if t in allowed[block.key] and t not in used]
-            if valid and len(stories) < block.wanted:
+            if valid and len(stories) < limit:
                 used |= set(valid)
                 stories.append(([ids[temp] for temp in valid], story.reason))
         if not stories:
-            stories = [([a], "Chosen by recency") for a in candidates(block)[: block.wanted]]
+            stories = [([a], "Chosen by recency") for a in candidates(block)[:limit]]
         chosen[block.key] = club_results(block, stories)
     return chosen
 

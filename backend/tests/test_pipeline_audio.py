@@ -80,7 +80,7 @@ def test_one_request_per_segment_split_between_turns() -> None:
     requests = voice_requests(script, VOICES)
 
     assert [r.segment for r in requests] == ["intro", "euroleague", "euroleague", "closing"]
-    assert [len(r.lines) for r in requests] == [2, 4, 1, 1]
+    assert [len(r.lines) for r in requests] == [2, 4, 1, 2]
     assert all(r.chars <= MAX_REQUEST_CHARS for r in requests)
 
 

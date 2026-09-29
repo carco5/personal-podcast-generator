@@ -92,7 +92,13 @@ GOOD = {
                 turn("host", "Next, Barça visit Besiktas tomorrow.", "S3"),
             ],
         },
-        {"key": "closing", "turns": [turn("host", "That's all for today. See you tomorrow!")]},
+        {
+            "key": "closing",
+            "turns": [
+                turn("host", "That's all for today. See you tomorrow!"),
+                turn("analyst", "Bye, everyone!"),
+            ],
+        },
     ],
 }
 
@@ -159,6 +165,23 @@ def test_each_style_rule_catches_its_sabotage(
     problems = style_problems(Script.model_validate(script), PLAN)
 
     assert any(expected in problem for problem in problems), problems
+
+
+def test_the_conversation_rules_catch_their_sabotage() -> None:
+    script = copy.deepcopy(GOOD)
+    script["segments"][1]["turns"] = [
+        turn("host", "Sarah, did Barça win? And Punter? And Dubai?", "S1"),
+        turn("analyst", "It's early, George, and it was only one game.", "S1"),
+        turn("host", "Sarah, Sarah, Sarah.", "S2", "S3"),
+    ]
+    script["segments"][2]["turns"] = [turn("host", "That's all for today.")]
+
+    problems = style_problems(Script.model_validate(script), PLAN, ("George", "Sarah"))
+
+    assert "2 hedges (it's early, only one game…); at most 1: take positions." in problems
+    assert any(p.startswith("euroleague: the host asks 3 questions") for p in problems)
+    assert any("say each other's names 5 times" in p for p in problems)
+    assert "closing: the analyst must speak here too (hello or goodbye)." in problems
 
 
 def test_stock_openers_and_markers_are_counted_per_episode() -> None:

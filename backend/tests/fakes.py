@@ -12,6 +12,7 @@ from app.models import Article, Episode, Interest, PodcastSettings, User
 from app.pipeline.checks import Judgement
 from app.pipeline.common import PaidCall, Run
 from app.pipeline.editorial import EditorialPlan
+from app.pipeline.repair import Repairs
 from app.pipeline.script import Script
 from app.pipeline.selection import Picks
 from app.pipeline.voice import ToneVoice, Voice
@@ -25,6 +26,7 @@ class FakeLlm:
             EditorialPlan: plan_first,
             Script: write_from_plan,
             Judgement: approve_all,
+            Repairs: repair_plainly,
         }
         self.responders = defaults | (responders or {})
         self.prompts: list[tuple[type, str]] = []
@@ -106,6 +108,12 @@ def write_from_plan(prompt: str) -> Script:
         if not segment["turns"]:
             segment["turns"] = [{"speaker": "host", "text": "Quiet day.", "source_ids": []}]
     return Script.model_validate({"title": "Test episode", "segments": segments})
+
+
+def repair_plainly(prompt: str) -> Repairs:
+    turn_ids = re.findall(r"^\[(\w[\w-]*\.\d+)\] ", prompt, re.MULTILINE)
+    turns = [{"turn": t, "text": "That's the one to watch.", "source_ids": []} for t in turn_ids]
+    return Repairs.model_validate({"turns": turns})
 
 
 def approve_all(prompt: str, flags: dict[str, str] | None = None) -> Judgement:

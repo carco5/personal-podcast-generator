@@ -87,15 +87,20 @@ def match_goals(fetcher: Fetcher, match: Match) -> list[Goal]:
         return []
     names = {side["id"]: team(side) for side in (match["home_team"], match["away_team"])}
     goals = []
+
+    def player(person: dict[str, Any]) -> str:
+        nickname = person.get("nickname") or ""
+        return (person.get("name") or nickname) if "." in nickname else nickname
+
     for event in events:
         kind = event["match_event_kind"]["name"]
         if event["match_event_kind"].get("collection") != "goal":
             continue
-        assist = (event.get("assist") or {}).get("person", {}).get("nickname") or ""
+        assist = player((event.get("assist") or {}).get("person") or {})
         goals.append(
             Goal(
                 team=names.get(event["lineup"]["team"]["id"], ""),
-                player=event["lineup"]["person"]["nickname"],
+                player=player(event["lineup"]["person"]),
                 minute=event["time"],
                 penalty="Penalty" in kind,
                 assist=assist,

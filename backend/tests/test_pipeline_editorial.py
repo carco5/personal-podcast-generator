@@ -81,8 +81,21 @@ def test_each_plan_rule_catches_its_sabotage() -> None:
     assert "barca: lead_ids must be source ids of its stories." in problems
     assert any(p.startswith("laliga: roundup_ids") for p in problems)
     assert "laliga: next_up must cite this section's context." in problems
-    assert "nba: give 1 to 5 key facts." in problems
+    assert "nba: give 1 to 3 key facts." in problems
     assert "hook must cite sources of this episode." in problems
+
+
+def test_a_fact_with_a_stat_line_is_rejected_and_major_allows_more_facts() -> None:
+    stat_line = {
+        "text": "Bacon had 24 points, five rebounds, four assists and a PIR of 31.",
+        "source_ids": ["S1"],
+    }
+    fact = {"text": "A fact.", "source_ids": ["S1"]}
+    problems = plan_problems(editorial(barca={"key_facts": [stat_line]}), PLAN, KNOWN)
+    assert any("has more than 2 numbers" in p for p in problems)
+
+    major = editorial(barca={"major": True, "key_facts": [fact] * 5})
+    assert plan_problems(major, PLAN, KNOWN) == []
 
 
 def test_a_grouped_story_can_be_split_into_lead_and_roundup() -> None:
