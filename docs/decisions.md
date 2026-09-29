@@ -1569,7 +1569,8 @@ its slash, and sponsor names such as "iLERNA Lleida".
 - football scores (both numbers 15 or less, which never happens in basketball) in words, British
   style: "three-one", "five-nil", "one-all", "nil-nil"; basketball scores as "89 to 82";
 - seasons as "2013-14", never "2013 to 14";
-- a slash between two words becomes a space;
+- a slash between two words becomes a space; a spaced dash becomes a comma and a spaced "&"
+  becomes "and" ("Barça & Beyond" is said "Barça and Beyond");
 - a pronunciation dictionary in code for names the voice gets wrong, the longest match first. It
   starts with "Bodø/Glimt" → "Bodo Glimt" and "iLERNA Lleida" → "Lleida", as fans say it. It
   grows when a name is heard wrong, and it applies to every episode, never to one.
@@ -1642,7 +1643,10 @@ Code keeps what code does best:
   the weight of each section (3, 2, 1), a `major` section counting 1.5 times, a `brief` one
   getting one line. The largest-remainder method makes the shares add up exactly;
 - select still groups a club's latest result in each competition into one story (D22), but no
-  longer puts it first: the plan decides what leads.
+  longer puts it first: the plan decides what leads. Code guarantees that grouping: if the
+  selection model leaves out one of those results, code adds it to the club's results story. In
+  test episodes 10 to 12 the model left out the 5–1 against Feyenoord, then the 89–82 against Efes,
+  even with the rule written as mandatory.
 
 The plan runs inside the select stage: select decides what is told, the plan how. The six stages
 of D3 and their database constraint stay as they are.
@@ -1657,7 +1661,11 @@ of D3 and their database constraint stay as they are.
   constraint for no gain in behaviour.
 
 **Trade-offs.** One more paid call per episode: about $0.04 to $0.045 with `gpt-6-sol`, measured
-(about 10,400 input tokens). The fallback plan is plainer than the model's.
+(about 10,400 input tokens). The fallback plan is plainer than the model's. Updated after episodes
+20 to 23: with one extra candidate per section the plan's prompt is 13,000 to 17,500 tokens, about
+$0.05 to $0.06 per call, and in those runs the first answer often failed validation (a fact with
+more than two numbers), so the plan cost about $0.10 to $0.12. A text-only episode costs $0.19 to
+$0.24 in all. Trimming what the plan reads is a future improvement.
 
 **Revised on 2026-09-29, after the first regeneration of episode 14 failed.**
 - The lead is given as source ids, not as a story number. Select sometimes groups several
@@ -1793,6 +1801,12 @@ judged by reading. Some warnings will reach the voice.
 86% (12), 90% (13) and 107% (14). One unit test per lint rule, one for each length case, and one
 for the per-episode counters.
 
+**Known issue, found with the sample (2026-09-29), to fix with the dashboard (Step 9), before
+delivery:** the voice
+counters include the free development voice, whose calls are recorded as "elevenlabs" at $0.
+Episode 23 reports 6,777 voice characters: 3,824 from the tone voice, plus 2,953 really billed. The
+counters must separate real voice, cached segments and the development voice.
+
 ---
 
 ## D41 · Episodes can be regenerated as of a past moment
@@ -1819,6 +1833,14 @@ across one.
 **Evidence.** Between the original episode 14 (2026-09-28, 21:32 UTC) and its regeneration, no
 LaLiga, Champions League, EuroLeague or ACB game was played. A unit test checks that no fetch
 runs, the plan carries the given time, and later news stays out.
+
+**Revised on 2026-09-29: a database snapshot keeps that moment across rounds.** `--as-of` filters
+news by publication time, but official data is the latest stored, and some items are rewritten in
+place: once EuroLeague round 2 is played, its fixtures item loses the games already played, and
+new results and standings enter a catch-up. Before the worker ingested anything new, a `pg_dump`
+of the development database was taken and restored as a separate database. Running the same
+runner against it with `--as-of` reproduces the sample's inputs (D45). The alternative rejected
+above, a snapshot, became necessary once new rounds would be ingested; it needs no product code.
 
 ---
 
@@ -1857,6 +1879,16 @@ correct.
 
 **Trade-offs.** A removed turn can leave a small gap in the conversation. The repair adds a small
 paid call (a few turns and their sources) and a partial judgement, only when a turn fails.
+
+**Future improvements, not required for delivery** (the product meets the brief without them, and the
+repair plus a read of every script cover the variability):
+- *Judging twice and keeping the majority:* the judge is itself a model and varies between runs. In
+  episode 13 it flagged two sentences that it approved on the retry.
+- *Guaranteeing the freshest story of each section in code:* the extra candidate usually lets it
+  through, but in episode 22 the selection model still chose an older NBA story.
+- *Counting a season ("2013/14") as one number* in the plan's two-numbers-per-fact rule: it caused
+  retries of the plan.
+- *Trimming what the plan reads* (D37).
 
 **Evidence.** Episode 18: plan fact "Kevin Punter led Barça with 19 points, one rebound, one
 assist and a PIR of 22" [S14]; source S14: "Best player of each team by valuation (PIR): Kevin
@@ -2023,6 +2055,102 @@ re-check of a completed episode end to end.
 
 ---
 
+## D45 · The sample is the best episode the product generated, and it can be reproduced
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** The brief asks for "a sample.mp3 file in the repo with the best podcast episode
+you've managed to generate using the product". Text is cheap to regenerate (cents); a
+five-minute voice take costs about 3,800 ElevenLabs characters, from a shared account whose limit
+cannot be read.
+
+**Decision.**
+- **Iterate on the text, voice it once.** Each weakness found by reading a script was fixed in the
+  product, as a general rule with a test in a commit, and the episode was generated again. Never
+  a script or audio edited by hand, and never code for one episode.
+- **Same moment for every version.** All regenerations ran as of Monday 28 September, 23:32 in
+  Madrid (`--as-of`, D41), so versions compare the same news and data. That is why the episode
+  says "It's Monday" and "tomorrow" means Tuesday the 29th.
+- **Chosen by reading.** Every fact of the finalists was checked against its sources, sentence by
+  sentence. Episode 23 won over episode 22 on links between sections and conversation, at the
+  cost of some striking details (Balcerowski's 21 points without a miss, the record since 1990):
+  at a fixed length, naturalness and data density compete.
+- **Voice preview first.** The intro and the section with the hardest names (871 characters) were
+  voiced through the product's own voice functions into its voice cache. After listening, the
+  full take ran with the runner and reused them, paying 2,953 more characters.
+- **Kept outside the cache:** the master, its nine segments, the script and a manifest (commit,
+  `--as-of`, chapters, loudness, characters and sha256 of each segment); and a database snapshot
+  (D41), so a later version can be compared on the same inputs. Only `sample.mp3` goes to the
+  repository.
+
+**Alternatives considered.**
+- *The first episode that passed the checks:* it read like a news wire.
+- *Editing a sentence by hand:* the sample would not be the product's output.
+- *Voicing every text candidate:* about $0.38 each, against cents for text.
+- *Generating the sample from the web app with the day's news:* a real test of the whole flow,
+  planned as a final validation, but not comparable with the earlier versions.
+
+**Trade-offs.** Twelve paid text runs in Step 7: eleven generations and one re-check, about $1.29
+of OpenAI, including three failed runs that each led to a general fix. Judging by reading is subjective; the checks guarantee facts, not
+style. The voice's naturalness is left as an improvement (D46).
+
+**Evidence.** Episodes 10 to 14 (28 September) and 16, 18, 20, 22 and 23 (29 September), with
+their scripts and costs in the work log. Episode 23: 3,781 characters, 293.6 seconds, −16.4 LUFS,
+all facts checked. The committed `sample.mp3` is byte-identical to the file the pipeline wrote
+(sha256 `874c74ee…`).
+
+---
+
+## D46 · Audio: ElevenLabs MP3 at 128 kbps, mastered in one pass
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Confirms:** D6
+
+**Context.** The master stage joins the voice segments with fixed silences and normalises the
+loudness to the podcast standard: −16 LUFS integrated, true peak at most −1 dBTP (D6). Two
+options were planned for testing with the sample: loudness normalisation in one or two passes,
+and a final MP3 at 128 or 192 kbps. While listening, the author also found Sarah's replies
+somewhat disconnected, so the pauses were measured.
+
+**Decision.**
+- **ElevenLabs delivers `mp3_44100_128`.** According to ElevenLabs' official agent skill, PCM needs
+  the Pro plan and MP3 at 192 kbps the Creator plan, and the key cannot read its plan (401).
+- **The master stays as it is:** one ffmpeg pass with `loudnorm` in its default dynamic mode
+  (−16 LUFS, true peak −1.5 dBTP, LRA 11), then MP3 at 128 kbps. The sample measures −16.4 LUFS
+  and −1.8 dBTP.
+- **The A/B test changed nothing,** because nothing improved. It was run with ffmpeg alone on the
+  same saved segments, so it cost no credits.
+  - Two passes would measure first and then apply one fixed gain. Here that gain (+0.72 dB) would
+    take the true peak from −0.43 to +0.29 dBTP, over the limit, so `loudnorm` falls back to
+    dynamic mode and the result measures the same.
+  - 192 kbps makes the file 50% larger. The source is already 128 kbps, so quality does not
+    come back.
+  - The product's own output was reproduced byte for byte.
+- **Pauses measured, not changed.**
+  - Speaker changes inside a segment last about 1 second (George to Sarah 1.01 s on average,
+    Sarah to George 0.99 s), and they come from ElevenLabs.
+  - The master only adds 0.4 s between segments, 0.5 s at the start and 1 s at the end, and it
+    does not lengthen any pause (−0.004 s on average).
+  - A speaker change across two segments therefore lasts about 0.45 s, half of one inside a
+    segment.
+  - Shortening those one-second gaps in the master is the first optional improvement: it is free,
+    it serves every episode, and it needs no new voice.
+
+**Alternatives considered.**
+- *Two passes with a limiter before them:* one more processing stage for no measured gain.
+- *192 kbps, or PCM from ElevenLabs:* larger for no gain, and PCM is not available to this key.
+- *Trimming the pauses now:* it changes the master and its chapter times, and the sample was
+  already approved. It is left for the end.
+
+**Trade-offs.** Dynamic normalisation adjusts the gain over time, which is slightly less faithful
+to the original dynamics than one fixed gain. The MP3 is encoded twice (by ElevenLabs and by the
+master), a loss that is hard to hear in speech. The one-second gaps between speakers stay.
+
+**Evidence.** ffmpeg `ebur128` measurements of the four variants, and `silencedetect` at −40 and
+−50 dB on the nine original segments and on the master. Speakers were told apart by pitch (George
+about 115 to 140 Hz, Sarah about 200 to 220 Hz); all 25 speaker changes of the script were found.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -2058,3 +2186,7 @@ useful.
   - `wshobson/agents@python-testing-patterns` (MIT, 33.6K installs): basic pytest patterns
     already in use;
   - `digitalsamba/claude-code-video-toolkit@ffmpeg` (MIT, 9.3K installs): built for video.
+- Step 7: no new skill; `fastapi` and `documentation-and-adrs` were kept. The official
+  `elevenlabs/skills@text-to-speech` was read again for its output formats (PCM needs the Pro plan,
+  MP3 at 192 kbps the Creator plan), which set the audio format (D46). It was not installed, for the
+  same reasons as in Step 3.
