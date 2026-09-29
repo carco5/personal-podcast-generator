@@ -25,11 +25,7 @@ def get_own_episode(session: Session, user: User, episode_id: int) -> Episode:
 
 
 def require_generation_keys(settings: Settings) -> None:
-    keys = {
-        "OPENAI_API_KEY": settings.openai_api_key,
-        "ELEVENLABS_API_KEY": settings.elevenlabs_api_key,
-    }
-    missing = [name for name, key in keys.items() if key is None]
+    missing = settings.missing_generation_keys()
     if missing:
         raise HTTPException(503, f"Episode generation needs {' and '.join(missing)} in .env")
 
@@ -37,7 +33,12 @@ def require_generation_keys(settings: Settings) -> None:
 IN_FLIGHT_INDEX = "uq_episodes_one_in_flight_per_user"
 
 NOT_FOUND = {404: {"description": "The episode does not exist or belongs to another user"}}
-KEYS_MISSING = {503: {"description": "OPENAI_API_KEY or ELEVENLABS_API_KEY is missing"}}
+KEYS_MISSING = {
+    503: {
+        "description": "OPENAI_API_KEY is missing, or ELEVENLABS_API_KEY when WORKER_VOICE is "
+        "elevenlabs"
+    }
+}
 
 
 def commit_or_conflict(session: Session) -> None:

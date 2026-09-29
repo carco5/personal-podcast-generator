@@ -64,4 +64,4 @@ def test_env_example_matches_settings() -> None:
             default = fields[name].default
             if isinstance(default, SecretStr):
                 default = default.get_secret_value()
-            assert value == default, name
+            assert value == str(default), name

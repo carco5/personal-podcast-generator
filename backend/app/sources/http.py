@@ -32,6 +32,9 @@ class Fetcher:
         self._clock = time.monotonic
         self._sleep = time.sleep
 
+    def close(self) -> None:
+        self._client.close()
+
     def get(
         self,
         url: str,

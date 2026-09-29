@@ -7,7 +7,7 @@ record supersedes the old one and both stay here.
 | # | Decision | Status |
 |---|---|---|
 | D1 | [Stack: FastAPI + PostgreSQL + React/TypeScript](#d1--stack-fastapi--postgresql--reacttypescript) | Accepted |
-| D2 | [The `episodes` table is the job queue, drained by one worker](#d2--the-episodes-table-is-the-job-queue-drained-by-one-worker) | Accepted |
+| D2 | [The `episodes` table is the job queue, drained by one worker](#d2--the-episodes-table-is-the-job-queue-drained-by-one-worker) | Accepted, built in Step 6 |
 | D3 | [A staged pipeline with checkpoints, using the provider SDKs directly](#d3--a-staged-pipeline-with-checkpoints-using-the-provider-sdks-directly) | Accepted |
 | D4 | [News sources behind a `NewsProvider` interface](#d4--news-sources-behind-a-newsprovider-interface) | Accepted |
 | D5 | [One OpenAI model per task](#d5--one-openai-model-per-task) | Accepted |
@@ -15,7 +15,7 @@ record supersedes the old one and both stay here.
 | D7 | [Check the script before paying for voice](#d7--check-the-script-before-paying-for-voice) | Accepted |
 | D8 | [Internal dashboard: product and operations](#d8--internal-dashboard-product-and-operations) | Accepted |
 | D9 | [Frontend: a single-page app served by FastAPI](#d9--frontend-a-single-page-app-served-by-fastapi) | Accepted |
-| D10 | [Runs locally with Docker Compose, including without API keys](#d10--runs-locally-with-docker-compose-including-without-api-keys) | Accepted |
+| D10 | [Runs locally with Docker Compose, including without API keys](#d10--runs-locally-with-docker-compose-including-without-api-keys) | Accepted, revised in Step 6 |
 | D11 | [Cost-aware development](#d11--cost-aware-development) | Accepted |
 | D12 | [REST conventions aligned with Prosper's public API](#d12--rest-conventions-aligned-with-prospers-public-api) | Accepted |
 | D13 | [Two fixed, configurable hosts](#d13--two-fixed-configurable-hosts) | Accepted |
@@ -34,10 +34,26 @@ record supersedes the old one and both stay here.
 | D26 | [Migrations with Alembic, applied by a prestart job](#d26--migrations-with-alembic-applied-by-a-prestart-job) | Accepted |
 | D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted |
 | D28 | [Tests run against a real PostgreSQL](#d28--tests-run-against-a-real-postgresql) | Accepted |
-| D29 | [One backend image with a cached dependency layer](#d29--one-backend-image-with-a-cached-dependency-layer) | Accepted |
+| D29 | [One backend Dockerfile with a cached dependency layer and two targets](#d29--one-backend-dockerfile-with-a-cached-dependency-layer-and-two-targets) | Accepted, revised in Step 6 |
 | D30 | [Sources are downloaded like a responsible crawler](#d30--sources-are-downloaded-like-a-responsible-crawler) | Accepted |
 | D31 | [Official data is read from the data inside official pages](#d31--official-data-is-read-from-the-data-inside-official-pages) | Accepted |
 | D32 | [The pipeline runs as recorded stages, behind small provider interfaces](#d32--the-pipeline-runs-as-recorded-stages-behind-small-provider-interfaces) | Accepted |
+| D33 | [Official results carry the players, and code computes the gaps](#d33--official-results-carry-the-players-and-code-computes-the-gaps) | Accepted |
+| D34 | [Days are spoken relative to the episode, and code writes the labels](#d34--days-are-spoken-relative-to-the-episode-and-code-writes-the-labels) | Accepted |
+| D35 | [Speech normalisation before the voice, with a pronunciation dictionary](#d35--speech-normalisation-before-the-voice-with-a-pronunciation-dictionary) | Accepted |
+| D36 | [The same story under two URLs is one source](#d36--the-same-story-under-two-urls-is-one-source) | Accepted |
+| D37 | [An editorial plan before writing](#d37--an-editorial-plan-before-writing) | Accepted |
+| D38 | [The show's format comes from the listener's interests](#d38--the-shows-format-comes-from-the-listeners-interests) | Accepted |
+| D39 | [The writer turns the plan into a conversation between two fans](#d39--the-writer-turns-the-plan-into-a-conversation-between-two-fans) | Accepted |
+| D40 | [Style lint, length control and a record of every episode](#d40--style-lint-length-control-and-a-record-of-every-episode) | Accepted |
+| D41 | [Episodes can be regenerated as of a past moment](#d41--episodes-can-be-regenerated-as-of-a-past-moment) | Accepted |
+| D42 | [The plan keeps the source's framing, and a rejected turn is repaired, not the episode](#d42--the-plan-keeps-the-sources-framing-and-a-rejected-turn-is-repaired-not-the-episode) | Accepted |
+| D43 | [Code picks each section's next game, and results are told the way fans tell them](#d43--code-picks-each-sections-next-game-and-results-are-told-the-way-fans-tell-them) | Accepted |
+| D44 | [Records keep their scope, sections are linked, and a script can be re-checked](#d44--records-keep-their-scope-sections-are-linked-and-a-script-can-be-re-checked) | Accepted |
+| D45 | [The sample is the best episode the product generated, and it can be reproduced](#d45--the-sample-is-the-best-episode-the-product-generated-and-it-can-be-reproduced) | Accepted |
+| D46 | [Audio: ElevenLabs MP3 at 128 kbps, mastered in one pass](#d46--audio-elevenlabs-mp3-at-128-kbps-mastered-in-one-pass) | Accepted |
+| D47 | [The worker: one polling loop, a short claim and a graceful stop](#d47--the-worker-one-polling-loop-a-short-claim-and-a-graceful-stop) | Accepted |
+| D48 | [When episodes are made, and how much they may spend](#d48--when-episodes-are-made-and-how-much-they-may-spend) | Accepted |
 
 ---
 
@@ -101,7 +117,10 @@ latency before a queued episode starts.
 with multiple consumers accessing a queue-like table"
 ([docs](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE)).
 Revised on 2026-09-27 to add the ingest task (D24), and in Step 4 to add the `skipped` status
-and the one-in-flight index (D25).
+and the one-in-flight index (D25). Built in Step 6 (2026-09-29): the claim is the `SELECT … FOR
+UPDATE SKIP LOCKED` plus the pipeline's first commit, which marks the episode `in_progress` and
+releases the lock. How the worker runs and stops is in D47; when it schedules and how much it may
+spend, in D48.
 
 ---
 
@@ -503,17 +522,19 @@ conflict.
 
 ## D10 · Runs locally with Docker Compose, including without API keys
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 6)
 
 **Context.** Reviewers must be able to run the project with one command, and the API keys belong
 to Prosper.
 
 **Decision.** `docker compose up` starts the database, a one-off `prestart` job (migrations and the
-demo user, D26), the API and the worker (Step 6). The `.env` file is optional (`required: false`).
+demo user, D26) and the API. The worker is optional: it only starts with `--profile worker`,
+because it spends provider credits (D47). The `.env` file is optional (`required: false`).
 Without keys the app still loads with the sample episode, the simulated dashboard and the full UI.
-Only "Generate" needs keys: the API answers 503 and names the missing variables. The database port
-is not published, and the API is published on `127.0.0.1` only, because it has no authentication
-and can spend provider credits.
+Only "Generate" needs keys: `OPENAI_API_KEY`, plus `ELEVENLABS_API_KEY` when the worker uses the
+real voice (D48). The API answers 503 and names the missing variables. The database port is not
+published, and the API is published on `127.0.0.1` only, because it has no authentication and can
+spend provider credits.
 
 **Alternatives considered.** *A public deployment:* a public URL could spend the provider credits
 without control.
@@ -523,7 +544,8 @@ work.
 
 **Evidence.** Docker Compose documentation: since Compose 2.24.0, an `env_file` entry with
 `required: false` is ignored when the file is missing. Revised in Step 4: the migration job became
-`prestart`, and the API port is bound to localhost.
+`prestart`, and the API port is bound to localhost. Revised in Step 6: the worker moved behind a
+Compose profile, and the voice key is only required for the real voice.
 
 ---
 
@@ -554,6 +576,9 @@ dry run on the real prompts. The text of a 5-minute episode was estimated at abo
 script passes at once; the two real episodes, text only, needed one rewrite each and cost $0.082
 and $0.084. The voice for 5 minutes adds about $0.37 (D21). The whole of Step 5 cost $0.17 in
 OpenAI credits and nothing in ElevenLabs credits.
+
+Extended in Step 6 (2026-09-29): the same `provider_calls` table sets the worker's spending cap
+(D48), and the worker uses the free tone voice unless the real voice is enabled.
 
 ---
 
@@ -1298,9 +1323,9 @@ end of Step 4, the 52 tests took about 2.5 seconds.
 
 ---
 
-## D29 · One backend image with a cached dependency layer
+## D29 · One backend Dockerfile with a cached dependency layer and two targets
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-29 (Step 6)
 
 **Context.** `prestart`, the API and the worker share code. Rebuilds must be fast while developing,
 and reviewers only need Docker.
@@ -1313,9 +1338,10 @@ and reviewers only need Docker.
 - **Contents and user:** only `app/` and `migrations/` go into the image, with no tests or spike.
   The container runs as an unprivileged user.
 - **In Compose:**
-  - the image is built once (`image: podcast-backend`), and each service sets its own command;
-  - a YAML fragment (`x-backend`) holds what they share: the build, the optional `.env` and the
-    in-network database URL.
+  - the `api` image is built once (`image: podcast-backend`) for `prestart` and the API, and each
+    service sets its own command; the worker builds its own target (Step 6, below);
+  - a YAML fragment (`x-backend`) holds what they share: the build, the optional `.env`, the
+    in-network database URL and, since Step 6, the audio volume mounted at `/data`.
 
 **Alternatives considered.**
 - *`pip install .`:* every change to the code reinstalls every dependency, and a second copy of
@@ -1324,13 +1350,30 @@ and reviewers only need Docker.
   (D15).
 - *`fastapi[standard]` with `fastapi run`:* more dependencies than uvicorn alone.
 
-**Trade-offs.** The image is 445 MB, mostly lxml and the provider SDKs. There is no multi-stage
-build, because nothing is compiled.
+**Trade-offs.** The API image is 445 MB, mostly lxml and the provider SDKs. Nothing is compiled;
+since Step 6 the stages only separate what each service needs (below).
 
 **Evidence.** Measured on 2026-09-27:
 - the first build took about 1.5 minutes, and a rebuild after a change to the code took 3 seconds,
   with the dependency layer reported as `CACHED`;
 - `id` inside the container reports uid 999 (`podcast`).
+
+**Revised in Step 6 (2026-09-29): two build targets.** The worker needs ffmpeg (mastering, audio
+checks and the tone voice), and Debian's `ffmpeg` package adds 457 MB. The Dockerfile now has a
+shared `base` stage (Python, dependencies, user, `/data` owned by that user) and two targets:
+- `api` (`podcast-backend`, used by `prestart` and the API): base plus the code, still 445 MB, with
+  no ffmpeg;
+- `worker` (`podcast-worker`): base plus ffmpeg, installed *before* the code is copied so a code
+  change does not reinstall it, plus the code (without the migrations, which `prestart` applies):
+  1.07 GB.
+
+*Why:* the API, the service exposed to the network, does not carry media codecs it never uses (a
+smaller attack surface), and a reviewer who only runs `docker compose up` never builds ffmpeg.
+*Alternatives:* one image for everything (simplest, but the API doubles in size for nothing); a
+static ffmpeg binary copied from a third-party image (about a third of the size, but an unsigned
+binary from outside the distribution instead of Debian's signed, patched package). *Trade-off:* a
+few more lines of Dockerfile and two image names. Measured: `ffmpeg -version` in the worker image
+reports 7.1.5 from Debian 13, and an episode mastered with it measured −16.5 LUFS (target −16 ± 1).
 
 ---
 
@@ -2151,6 +2194,171 @@ about 115 to 140 Hz, Sarah about 200 to 220 Hz); all 25 speaker changes of the s
 
 ---
 
+## D47 · The worker: one polling loop, a short claim and a graceful stop
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** Episodes must be generated on schedule with nobody pressing a button. A generation
+takes one to three minutes (measured: 41 s to 2 min 48 s) and pays for OpenAI and ElevenLabs calls.
+The process will be stopped on purpose (it is how the worker is paused) and it can die (a crash,
+`kill`, a power cut).
+
+**Decision.** `app/worker.py` is a single process. Every `WORKER_POLL_SECONDS` (10 s) it:
+1. **Recovers stuck episodes:** an episode `in_progress` for more than 30 minutes becomes `failed`
+   ("Interrupted…"), and its running stages become `failed` ("interrupted"). It is one
+   `UPDATE … RETURNING` that re-checks the status, so an episode finishing at that instant is not
+   overwritten. It goes by age, not "every episode in progress", because another worker or a
+   manual run may be working for real. A retry resumes from the last checkpoint (D3).
+2. **Schedules** the episodes that are due (D48).
+3. **Claims one queued episode** with `SELECT … FOR UPDATE SKIP LOCKED`, oldest first, checks the
+   spending cap (D48) and runs the pipeline. The row lock lasts until the pipeline's first commit
+   marks the episode `in_progress`: no provider call is ever made while holding it.
+4. **Ingests the catalogue** every three hours (D24), after the episode: what a listener is waiting
+   for goes first.
+
+Around the loop:
+- **Graceful stop.** Docker stops a container with SIGTERM. The worker's handler only sets a flag:
+  the loop finishes the episode in progress, starts nothing new (not even a due ingest) and exits
+  with code 0. Idle waits are one-second steps that check the flag. Compose waits up to
+  `stop_grace_period: 10m` before SIGKILL. `docker compose kill worker` stops at once; step 1 then
+  recovers the episode.
+- **A stage only counts as completed if it finishes.** Found while designing the stop: an
+  interruption that is not an `Exception` (Ctrl+C, a process stop) went past the stage's error
+  handling, and the stage was recorded as `completed`. For `check`, a retry then skipped the judge
+  and paid for voice on an unchecked script. A stage now starts as `failed`/`interrupted`.
+- **Resilience.** An unexpected error in an iteration (a database restart) is logged with its
+  trace, and the next iteration retries.
+- **In Docker.** The worker is its own Compose service behind `profiles: [worker]`, so
+  `docker compose up` never spends credits. It uses the image target with ffmpeg (D29) and shares
+  the `appdata` volume (`/data`) with the API. Without the keys it needs, it exits with code 1 and
+  names them, instead of restarting in a loop.
+- **A fresh HTTP fetcher per task**, closed afterwards, so a process that lives for days re-reads
+  each `robots.txt` (D30).
+
+**Alternatives considered.**
+- *Claiming with a single `UPDATE … RETURNING` in the worker:* equivalent. The pipeline already
+  marks the episode `in_progress` and commits at once, so the lock is just as short, and only one
+  place changes that status.
+- *Leases, heartbeats or advisory locks to detect a dead worker at once:* precise, but more moving
+  parts. With one worker, a 30-minute age (ten times the longest run measured) is enough.
+- *PostgreSQL `LISTEN`/`NOTIFY` to wake the worker the moment an episode is queued:* removes the
+  10-second wait, but a notification sent while nobody is listening is lost, so polling would still
+  be needed as the fallback. It is a later improvement, not a replacement.
+- *Stopping at once on SIGTERM* (raising from the handler): the episode could stop anywhere,
+  including mid-commit. Finishing the current task is what Celery's warm shutdown does.
+- *A `threading.Event` for the idle wait:* shorter, but `set()` from a signal handler takes a
+  lock, and it can deadlock if the signal arrives while the same thread holds it.
+- *Starting the worker with `docker compose up`:* a reviewer would spend credits just by running
+  the app.
+- *A Compose restart policy:* with missing keys it would restart forever; the loop already
+  survives errors. Production deployment is future work.
+
+**Trade-offs.**
+- Polling adds up to 10 s before a queued episode starts, and one small query every 10 s.
+- A worker killed hard blocks that listener for up to 30 minutes.
+- The scheduler reads every listener's settings on every iteration: fine for hundreds; at scale,
+  each listener's next run would be stored and indexed.
+- The ingest clock lives in memory, so every restart ingests again (free GETs, about 1.5 minutes).
+- Stopping can take minutes while an episode is running.
+
+**Evidence.**
+- *Measured on 2026-09-29, in Docker:*
+  - a Python process 1 without a SIGTERM handler ended with code 137 (SIGKILL); with a handler,
+    code 0 in 0.7 s;
+  - the idle worker stopped in 2.2 s, and a worker in the middle of its ingest waited about 51 s,
+    then exited with code 0;
+  - a stop requested while the script was being written: the episode completed 75 s later, no
+    ingest started, and the process exited with code 0;
+  - the first ingest took 95 s, and `docker compose down` without the profile leaves the worker's
+    container (hence `docker compose --profile worker down`).
+- *Tests:*
+  - two real database connections claim two different episodes, and a third gets none, without
+    waiting;
+  - with the old stage code, the interruption test fails ("check" recorded as `completed`).
+- *Sources:*
+  - PostgreSQL on `SKIP LOCKED` (see D2), and Supabase's `lock-skip-locked` and
+    `lock-short-transactions` rules (read, not installed);
+  - Celery: "When shutdown is initiated the worker will finish all currently executing tasks
+    before it actually terminates";
+  - Compose: `stop_grace_period` defaults to 10 s, and a service with profiles "is only started
+    if the profile is activated".
+
+---
+
+## D48 · When episodes are made, and how much they may spend
+
+**Status:** Accepted · **Date:** 2026-09-29
+
+**Context.** Each listener sets days, a time and an IANA time zone. The machine running the worker
+may be off at that time. Credits are limited and their balance cannot be read (D11), and the worker
+runs unattended.
+
+**Decision.**
+- **The slot is computed in the listener's time zone.** 07:00 in Madrid stays 07:00 across
+  daylight saving changes (05:00 UTC in summer, 06:00 UTC in winter).
+- **A 30-minute lead** (set in the definition, Step 1): the 07:00 episode is queued from 06:30, so
+  it is ready at 07:00 (the longest run measured is about 3 minutes). `scheduled_for` stays the
+  delivery time, which the dashboard compares with `finished_at` to measure punctuality.
+- **Catch-up:** only the *latest* slot whose lead has begun is created, and only if it is less
+  than 12 hours old *and* later than the moment the listener last saved their settings
+  (`podcast_settings.updated_at`). It never builds a backlog: like systemd's `Persistent=`, a missed
+  run triggers once. Starting the worker, or changing the schedule, never creates this morning's
+  episode. A time that has not arrived yet does count: saving a 07:00 schedule at 06:45 queues it
+  at once, because that is the episode being asked for.
+- **Only listeners with interests** are scheduled, as the API requires for "Generate".
+- **No duplicates.** A `SELECT` first skips listeners who already have that slot or an episode in
+  flight. `INSERT … ON CONFLICT DO NOTHING` is the guarantee: with no conflict target it covers both
+  the unique `(user_id, scheduled_for)` and the one-in-flight partial index, and a test proves it.
+  The `SELECT` also matters because an insert that conflicts still consumes an identity value:
+  without it, episode ids would jump by thousands. A manual episode in flight at the scheduled time
+  delays the scheduled one. If nothing is new by then, it ends `skipped` at no cost (D19, D23).
+- **Voice:** `WORKER_VOICE=tone` by default, so the worker never spends ElevenLabs credits unless
+  real voice is enabled. "Generate" only asks for the ElevenLabs key when it is. The API and the
+  worker share one rule for the required keys (`Settings.missing_generation_keys`).
+- **Spending cap:** `WORKER_DAILY_BUDGET_USD` (default $1.00) over any rolling 24 hours, summing
+  every paid call in `provider_calls`, including manual runs. It is checked before an episode
+  starts. If it is reached, the episode becomes `failed` with the reason, and it can be retried
+  later. An episode that starts under the cap can exceed it by its own cost: about $0.06–0.24 for
+  the text, plus about $0.37 for 5 minutes of real voice.
+- **Demo:** the real schedule. The time is set a couple of minutes ahead: it is later than the
+  save and its lead has begun, so the worker, which polls every 10 seconds, starts it at once.
+  There is no special demo mode.
+
+**Alternatives considered.**
+- *Starting at the scheduled time:* every episode would arrive a few minutes late.
+- *Generating every missed slot:* stale briefings, paid for one after another.
+- *Skipping missed slots:* a restart at 06:59 would lose that day's episode.
+- *Counting slots from before the schedule was saved:* starting the worker at 15:00 would
+  immediately generate, and pay for, that morning's episode.
+- *A dedicated `schedule_updated_at` column:* a more precise anchor, at the cost of a migration
+  (see the trade-offs).
+- *A calendar-day cap:* needs a time zone decision, and allows a burst around midnight.
+- *Keeping capped episodes queued until there is budget:* the listener is blocked (409) and does
+  not see why.
+- *A demo mode that generates every N minutes:* a path production never takes, and it spends on
+  every round.
+
+**Trade-offs.**
+- `updated_at` changes with any setting, so renaming the show after a missed slot cancels that
+  catch-up. The next slot is at most a week away, and a day away on a daily schedule.
+- A capped episode counts as `failed`. The dashboard should separate it by its reason (Step 9).
+- A fresh clone produces a tone, not voices, until `WORKER_VOICE=elevenlabs` is set.
+- News published in the 30 minutes before the scheduled time waits for the next episode.
+
+**Evidence.**
+- *Tests:* the daylight-saving change, the lead (06:29 no, 06:31 yes), a schedule saved two
+  minutes ahead, a slot 13 hours old, a slot before the settings were saved, and the conflict on
+  the partial index. Removing the lead, either catch-up rule, or the 30-minute age of D47, makes
+  its test fail.
+- *In Docker on 2026-09-29:* the last 24 hours showed $1.44 of spending, so "Generate" (episode 24)
+  failed with "Daily spending cap reached: $1.44 of $1.00 in the last 24 hours", with no attempt, no
+  stage and no paid call. With the cap raised for the test, the retry completed: 300.3 s,
+  −16.5 LUFS, $0.0628.
+- *systemd's `Persistent=`:* "the service unit is triggered immediately if it would have been
+  triggered at least once during the time when the timer was inactive".
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -2190,3 +2398,9 @@ useful.
   `elevenlabs/skills@text-to-speech` was read again for its output formats (PCM needs the Pro plan,
   MP3 at 192 kbps the Creator plan), which set the audio format (D46). It was not installed, for the
   same reasons as in Step 3.
+- Step 6: no new skill; `fastapi` and `documentation-and-adrs` were kept. Searched for a Postgres
+  queue, Docker Compose and background workers. `supabase-postgres-best-practices` was read again,
+  and its `lock-skip-locked` and `lock-short-transactions` rules are cited in D47.
+  `affaan-m/ecc@docker-patterns` (12.4K installs) is generic and says nothing about signals or
+  profiles. `github/awesome-copilot@multi-stage-dockerfile` (27.4K installs) is about compiling in
+  one stage and shipping from another, while here the stages only split what each service needs.

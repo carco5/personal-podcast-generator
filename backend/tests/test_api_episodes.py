@@ -38,7 +38,29 @@ def test_generate_without_keys(client: TestClient, with_interest: None) -> None:
     response = client.post("/api/v1/episodes")
 
     assert response.status_code == 503
+    assert "OPENAI_API_KEY" in response.json()["detail"]
+    assert "ELEVENLABS_API_KEY" not in response.json()["detail"]
+
+
+def test_generate_with_real_voice_needs_both_keys(
+    client: TestClient, test_settings: Settings, with_interest: None
+) -> None:
+    test_settings.worker_voice = "elevenlabs"
+
+    response = client.post("/api/v1/episodes")
+
+    assert response.status_code == 503
     assert "OPENAI_API_KEY and ELEVENLABS_API_KEY" in response.json()["detail"]
+
+
+def test_generate_with_tone_voice_needs_only_openai(
+    client: TestClient, test_settings: Settings, with_interest: None
+) -> None:
+    test_settings.openai_api_key = SecretStr("sk-test")
+
+    response = client.post("/api/v1/episodes")
+
+    assert response.status_code == 202
 
 
 def test_generate_needs_an_interest(client: TestClient, with_keys: None) -> None:

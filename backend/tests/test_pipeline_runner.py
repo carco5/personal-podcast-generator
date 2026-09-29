@@ -11,9 +11,11 @@ from app.models import Article, Episode, EpisodeArticle, ProviderCall, StageRun
 from app.pipeline import fetch, master, runner
 from app.pipeline.checks import Judgement
 from app.pipeline.common import Run
+from app.pipeline.editorial import EditorialPlan
 from app.pipeline.repair import Repairs
 from app.pipeline.runner import run_episode
 from app.pipeline.script import Script
+from app.pipeline.selection import Picks
 from app.pipeline.voice import ToneVoice
 from app.sources.http import Fetcher
 from tests.fakes import FakeLlm, approve_all, make_article, make_listener
@@ -203,3 +205,25 @@ def test_an_unexpected_error_fails_the_episode_cleanly(session: Session, tmp_pat
     assert episode.status_reason == "write: RuntimeError: model unavailable"
     assert stages(session, episode)[-1] == (1, "write", "failed")
     assert session.scalars(select(ProviderCall)).all()
+
+
+def test_an_interrupted_check_is_checked_again(session: Session, tmp_path: Path) -> None:
+    def interrupted_judge(prompt: str) -> Judgement:
+        raise KeyboardInterrupt
+
+    episode = setup(session)
+    with pytest.raises(KeyboardInterrupt):
+        generate(session, episode, FakeLlm({Judgement: interrupted_judge}), tmp_path)
+    assert stages(session, episode)[-1] == (1, "check", "failed")
+    check = session.scalars(select(StageRun).where(StageRun.stage == "check")).one()
+    assert check.error == "interrupted"
+
+    llm = FakeLlm()
+    episode.status = "queued"
+    generate(session, episode, llm, tmp_path)
+
+    assert episode.status == "completed" and episode.attempts == 2
+    second = [stage for attempt, stage, _ in stages(session, episode) if attempt == 2]
+    assert second == ["fetch", "check", "voice", "master"]
+    schemas = [schema for schema, _ in llm.prompts]
+    assert schemas[0] is Judgement and Picks not in schemas and EditorialPlan not in schemas

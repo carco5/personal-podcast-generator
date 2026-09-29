@@ -1,11 +1,16 @@
 x-backend: &backend
-  build: ./backend
+  build:
+    context: ./backend
+    target: api
   image: podcast-backend
   env_file:
     - path: .env
       required: false
   environment:
     DATABASE_URL: postgresql+psycopg://podcast:podcast@db:5432/podcast
+    DATA_DIR: /data
+  volumes:
+    - appdata:/data
 
 services:
   db:
@@ -40,5 +45,20 @@ services:
       prestart:
         condition: service_completed_successfully
 
+  # Optional: it generates episodes and spends provider credits. On stop it finishes the
+  # episode in progress, so the grace period is longer than the default 10 s.
+  worker:
+    <<: *backend
+    build:
+      context: ./backend
+      target: worker
+    image: podcast-worker
+    profiles: ["worker"]
+    stop_grace_period: 10m
+    depends_on:
+      prestart:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
+  appdata:

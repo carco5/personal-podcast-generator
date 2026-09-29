@@ -104,12 +104,13 @@ def run_stage(run: Run, name: Stage, function: Callable[[Run], dict]) -> dict:
     session.add(stage)
     session.commit()
     run.calls = []
-    status, error, details = "completed", None, {}
+    status, error, details = "failed", "interrupted", {}
     try:
         details = function(run)
+        status, error = "completed", None
         return details
     except EpisodeSkipped as skipped:
-        details = {"skipped": str(skipped)}
+        status, error, details = "completed", None, {"skipped": str(skipped)}
         raise
     except StageFailed as failed:
         status, error, details = "failed", str(failed), failed.details
