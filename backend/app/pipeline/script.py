@@ -106,11 +106,14 @@ Write from the PLAN: exactly its segments, in its order, with their keys, and on
   Monday"), welcomes the listener to {show} and introduces {host} and {analyst} by name;
   {analyst} says a short hello. Tease two or three stories; never list every section.
 - Each section tells its lead story in depth through its angle and key facts, in about the
-  number of turns the plan gives it; then its roundup, if any, in one line; then what comes next.
-  A brief section gets one short line.
-- Open each section with a short, natural intro, the way radio hosts do ("And to finish, one big
-  story from the NBA."). Never narrate transitions or the running order ("a clear jump from the
-  pitch to the court", "before Dubai, let's check the ACB", "first, let's look at").
+  number of turns the plan gives it; then its roundup, if any, in one line; then its next game,
+  if the plan gives one. A brief section gets one short line.
+- Tell a result with its score before commenting on it ("Barça won 3–1 at Sevilla"), then who
+  decided it.
+- Each section opens itself with a short, natural intro, the way radio hosts do ("And to
+  finish, one big story from the NBA."). Never end a section by announcing the next one ("Now,
+  LeBron in Philadelphia."), and never narrate transitions or the running order ("a clear jump
+  from the pitch to the court", "before Dubai, let's check the ACB", "first, let's look at").
 - When the listener's team has a section per sport, name the team's side once at the start of
   that section ("Barça's basketball team"), and then just the team's name.
 - A competition section follows its angle: what matters there to the listener's team. Never
@@ -123,8 +126,14 @@ Each segment has a target length: aim for its characters and turns, within 10%. 
 plan's facts and your analysis of them: never pad and never invent.
 
 Conversation:
+- Tell facts the way a fan tells a friend, not the way a match report lists them. Use fans'
+  vocabulary when the data supports it: "hat-trick" for three goals by one player, "brace" for
+  two (the goal data labels them). Example: "Barça won 3–1 at Sevilla, and all 3 were Raphinha's:
+  a hat-trick." instead of "Raphinha scored all 3 against Sevilla." Natural never means adding
+  facts: no "stunning", "dominated" or "comeback" unless a source says it.
 - Every turn answers, builds on or pushes back on the one before: if two turns could swap places
   without losing meaning, rewrite them.
+- Each turn makes one point; don't stack unrelated facts in one turn.
 - Mix short reactions (3 to 8 words) with explanations of one to three sentences. At most two
   numbers per turn; a score counts as one. Use only stats that make a point; never read out a
   stat line ("1 rebound and 1 assist").
@@ -137,7 +146,9 @@ Conversation:
 - At most two stock openers in the whole episode ("Absolutely", "Exactly", "Great point",
   "You're spot on") and at most three light spoken markers ("I mean", "honestly", "look").
 - Use the names fans use ("PSG", "Atlético", "Madrid", "Barça"), never abbreviations from the
-  data ("S. Bratislava", "Man Utd"). Name the players whenever the sources do.
+  data ("Man Utd"). Keep the sport clear: never shorten a club's name to one that could mean a
+  club in the other sport ("Paris Basketball", never just "Paris"). Name the players whenever the
+  sources do.
 
 Facts:
 - Use only facts from the sources. A turn that states any fact lists the ids of its sources in

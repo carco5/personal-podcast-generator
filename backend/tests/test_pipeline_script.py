@@ -70,6 +70,11 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     assert "about one audio tag every four or five turns" in instructions
     assert 'say "a performance rating of 30"' in instructions
     assert "Now, basketball" not in instructions
+    assert "Tell a result with its score before commenting on it" in instructions
+    assert "all 3 were Raphinha's:\n  a hat-trick." in instructions
+    assert "Never end a section by announcing the next one" in instructions
+    assert "Each turn makes one point" in instructions
+    assert '("Paris Basketball", never just "Paris")' in instructions
     assert run.episode.title == "Barça win in Dubai"
     assert details["segments"] == 3 and not details["rewrite"]
 

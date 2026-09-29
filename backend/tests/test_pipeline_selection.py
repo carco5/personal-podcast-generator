@@ -180,8 +180,12 @@ def test_select_saves_the_editorial_plan_and_the_shares(session: Session) -> Non
 
     plan = run.episode.plan
     assert details["editorial"]["fallback"] is False
+    assert details["editorial"]["attempts"] == [[]]
     assert [s["key"] for s in plan["editorial"]["sections"]] == [b["key"] for b in plan["blocks"]]
     assert sum(block["chars"] for block in plan["blocks"]) == 3720 - 300 - 250
+    next_up = {s["key"]: s["next_up"] for s in plan["editorial"]["sections"]}
+    assert next_up["fc-barcelona-basketball"]["text"].startswith("Besiktas host FC Barcelona")
+    assert next_up["euroleague"] is None and next_up["fc-barcelona-football"] is None
 
 
 def test_an_invalid_editorial_plan_is_retried_then_replaced(session: Session) -> None:
@@ -202,6 +206,9 @@ def test_an_invalid_editorial_plan_is_retried_then_replaced(session: Session) ->
     prompts = [prompt for schema, prompt in llm.prompts if schema is EditorialPlan]
     assert len(prompts) == 2 and "YOUR PREVIOUS PLAN had these problems" in prompts[1]
     assert details["editorial"]["fallback"] is True
+    attempts = details["editorial"]["attempts"]
+    assert len(attempts) == 2 and all(attempts)
+    assert attempts[0][0].startswith("The sections must be exactly")
     assert run.episode.plan["plan_fallback"] is True
     first = run.episode.plan["editorial"]["sections"][0]
     assert first["lead_ids"] and first["key_facts"]

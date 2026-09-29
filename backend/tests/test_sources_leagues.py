@@ -4,6 +4,7 @@ import pytest
 from pydantic import SecretStr
 
 from app.sources.acb import CALENDAR, AcbCalendarSource, calendar_data
+from app.sources.base import Goal, goals_sentence
 from app.sources.guardian import SEARCH, GuardianSource
 from app.sources.laliga import BASE, MATCH_PAGE, LaLigaSource, page_data
 from tests.web import PARAGRAPH, FakeWeb
@@ -106,7 +107,7 @@ def test_laliga_results_standings_and_next_matchday() -> None:
 
     assert bodies[0] == (
         "LaLiga EA Sports, Matchday 7, Saturday 19 September 2026: "
-        "FC Barcelona beat Sevilla FC 4–2 away. FC Barcelona goals: Raphinha 2 (22', 52'), "
+        "FC Barcelona beat Sevilla FC 4–2 away. FC Barcelona goals: Raphinha 2, a brace (22', 52'), "
         "Lewandowski 1 (88' penalty). Assists: Christensen 1, Lamine Yamal 1. Sevilla FC goals: "
         "Fofana 1 (19'), Jonathan David 1 (90'). Assists: Felix 1. Own goals: Badé (80')."
     )
@@ -220,3 +221,14 @@ def test_guardian_sends_the_key_in_a_header_and_keeps_full_articles() -> None:
     assert search.headers["api-key"] == "secret-k"
     assert "secret-k" not in str(search.url)
     assert search.url.params["tag"] == "football/laligafootball"
+
+
+def test_three_goals_by_one_player_are_a_hat_trick() -> None:
+    goals = [
+        Goal("FC Barcelona", "Raphinha", minute, penalty=minute == 69) for minute in (22, 52, 69)
+    ]
+    goals.append(Goal("", "Badé", 80, own_goal=True))
+
+    assert goals_sentence(goals, ["FC Barcelona"]) == (
+        "FC Barcelona goals: Raphinha 3, a hat-trick (22', 52', 69' penalty). Own goals: Badé (80')."
+    )

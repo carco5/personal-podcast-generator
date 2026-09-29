@@ -66,8 +66,15 @@ def matchday(match: Match) -> int:
     return int("".join(ch for ch in match["matchday"]["name"] if ch.isdigit()) or 0)
 
 
+FAN_NAMES = {"Paris": "PSG"}
+
+
 def team(side: dict[str, Any]) -> str:
-    return side["internationalName"]
+    name = side["internationalName"]
+    short = (side.get("translations") or {}).get("shortName", {}).get("EN") or ""
+    if "." in name and short and "." not in short:
+        name = short
+    return FAN_NAMES.get(name, name)
 
 
 def match_day(match: Match) -> date:

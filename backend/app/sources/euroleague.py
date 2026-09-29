@@ -55,7 +55,14 @@ class EuroleagueSource(Source):
 
 
 def team(side: dict[str, Any]) -> str:
-    return side["club"]["abbreviatedName"]
+    return club_name(side["club"])
+
+
+def club_name(club: dict[str, Any]) -> str:
+    short, full = club["abbreviatedName"], club.get("name") or ""
+    if full.removeprefix(short).strip() in ("Basketball", "Basket"):
+        return full
+    return short
 
 
 def game_day(game: Game) -> date:
@@ -118,7 +125,7 @@ def standings_item(
     standings: dict[str, Any], number: int, round_games: list[Game], url: str
 ) -> SourceItem:
     rows = " ".join(
-        f"{row['position']}. {row['club']['abbreviatedName']}, "
+        f"{row['position']}. {club_name(row['club'])}, "
         f"{count(row['gamesWon'], 'win')} and {count(row['gamesLost'], 'loss', 'losses')}."
         for row in standings["teams"]
     )
@@ -132,7 +139,7 @@ def standings_item(
             "competition": "euroleague",
             "type": "standings",
             "round": number,
-            "teams": [row["club"]["abbreviatedName"] for row in standings["teams"]],
+            "teams": [club_name(row["club"]) for row in standings["teams"]],
         },
     )
 

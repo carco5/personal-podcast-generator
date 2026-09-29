@@ -2,7 +2,13 @@ import copy
 
 import pytest
 
-from app.pipeline.checks import code_problems, length_problems, source_numbers, style_problems
+from app.pipeline.checks import (
+    code_problems,
+    length_problems,
+    result_problems,
+    source_numbers,
+    style_problems,
+)
 from app.pipeline.script import EpisodeSource, Script
 
 PLAN = {
@@ -196,6 +202,18 @@ def test_stock_openers_and_markers_are_counted_per_episode() -> None:
 
     assert "3 turns open with a stock phrase (Absolutely, Exactly…); at most 2." in problems
     assert "4 spoken markers (I mean, honestly, look); at most 3." in problems
+
+
+def test_a_result_is_told_with_its_score_first() -> None:
+    assert result_problems(Script.model_validate(GOOD), SOURCES) == []
+
+    late = copy.deepcopy(GOOD)
+    late["segments"][1]["turns"][0] = turn("host", "FC Barcelona won away in Dubai.", "S1")
+    late["segments"][1]["turns"][1] = turn("analyst", "Punter scored 19 in the 80–70 win.", "S1")
+
+    assert result_problems(Script.model_validate(late), SOURCES) == [
+        "euroleague turn 1: tell the result of S1 with its score (80–70) before commenting on it."
+    ]
 
 
 def test_length_rules() -> None:

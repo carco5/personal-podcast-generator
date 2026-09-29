@@ -1886,6 +1886,77 @@ whole-script problem that still fails after the rewrite.
 
 ---
 
+## D43 · Code picks each section's next game, and results are told the way fans tell them
+
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D33, D37, D39, D40
+
+**Context.** Episode 20 was the first regeneration that passed and sounded like a podcast. Reading
+it, the author found five general problems:
+- each section's "next up" was the first game of the round (Lens–Sporting, Joventut–Andorra,
+  Paris–Partizan), and the listener's own games in the Champions League and the Liga ACB were
+  missing from the whole episode;
+- "Paris" was PSG in the Champions League and Paris Basketball in the EuroLeague;
+- "Raphinha scored all 3 against Sevilla" never said the result was 3–1;
+- facts were listed like a match report, and a section ended by announcing the next one ("Now,
+  LeBron in Philadelphia.");
+- the editor's first answer failed validation, and only the problems of the last attempt were
+  recorded.
+
+**Decision.**
+- **Code picks the next game.** The official fixtures already store every game. Section by
+  section, in episode order, the next game is the listener's team's earliest game in the
+  section's fixtures that no earlier section has given; if its only game was already given (the
+  league game, told in the club's own section), nothing. If the team is not in those fixtures but
+  is in the section's table, it is the earliest game of the team just above or just below it. If
+  the listener follows no team, there is none. The editor no longer chooses it; it sees it in its
+  prompt.
+- **Names that keep the sport clear.** In UEFA data, a name abbreviated with a dot uses the
+  short name spelled out ("Slovan Bratislava"), and a small table maps names that are ambiguous
+  across sports to the fans' name ("Paris" → "PSG"). In EuroLeague data, a club whose full name is
+  its city plus "Basketball" or "Basket" uses it ("Paris Basketball", "Dubai Basketball",
+  "Valencia Basket"); the other full names carry sponsors, so the short name stays.
+- **Fans' vocabulary, written by code.** Goal data labels two goals by one player "a brace" and
+  three "a hat-trick" (penalties count, own goals do not), as it already writes the totals (D33).
+  The judge then finds the word in the source instead of having to infer it from the count.
+- **The writer's prompt, rewritten in place (D39):** a result is told with its score before it is
+  discussed; facts are told the way a fan tells a friend, with the fans' words when the data
+  supports them, and never with added colour ("stunning", "comeback") that no source states; each
+  turn makes one point; each section opens itself and never ends by announcing the next one; a
+  club's name is never shortened to one that could mean a club in the other sport.
+- **Lint (D40):** the first turn that cites an official result, outside the intro and the
+  closing, must say its score. Like the other style rules, it goes into the single rewrite and
+  then stays as a warning.
+- **The editor's attempts are recorded.** The select stage details keep the problems of every
+  attempt, not only the last one.
+
+**Alternatives considered.**
+- *Telling the editor to pick the listener's team's game:* the rule was already implied ("through
+  the eyes of a fan of the listener's team"), and the editor still took the first game listed.
+  The fixtures are structured data, so code can decide it exactly.
+- *A rival's game when the team's game was already told:* early in a season the table does not
+  say who a rival is (after one EuroLeague round, half the teams were 1–0), and it would bring back
+  games the listener does not care about.
+- *UEFA's official names ("Paris Saint-Germain", "Galatasaray A.Ş."):* unambiguous, but formal
+  and awkward to say.
+- *Letting the judge infer "hat-trick" from "Raphinha 3":* probably accepted, but a rejected turn
+  would be removed, and the label costs one line of code.
+
+**Trade-offs.** A listener who follows no team gets no "next up". The name table is kept by hand,
+like the pronunciation dictionary (D35). The score lint can trigger the rewrite more often, about
+$0.05 each time.
+
+**Evidence.** Episode 20 script and plan (2026-09-29). Measured the same day: the UEFA match and
+standings data carry `translations.shortName` ("S. Bratislava" → "Slovan Bratislava", "B.
+Dortmund" → "Dortmund") and `displayOfficialName`; the EuroLeague games and standings carry
+`name` ("Paris Basketball", "Partizan Mozzart Bet Belgrade"). A dry run on the stored data as of
+episode 20's moment gave: Barça football → Getafe, LaLiga → none, Champions League →
+Galatasaray–Barcelona, Barça basketball → Dubai Basketball–FC Barcelona, Liga ACB → UCAM
+Murcia–Barça, EuroLeague → none, NBA → none. Unit tests cover the next game (the team's game given
+once, a direct rival, no team), the names, the goal labels, the score lint and the recorded
+attempts.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the

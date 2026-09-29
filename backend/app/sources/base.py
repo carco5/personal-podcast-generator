@@ -82,6 +82,9 @@ class Goal:
     own_goal: bool = False
 
 
+GOAL_LABELS = {2: "a brace", 3: "a hat-trick"}
+
+
 def goals_sentence(goals: list[Goal], teams: list[str]) -> str:
     in_order = sorted(goals, key=lambda goal: goal.minute)
     parts = []
@@ -94,7 +97,11 @@ def goals_sentence(goals: list[Goal], teams: list[str]) -> str:
             minutes.setdefault(goal.player, []).append(
                 f"{goal.minute}'" + (" penalty" if goal.penalty else "")
             )
-        scorers = ", ".join(f"{p} {len(m)} ({', '.join(m)})" for p, m in minutes.items())
+        scorers = ", ".join(
+            f"{p} {len(m)}{f', {GOAL_LABELS[len(m)]}' if len(m) in GOAL_LABELS else ''}"
+            f" ({', '.join(m)})"
+            for p, m in minutes.items()
+        )
         text = f"{name} goals: {scorers}."
         assists = Counter(goal.assist for goal in mine if goal.assist)
         if assists:

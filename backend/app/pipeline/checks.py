@@ -128,7 +128,11 @@ def check_script(run: Run) -> dict:
         if judged:
             for turn_id, problems in judge_issues(run, script, sources).items():
                 issues.setdefault(turn_id, []).extend(problems)
-        style = style_problems(script, plan, names) + length_problems(script, plan)
+        style = (
+            style_problems(script, plan, names)
+            + result_problems(script, sources)
+            + length_problems(script, plan)
+        )
         turn_list = [f"{turn_id}: {p}" for turn_id, problems in issues.items() for p in problems]
         rounds.append({"problems": hard + turn_list, "judged": judged, "style": style})
         if attempt == 1 and (hard or style):
@@ -335,6 +339,32 @@ def style_problems(script: Script, plan: dict, names: tuple[str, ...] = ()) -> l
             f"The hosts say each other's names {mentions} times after the intro; at most "
             f"{MAX_NAME_MENTIONS} each."
         )
+    return problems
+
+
+def result_problems(script: Script, sources: dict[str, EpisodeSource]) -> list[str]:
+    scores = {
+        sid: pairs
+        for sid, source in sources.items()
+        if source.is_data and (pairs := score_pairs(source.text.splitlines()[0]))
+    }
+    problems: list[str] = []
+    told: set[str] = set()
+    for segment in script.segments:
+        if segment.key in ("intro", "closing"):
+            continue
+        for number, turn in enumerate(segment.turns, start=1):
+            said = score_pairs(turn.text)
+            for sid in turn.source_ids:
+                if sid not in scores or sid in told:
+                    continue
+                told.add(sid)
+                first, second = next(iter(scores[sid]))
+                if not said & {(first, second), (second, first)}:
+                    problems.append(
+                        f"{segment.key} turn {number}: tell the result of {sid} with its score "
+                        f"({first}–{second}) before commenting on it."
+                    )
     return problems
 
 

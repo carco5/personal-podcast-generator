@@ -69,7 +69,6 @@ def plan_first(prompt: str) -> EditorialPlan:
                     "angle": "It matters.",
                     "key_facts": [{"text": "The key fact.", "source_ids": section["ids"]}],
                     "roundup_ids": [],
-                    "next_up": None,
                     "brief": False,
                     "major": False,
                 }

@@ -1,7 +1,10 @@
+from datetime import date
+
 from app.pipeline.editorial import (
     BRIEF_CHARS,
     EditorialPlan,
     budget_shares,
+    next_games,
     plan_problems,
 )
 
@@ -37,7 +40,6 @@ def editorial(**changes: dict) -> EditorialPlan:
             "angle": "Why it matters.",
             "key_facts": [{"text": "A fact.", "source_ids": block["stories"][0]["source_ids"]}],
             "roundup_ids": [],
-            "next_up": None,
             "brief": False,
             "major": False,
         }
@@ -71,7 +73,7 @@ def test_each_plan_rule_catches_its_sabotage() -> None:
     fact = {"text": "A fact.", "source_ids": ["S5"]}
     broken = editorial(
         barca={"lead_ids": ["S5"], "key_facts": [{"text": "LaLiga fact.", "source_ids": ["S5"]}]},
-        laliga={"roundup_ids": ["S5"], "next_up": {"text": "Next.", "source_ids": ["S1"]}},
+        laliga={"roundup_ids": ["S5"]},
         nba={"key_facts": [fact] * 6},
     )
     broken.hook.source_ids = ["S99"]
@@ -80,7 +82,6 @@ def test_each_plan_rule_catches_its_sabotage() -> None:
 
     assert "barca: lead_ids must be source ids of its stories." in problems
     assert any(p.startswith("laliga: roundup_ids") for p in problems)
-    assert "laliga: next_up must cite this section's context." in problems
     assert "nba: give 1 to 3 key facts." in problems
     assert "hook must cite sources of this episode." in problems
 
@@ -120,7 +121,6 @@ def test_a_grouped_story_can_be_split_into_lead_and_roundup() -> None:
                     "angle": "Why.",
                     "key_facts": [{"text": "A fact.", "source_ids": ["S1"]}],
                     "roundup_ids": ["S2", "S3"],
-                    "next_up": None,
                     "brief": False,
                     "major": False,
                 }
@@ -139,3 +139,89 @@ def test_sections_must_match_the_plan() -> None:
     assert plan_problems(swapped, PLAN, KNOWN) == [
         "The sections must be exactly ['barca', 'laliga', 'nba'], in that order."
     ]
+
+
+TEAM = frozenset({"FC Barcelona", "Barça", "Barcelona"})
+MONDAY = date(2026, 9, 28)
+SAMPLE = {
+    "blocks": [
+        {
+            "key": "fc-barcelona-football",
+            "interest": "fc-barcelona",
+            "context_ids": ["S5", "S6", "S7", "S8"],
+        },
+        {"key": "laliga", "interest": "laliga", "context_ids": ["S6", "S8"]},
+        {"key": "champions-league", "interest": "champions-league", "context_ids": ["S5", "S7"]},
+        {"key": "nba", "interest": "nba", "context_ids": []},
+    ]
+}
+METAS = {
+    "S5": {"type": "standings", "teams": ["PSG", "Barcelona", "Liverpool"]},
+    "S6": {"type": "standings", "teams": ["FC Barcelona", "Atlético de Madrid", "Real Betis"]},
+    "S7": {
+        "type": "fixtures",
+        "games": [
+            {"date": "2026-10-13", "home": "Lens", "away": "Sporting CP"},
+            {"date": "2026-10-13", "home": "Galatasaray", "away": "Barcelona"},
+        ],
+    },
+    "S8": {
+        "type": "fixtures",
+        "games": [
+            {"date": "2026-10-09", "home": "Málaga CF", "away": "RCD Espanyol"},
+            {"date": "2026-10-10", "home": "FC Barcelona", "away": "Getafe CF"},
+        ],
+    },
+}
+
+
+def test_next_up_is_the_team_game_given_once() -> None:
+    upcoming = next_games(SAMPLE, METAS, TEAM, MONDAY)
+
+    football = upcoming["fc-barcelona-football"]
+    assert football is not None and football.source_ids == ["S8"]
+    assert football.text == (
+        "FC Barcelona host Getafe CF on Saturday 10 October 2026 [say: Saturday the 10th]."
+    )
+    assert upcoming["laliga"] is None
+    champions = upcoming["champions-league"]
+    assert champions is not None and champions.text.startswith("Galatasaray host Barcelona")
+    assert upcoming["nba"] is None
+
+
+def test_without_a_team_game_next_up_is_a_direct_rival() -> None:
+    metas = {
+        "S6": {
+            "type": "standings",
+            "teams": ["Atlético de Madrid", "FC Barcelona", "Real Betis", "Girona FC"],
+        },
+        "S9": {
+            "type": "fixtures",
+            "games": [
+                {"date": "2026-10-10", "home": "Girona FC", "away": "Villarreal CF"},
+                {"date": "2026-10-11", "home": "Real Betis", "away": "Sevilla FC"},
+            ],
+        },
+    }
+    plan = {
+        "blocks": [
+            {
+                "key": "fc-barcelona-football",
+                "interest": "fc-barcelona",
+                "context_ids": ["S6", "S9"],
+            },
+            {"key": "laliga", "interest": "laliga", "context_ids": ["S6", "S9"]},
+        ]
+    }
+
+    upcoming = next_games(plan, metas, TEAM, MONDAY)
+
+    assert upcoming["fc-barcelona-football"] is None
+    laliga = upcoming["laliga"]
+    assert laliga is not None and laliga.text.startswith("Real Betis host Sevilla FC")
+
+
+def test_without_a_team_there_is_no_next_up() -> None:
+    upcoming = next_games(SAMPLE, METAS, frozenset(), MONDAY)
+
+    assert set(upcoming.values()) == {None}

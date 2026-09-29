@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 
 from app.pipeline.selection import belongs_to_team
 from app.sources.registry import TOPIC_FEEDS
-from app.sources.uefa import MATCHES, SITE, STANDINGS, UefaChampionsSource, season_year
+from app.sources.uefa import MATCHES, SITE, STANDINGS, UefaChampionsSource, season_year, team
 from tests.web import FakeWeb
 
 
@@ -79,7 +79,7 @@ def test_uefa_results_standings_and_next_matchday() -> None:
 
     assert items[0].body == (
         "UEFA Champions League, league phase Matchday 1, Wednesday 9 September 2026: "
-        "Barcelona beat Feyenoord 5–1 at home. Barcelona goals: Raphinha 2 (3', 57'), Karim "
+        "Barcelona beat Feyenoord 5–1 at home. Barcelona goals: Raphinha 2, a brace (3', 57'), Karim "
         "Adeyemi 1 (22'), Lamine Yamal 1 (77' penalty). Feyenoord goals: Sem Steijn 1 (82'). "
         "Own goals: Gernot Trauner (85'). Player of the match: Raphinha (Barcelona)."
     )
@@ -104,3 +104,13 @@ def test_barca_is_found_in_uefa_data_but_not_confused_with_espanyol() -> None:
         update={"meta": {"type": "standings", "teams": ["RCD Espanyol de Barcelona"]}}
     )
     assert not belongs_to_team(espanyol, barca)
+
+
+def test_team_names_are_spelled_out_and_unambiguous() -> None:
+    def side(name: str, short: str) -> dict:
+        return {"internationalName": name, "translations": {"shortName": {"EN": short}}}
+
+    assert team(side("S. Bratislava", "Slovan Bratislava")) == "Slovan Bratislava"
+    assert team(side("Paris", "Paris")) == "PSG"
+    assert team(side("Man City", "Man. City")) == "Man City"
+    assert team({"internationalName": "Barcelona"}) == "Barcelona"

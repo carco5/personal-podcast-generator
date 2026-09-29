@@ -409,6 +409,7 @@ def save_plan(
                 "title": block.title,
                 "weight": block.weight,
                 "sport": block.sport,
+                "interest": block.interest,
                 "chars": len(stories) * STORY_CHARS,
                 "stories": stories,
                 "context_ids": context,

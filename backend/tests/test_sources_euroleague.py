@@ -1,6 +1,13 @@
 from datetime import UTC, date, datetime
 
-from app.sources.euroleague import API, STANDINGS, EuroleagueSource, player_name, season_code
+from app.sources.euroleague import (
+    API,
+    STANDINGS,
+    EuroleagueSource,
+    club_name,
+    player_name,
+    season_code,
+)
 from tests.web import FakeWeb
 
 SEASON = season_code(datetime.now(UTC).date())
@@ -176,3 +183,14 @@ def test_known_results_are_not_downloaded_again() -> None:
 
     assert [item.meta["type"] for item in items] == ["fixtures"]
     assert not any("/stats" in url or "standings" in url for url in web.urls())
+
+
+def test_club_names_keep_the_sport_clear() -> None:
+    assert club_name({"abbreviatedName": "Paris", "name": "Paris Basketball"}) == "Paris Basketball"
+    assert (
+        club_name({"abbreviatedName": "Valencia", "name": "Valencia Basket"}) == "Valencia Basket"
+    )
+    assert club_name({"abbreviatedName": "Partizan", "name": "Partizan Mozzart Bet Belgrade"}) == (
+        "Partizan"
+    )
+    assert club_name({"abbreviatedName": "FC Barcelona"}) == "FC Barcelona"

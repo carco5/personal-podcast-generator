@@ -1,11 +1,18 @@
 import re
+from datetime import date
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
+from sqlalchemy import select
 
 from app.catalog import CATALOG
+from app.models import Article, EpisodeArticle
 from app.pipeline.checks import NUMBER, SCORE
 from app.pipeline.common import Run
-from app.pipeline.script import MAX_WRITE_CHARS, script_sources
+from app.pipeline.days import with_day_labels
+from app.pipeline.script import MAX_WRITE_CHARS, episode_day, script_sources
+from app.sources.base import spoken_date
+from app.sources.registry import TOPIC_FEEDS
 
 PLAN_EFFORT = "low"
 MAX_ROUNDUP = 2
@@ -35,7 +42,6 @@ class SectionPlan(BaseModel):
     angle: str
     key_facts: list[Fact]
     roundup_ids: list[str]
-    next_up: Fact | None
     brief: bool
     major: bool
 
@@ -67,14 +73,14 @@ For each section, in the given order:
   ids of the sources that state it and at most {max_numbers} numbers. Prefer facts that make a
   point: who decided the game, a record, the table (standings state each team's gap to the
   leader), a quote. Never a stat line. Give fewer when the sources hold fewer: never invent and
-  never pad.
+  never pad. A fact about a result states its score.
 - Keep each fact's framing exactly as its source frames it: a team's best player by rating is
   not its top scorer, "reportedly" stays reportedly, a close game is not a comeback.
 - roundup_ids: the source ids of at most {max_roundup} other results worth one line: only results
   that matter to the listener's team (a direct rival in the table, an upcoming opponent) or that
   are truly outstanding. Leave everything else out. Never the lead's sources.
-- next_up: the section's nearest upcoming game, with the day as its source labels it ([say:
-  ...]), and its source ids; null if there is none.
+- The next game of each section is set by the code ("Next up" under the section): you don't
+  choose it.
 - brief: true when nothing in the section is impactful. It then gets one short line.
 - major: true only for a story clearly bigger than a normal day: a record, a result that changes
   a title race, a star's move.
@@ -100,14 +106,16 @@ Use only facts from the sources and only the ids listed. Never compute numbers.
 def plan_episode(run: Run) -> dict:
     plan = run.episode.plan
     sources = script_sources(run)
-    prompt = planner_prompt(plan, sources)
-    problems: list[str] = []
+    today = episode_day(plan, ZoneInfo(run.podcast.timezone))
+    upcoming = next_games(plan, source_metas(run), team_names(run), today)
+    prompt = planner_prompt(plan, sources, upcoming)
+    attempts: list[list[str]] = []
     editorial: EditorialPlan | None = None
     for _attempt in (1, 2):
         text = prompt
-        if problems:
+        if attempts:
             text += "\n\nYOUR PREVIOUS PLAN had these problems; fix them:\n" + "\n".join(
-                f"- {p}" for p in problems
+                f"- {p}" for p in attempts[-1]
             )
         answer, call = run.llm.parse(
             model=run.config.openai_write_model,
@@ -117,8 +125,8 @@ def plan_episode(run: Run) -> dict:
             effort=PLAN_EFFORT,
         )
         run.calls.append(call)
-        problems = plan_problems(answer, plan, set(sources))
-        if not problems:
+        attempts.append(plan_problems(answer, plan, set(sources)))
+        if not attempts[-1]:
             editorial = answer
             break
     fallback = editorial is None
@@ -127,9 +135,67 @@ def plan_episode(run: Run) -> dict:
     shares = budget_shares(plan, editorial)
     for block in plan["blocks"]:
         block["chars"] = shares[block["key"]]
-    run.episode.plan = {**plan, "editorial": editorial.model_dump(), "plan_fallback": fallback}
+    stored = editorial.model_dump()
+    for section in stored["sections"]:
+        fact = upcoming.get(section["key"])
+        section["next_up"] = fact.model_dump() if fact else None
+    run.episode.plan = {**plan, "editorial": stored, "plan_fallback": fallback}
     run.session.flush()
-    return {"fallback": fallback, "problems": problems, "shares": shares}
+    return {"fallback": fallback, "attempts": attempts, "shares": shares}
+
+
+def next_games(
+    plan: dict, metas: dict[str, dict], names: frozenset[str], today: date
+) -> dict[str, Fact | None]:
+    told: set[tuple[str, str, str]] = set()
+    chosen: dict[str, Fact | None] = {}
+    for block in plan["blocks"]:
+        games = sorted(
+            (game["date"], game["home"], game["away"], sid)
+            for sid in block["context_ids"]
+            if metas.get(sid, {}).get("type") == "fixtures"
+            for game in metas[sid].get("games", [])
+        )
+        mine = [game for game in games if {game[1], game[2]} & names]
+        pick = next((game for game in mine if game[:3] not in told), None)
+        topic = CATALOG.get(block.get("interest", ""))
+        if not mine and (topic is None or topic.kind != "team"):
+            rivals = table_neighbours(block, metas, names)
+            pick = next((game for game in games if {game[1], game[2]} & rivals), None)
+        chosen[block["key"]] = None
+        if pick:
+            told.add(pick[:3])
+            day = date.fromisoformat(pick[0])
+            text = with_day_labels(f"{pick[1]} host {pick[2]} on {spoken_date(day)}.", today)
+            chosen[block["key"]] = Fact(text=text, source_ids=[pick[3]])
+    return chosen
+
+
+def table_neighbours(block: dict, metas: dict[str, dict], names: frozenset[str]) -> set[str]:
+    for sid in block["context_ids"]:
+        meta = metas.get(sid, {})
+        if meta.get("type") != "standings":
+            continue
+        teams = meta.get("teams", [])
+        spots = [number for number, team in enumerate(teams) if team in names]
+        if spots:
+            spot = spots[0]
+            return set(teams[max(0, spot - 1) : spot] + teams[spot + 1 : spot + 2])
+    return set()
+
+
+def source_metas(run: Run) -> dict[str, dict]:
+    rows = run.session.execute(
+        select(EpisodeArticle.source_id, Article.meta)
+        .join(Article, Article.id == EpisodeArticle.article_id)
+        .where(EpisodeArticle.episode_id == run.episode.id)
+    ).all()
+    return {source_id: meta or {} for source_id, meta in rows}
+
+
+def team_names(run: Run) -> frozenset[str]:
+    feeds = [TOPIC_FEEDS[i.topic] for i in run.interests if i.topic in TOPIC_FEEDS]
+    return frozenset().union(*(feed.data_names for feed in feeds))
 
 
 def planner_instructions(run: Run) -> str:
@@ -152,7 +218,9 @@ def planner_instructions(run: Run) -> str:
     )
 
 
-def planner_prompt(plan: dict, sources: dict) -> str:
+def planner_prompt(
+    plan: dict, sources: dict, upcoming: dict[str, Fact | None] | None = None
+) -> str:
     lines = [f"[CTX] {sources['CTX'].text}", "", "SECTIONS"]
     for block in plan["blocks"]:
         lines.append(f'- Section "{block["key"]}" ({block["title"]}; weight {block["weight"]}):')
@@ -163,6 +231,8 @@ def planner_prompt(plan: dict, sources: dict) -> str:
             lines.append(f"  Story {number}: {', '.join(story['source_ids'])} — {titles}")
         if block["context_ids"]:
             lines.append(f"  Context: {', '.join(block['context_ids'])}")
+        if next_up := (upcoming or {}).get(block["key"]):
+            lines.append(f"  Next up: {next_up.text} ({', '.join(next_up.source_ids)})")
     lines += ["", "SOURCES"]
     for source in sources.values():
         if source.source_id != "CTX":
@@ -201,8 +271,6 @@ def plan_problems(answer: EditorialPlan, plan: dict, known: set[str]) -> list[st
                     f"{section.key}: key fact '{fact.text}' has more than {MAX_FACT_NUMBERS} "
                     "numbers; keep the ones that make the point."
                 )
-        if section.next_up and not set(section.next_up.source_ids) <= allowed:
-            problems.append(f"{section.key}: next_up must cite this section's context.")
     if not answer.hook.source_ids or not set(answer.hook.source_ids) <= known:
         problems.append("hook must cite sources of this episode.")
     if len(answer.threads) > MAX_THREADS:
@@ -242,7 +310,6 @@ def code_plan(plan: dict, sources: dict) -> EditorialPlan:
                 angle="",
                 key_facts=facts[:MAX_FACTS],
                 roundup_ids=roundup,
-                next_up=None,
                 brief=False,
                 major=False,
             )
