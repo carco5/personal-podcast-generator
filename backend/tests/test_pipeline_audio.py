@@ -20,14 +20,14 @@ from app.pipeline.voice import (
     voice_requests,
     voice_script,
 )
-from tests.fakes import make_listener, make_run
+from tests.fakes import PaidVoice, make_listener, make_run
 from tests.test_pipeline_checks import GOOD
 
 pytestmark = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is not installed")
 VOICES = {"host": "george", "analyst": "sarah"}
 
 
-class BrokenVoice(ToneVoice):
+class BrokenVoice(PaidVoice):
     def __init__(self, fault: str, bad: int) -> None:
         self.fault, self.bad = fault, bad
 

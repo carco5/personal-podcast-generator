@@ -45,7 +45,7 @@ class Request:
 class Voice(Protocol):
     model: str
 
-    def synthesize(self, lines: Sequence[Line]) -> tuple[bytes, PaidCall]: ...
+    def synthesize(self, lines: Sequence[Line]) -> tuple[bytes, PaidCall | None]: ...
 
 
 class ElevenLabsVoice:
@@ -81,7 +81,7 @@ class ToneVoice:
 
     model = "tone-for-development"
 
-    def synthesize(self, lines: Sequence[Line]) -> tuple[bytes, PaidCall]:
+    def synthesize(self, lines: Sequence[Line]) -> tuple[bytes, PaidCall | None]:
         chars = sum(len(line.text) for line in lines)
         seconds = round(chars / CHARS_PER_SECOND, 2)
         with tempfile.TemporaryDirectory() as folder:
@@ -103,7 +103,7 @@ class ToneVoice:
                 path,
             )
             data = path.read_bytes()
-        return data, PaidCall("elevenlabs", self.model, 0.0, 0, characters=chars)
+        return data, None
 
 
 SEASON_SLASH = re.compile(r"\b(\d{4})/(\d{2})\b")
@@ -166,6 +166,7 @@ def voices(run: Run) -> dict[str, str]:
 def voice_script(run: Run) -> dict:
     script = Script.model_validate(run.episode.script)
     report = []
+    generated = 0
     for request in voice_requests(script, voices(run)):
         path = cache_path(run.config.data_dir, run.voice.model, request)
         cached = path.exists()
@@ -173,7 +174,9 @@ def voice_script(run: Run) -> dict:
             path.parent.mkdir(parents=True, exist_ok=True)
             for attempt in (1, 2):
                 data, call = run.voice.synthesize(request.lines)
-                run.calls.append(call)
+                generated += request.chars
+                if call is not None:
+                    run.calls.append(call)
                 path.write_bytes(data)
                 problem = chunk_problem(path, request.chars)
                 if problem is None:
@@ -189,10 +192,12 @@ def voice_script(run: Run) -> dict:
                 "cached": cached,
             }
         )
-    generated = sum(call.characters or 0 for call in run.calls)
     return {
+        "voice": run.voice.model,
         "requests": report,
         "generated_characters": generated,
+        "billed_characters": sum(call.characters or 0 for call in run.calls),
+        "reused_characters": sum(r["chars"] for r in report if r["cached"]),
         "cost_usd": round(sum(call.cost_usd for call in run.calls), 4),
     }
 

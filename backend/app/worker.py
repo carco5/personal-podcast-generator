@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.db import engine
-from app.models import Episode, Interest, PodcastSettings, ProviderCall, StageRun
+from app.models import Episode, Interest, PodcastSettings, ProviderCall, StageRun, User
 from app.pipeline.llm import Llm, OpenAILlm
 from app.pipeline.runner import finish, run_episode
 from app.pipeline.voice import ElevenLabsVoice, ToneVoice, Voice
@@ -34,6 +34,9 @@ STALE_AFTER = timedelta(minutes=30)
 BUDGET_WINDOW = timedelta(hours=24)
 
 INTERRUPTED = "Interrupted: the worker stopped while generating. Retry to resume where it stopped."
+BUDGET_EXCEEDED = "Daily spending cap reached"
+
+REAL_USERS = select(User.id).where(User.is_synthetic.is_(False))
 
 
 def recover_stale(session: Session, now: datetime) -> list[int]:
@@ -56,7 +59,10 @@ def recover_stale(session: Session, now: datetime) -> list[int]:
 def schedule_due(session: Session, now: datetime) -> int:
     has_interests = exists().where(Interest.user_id == PodcastSettings.user_id)
     created = 0
-    for podcast in session.scalars(select(PodcastSettings).where(has_interests)):
+    listeners = select(PodcastSettings).where(
+        has_interests, PodcastSettings.user_id.in_(REAL_USERS)
+    )
+    for podcast in session.scalars(listeners):
         slot = latest_slot(podcast, now + LEAD)
         if slot is None or slot < now - CATCH_UP or slot < podcast.updated_at:
             continue
@@ -77,16 +83,17 @@ def schedule_due(session: Session, now: datetime) -> int:
 
 def spent_in_window(session: Session, now: datetime) -> Decimal:
     return session.scalar(
-        select(func.coalesce(func.sum(ProviderCall.cost_usd), 0)).where(
-            ProviderCall.created_at > now - BUDGET_WINDOW
-        )
+        select(func.coalesce(func.sum(ProviderCall.cost_usd), 0))
+        .join(StageRun, StageRun.id == ProviderCall.stage_run_id)
+        .join(Episode, Episode.id == StageRun.episode_id)
+        .where(ProviderCall.created_at > now - BUDGET_WINDOW, Episode.user_id.in_(REAL_USERS))
     )
 
 
 def claim_next(session: Session) -> Episode | None:
     return session.scalar(
         select(Episode)
-        .where(Episode.status == "queued")
+        .where(Episode.status == "queued", Episode.user_id.in_(REAL_USERS))
         .order_by(Episode.scheduled_for, Episode.id)
         .limit(1)
         .with_for_update(skip_locked=True)
@@ -102,7 +109,7 @@ def process_next(
         return None
     spent, cap = spent_in_window(session, now), config.worker_daily_budget_usd
     if spent >= cap:
-        reason = f"Daily spending cap reached: ${spent:.2f} of ${cap:.2f} in the last 24 hours."
+        reason = f"{BUDGET_EXCEEDED}: ${spent:.2f} of ${cap:.2f} in the last 24 hours."
         finish(session, episode, "failed", f"{reason} Retry later.")
         return episode
     with closing(Fetcher()) as fetcher:

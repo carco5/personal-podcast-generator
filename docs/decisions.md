@@ -13,7 +13,7 @@ record supersedes the old one and both stay here.
 | D5 | [One OpenAI model per task](#d5--one-openai-model-per-task) | Accepted |
 | D6 | [Voice: ElevenLabs v3 text-to-dialogue](#d6--voice-elevenlabs-v3-text-to-dialogue) | Accepted, validated in Step 3 |
 | D7 | [Check the script before paying for voice](#d7--check-the-script-before-paying-for-voice) | Accepted |
-| D8 | [Internal dashboard: product and operations](#d8--internal-dashboard-product-and-operations) | Accepted, refined in Step 8 |
+| D8 | [Internal dashboard: product and operations](#d8--internal-dashboard-product-and-operations) | Accepted, refined in Step 8, built in Step 9 |
 | D9 | [Frontend: a single-page app served by FastAPI](#d9--frontend-a-single-page-app-served-by-fastapi) | Accepted, built in Step 8 |
 | D10 | [Runs locally with Docker Compose, including without API keys](#d10--runs-locally-with-docker-compose-including-without-api-keys) | Accepted, revised in Step 6 |
 | D11 | [Cost-aware development](#d11--cost-aware-development) | Accepted |
@@ -45,7 +45,7 @@ record supersedes the old one and both stay here.
 | D37 | [An editorial plan before writing](#d37--an-editorial-plan-before-writing) | Accepted |
 | D38 | [The show's format comes from the listener's interests](#d38--the-shows-format-comes-from-the-listeners-interests) | Accepted |
 | D39 | [The writer turns the plan into a conversation between two fans](#d39--the-writer-turns-the-plan-into-a-conversation-between-two-fans) | Accepted |
-| D40 | [Style lint, length control and a record of every episode](#d40--style-lint-length-control-and-a-record-of-every-episode) | Accepted |
+| D40 | [Style lint, length control and a record of every episode](#d40--style-lint-length-control-and-a-record-of-every-episode) | Accepted, known issue resolved in Step 9 |
 | D41 | [Episodes can be regenerated as of a past moment](#d41--episodes-can-be-regenerated-as-of-a-past-moment) | Accepted |
 | D42 | [The plan keeps the source's framing, and a rejected turn is repaired, not the episode](#d42--the-plan-keeps-the-sources-framing-and-a-rejected-turn-is-repaired-not-the-episode) | Accepted |
 | D43 | [Code picks each section's next game, and results are told the way fans tell them](#d43--code-picks-each-sections-next-game-and-results-are-told-the-way-fans-tell-them) | Accepted |
@@ -59,6 +59,9 @@ record supersedes the old one and both stay here.
 | D51 | [Barça football and basketball are two sections of the catalogue](#d51--barça-football-and-basketball-are-two-sections-of-the-catalogue) | Accepted |
 | D52 | [Listening events: one heartbeat per 15-second slot actually played](#d52--listening-events-one-heartbeat-per-15-second-slot-actually-played) | Accepted |
 | D53 | [A fresh install shows the sample episode, without keys](#d53--a-fresh-install-shows-the-sample-episode-without-keys) | Accepted |
+| D54 | [Dashboard metrics are computed in SQL from one definition of a listen](#d54--dashboard-metrics-are-computed-in-sql-from-one-definition-of-a-listen) | Accepted |
+| D55 | [Simulated data lives in the same tables, marked on the user](#d55--simulated-data-lives-in-the-same-tables-marked-on-the-user) | Accepted |
+| D56 | [The internal dashboard: its own API and page, and retries for real runs only](#d56--the-internal-dashboard-its-own-api-and-page-and-retries-for-real-runs-only) | Accepted |
 
 ---
 
@@ -504,6 +507,18 @@ engagement metrics" (a stream is 60 seconds or more).
 
 **Refined on 2026-09-29 (Step 8).** The listening events are defined in D52: one heartbeat per
 15-second slot actually played, and simulated data marked on the user rather than on each event.
+
+**Built on 2026-09-30 (Step 9)** as D54 (metrics), D55 (simulated data) and D56 (API and page).
+Three changes from the Step 1 list, agreed with the owner:
+- **Topics** are measured as section completion (of the played episodes that reached a section,
+  how many heard it to the end) instead of engaged listens per topic: an episode covers several
+  topics, so one engaged listen would add one to each, and the count would mostly reflect how many
+  people follow each topic.
+- **The voice budget** is the worker's daily dollar cap (D48) plus the month's billed and
+  cache-reused ElevenLabs characters. The provider's quota for these keys is not known, so a
+  "characters left" figure would be invented.
+- **Cohorts** count only listeners who have lived the whole week being measured, and the funnel
+  ends 24 hours ago, so recent episodes do not look unheard just because they are new.
 
 ---
 
@@ -1879,6 +1894,22 @@ counters include the free development voice, whose calls are recorded as "eleven
 Episode 23 reports 6,777 voice characters: 3,824 from the tone voice, plus 2,953 really billed. The
 counters must separate real voice, cached segments and the development voice.
 
+**Resolved on 2026-09-30 (Step 9).**
+- The tone voice is a local stand-in, not a provider, so it no longer returns a provider call, and
+  `provider_calls` only holds what a provider bills. A data migration deleted the 88 old tone rows
+  (37,164 characters at $0). Episodes and stage records were left untouched: their checksums were
+  the same before and after the migration.
+- The voice stage records which voice spoke and the characters generated, billed and reused from
+  the cache. The episode record adds the voice and the reused characters.
+- ElevenLabs now shows the 2,953 characters episode 23 really billed. A voice preview of 871
+  characters, made before the full take and reused by it from the cache, was paid outside the
+  product's records; the project's own cost log counts it.
+- Records written before the fix are kept as they were; the dashboard reads `provider_calls`.
+- Evidence: a test that the tone voice leaves no provider call and keeps its stage history, a test
+  that a retried voice stage reports everything reused, a migration test with real rows, and four
+  sabotages. In the end-to-end run of Step 9, the voice stage recorded 3,927 tone characters, 0
+  billed.
+
 ---
 
 ## D41 · Episodes can be regenerated as of a past moment
@@ -2639,6 +2670,171 @@ sample, 4,698,322 audio bytes (the size of `sample.mp3`), the missing key, and a
 
 ---
 
+## D54 · Dashboard metrics are computed in SQL from one definition of a listen
+
+**Status:** Accepted · **Date:** 2026-09-30 · **Builds:** D8, on the events of D52
+
+**Context.** The dashboard has to show whether the product works for listeners and how the
+pipeline behaves. The player sends a `play` event and one heartbeat per 15-second slot actually
+heard (D52). The metrics must agree with each other and be defensible one by one.
+
+**Decision.**
+- **One base, one row per completed episode** (`LISTENS` in `app/metrics.py`):
+  - when it was first played;
+  - how much was heard: distinct 15-second slots, the last one counting only its real length;
+  - when that crossed 60 seconds (a *stream*, Spotify's definition) and 40% of the episode (an
+    *engaged listen*, Apple's).
+  - Replaying a slot or skipping ahead cannot change it, and an episode counts at most once.
+- **Product, all from that base:**
+  - engaged listens per week, the North Star (Monday to Sunday, UTC, dated when the listen
+    crossed 40%);
+  - weekly engaged listeners;
+  - the funnel and the average share heard, over episodes ready between 28 days and 24 hours ago,
+    so each had a day to be heard;
+  - activation: a new listener's first episode heard engaged within 24 hours;
+  - the drop-off curve: the share of played episodes that heard each tenth of the episode;
+  - topics: of the played episodes that reached a section, how many heard its last slot;
+  - cohorts: an engaged listen on days 0–6 and 21–27 after signup, counted only once that week
+    has passed;
+  - on-time delivery: scheduled episodes, once resolved, ready by their time. Manual and skipped
+    episodes are left out, and a failed one counts as late.
+- **Operations** read `stage_runs` and `provider_calls`:
+  - outcomes, with spending-cap stops kept apart from failures;
+  - cost per completed episode that has run records;
+  - runs, success, p50 and p95 duration and cost per stage (each stage talks to one provider, so
+    stage failures are provider failures);
+  - failures grouped by the stage that stopped them;
+  - the 20 latest runs;
+  - the spend of the last 24 hours, from the worker's own function (real users only).
+- **Counts, not percentages, in the API:** the page divides and shows "—" when there is no base.
+- **Thresholds are backend constants,** passed to SQL text as bound parameters.
+
+**Alternatives considered.**
+- *Computing in Python after loading the events:* it moves every event to the app; the database
+  aggregates next to the data.
+- *A SQL view:* the thresholds would be hard-coded in a migration.
+- *Engaged listens per topic (Step 1):* see D8's revision.
+
+**Trade-offs.**
+- Long SQL strings: named CTEs make them readable, but they are not type-checked, so every
+  definition has a test.
+- The funnel and the topics leave out the last day.
+- A section shorter than one slot is not measured.
+- A slot heard for 10 of its 15 seconds adds nothing (D52).
+
+**Evidence.** Nine tests on hand-built data with known answers. Each one has a sabotage that breaks
+its definition in the SQL and makes it fail:
+- distinct slots and the 24-hour window;
+- "≥" at exactly 60 seconds and at exactly 40%;
+- the shorter last slot;
+- the week in which the listen crossed 40%;
+- activation within 24 hours;
+- finished sections;
+- cohort eligibility;
+- scheduled-only delivery;
+- the simulated-data switch;
+- cap stops kept apart;
+- cost only with run records.
+
+The product tab takes 0.16 s over about 1,200 simulated episodes. In the end-to-end run of Step 9,
+the listen heard to 45% appeared as one engaged listen in the current week.
+
+---
+
+## D55 · Simulated data lives in the same tables, marked on the user
+
+**Status:** Accepted · **Date:** 2026-09-30 · **Builds:** D8, D52
+
+**Context.** The brief allows mocked data. A dashboard needs weeks of listeners to mean anything,
+and a reviewer without keys should see it at once. Real events must go through the same queries.
+
+**Decision.**
+- **`users.is_synthetic`** marks simulated listeners; everything they own inherits the mark, so
+  nothing is stored twice (D52).
+- **`app/synthetic.py` builds them deterministically** from a fixed seed and the moment of seeding:
+  - 69 listeners who sign up over 8 weeks, and about 1,200 episodes;
+  - calibrated on this project's own runs: average tokens and latency per call, the pipeline's
+    prices, 12.4 characters of speech per second and $0.10 per 1,000 characters, so a completed
+    episode costs about $0.45;
+  - invented patterns: drop-off in the first two minutes, some sections skipped more than others,
+    listening that fades with the weeks, 30% who stop listening while episodes keep coming, a
+    group of curious sign-ups who barely listen, and a few replays.
+- **Seeded by the prestart job** on a fresh database (about 10 seconds, once).
+  `python -m app.synthetic --reset` recreates them as of now.
+- **The worker ignores them** when scheduling, when claiming and in the spending cap. They have no
+  settings or interests, so they would never be scheduled anyway; the guards are a second line of
+  defence, each with a test.
+- **The page says the data is simulated,** and a switch hides it.
+
+**Alternatives considered.**
+- *A database dump:* opaque and tied to one schema version.
+- *A separate demo database:* the queries would not be tested on real rows.
+- *A flag on every row:* the same fact stored many times.
+- *Random numbers without calibration:* the operations tab would show invented costs and timings.
+
+**Trade-offs.**
+- The simulated weeks end on the day of seeding: an old install shows old weeks until `--reset`.
+- Simulated completed episodes point to an audio path that does not exist; the app never serves
+  them.
+- The listening patterns are invented; only the costs and timings come from measurements.
+
+**Evidence.**
+- Three tests: the data is deterministic, every row follows the product's rules, and seeding and
+  deleting touch only simulated users.
+- Three worker tests with sabotages.
+- The tests caught a real bug in the generator: a heartbeat at second 300 of a 300-second episode.
+- A clean install without `.env` seeded the 69 listeners on its first start, and a restart seeded
+  none.
+
+---
+
+## D56 · The internal dashboard: its own API and page, and retries for real runs only
+
+**Status:** Accepted · **Date:** 2026-09-30 · **Builds:** D8, D9, D27
+
+**Context.** The team needs the metrics of D54 in a page, and a way to act on a failed run.
+Listeners must not pay for the team's tools.
+
+**Decision.**
+- **API under `/api/v1/internal`:**
+  - `GET /product` and `GET /operations`, with `?include_simulated=`;
+  - `POST /episodes/{id}/retry`: it needs the keys (503), refuses simulated episodes (409) and
+    otherwise requeues the episode with the same function as the listener's retry.
+- **The page `/internal`,** linked on the right of the menu:
+  - one filter row with the simulated-data switch, and two tabs;
+  - charts with shadcn's chart component (Recharts 3), each with a table view;
+  - values readable without hovering;
+  - one validated colour for single series;
+  - percentages that never show 100% or 0% unless exact.
+- **Loaded only when opened** (`React.lazy`): the listener's app stays at 390 KB (125 KB gzipped),
+  and the dashboard is a separate 391 KB file.
+- **No login:** everything under `/internal` can be protected by a team role once authentication
+  exists (D27).
+
+**Alternatives considered.**
+- *Metabase or Grafana* (D8): one more service.
+- *Retrying only from the listener's endpoint:* the team could not act on another listener's run.
+- *Filters inside each chart:* numbers from different slices on one page.
+- *Charts in the main bundle:* it doubled the JavaScript every listener downloads.
+
+**Trade-offs.**
+- The dashboard is open to anyone who reaches the app, like the rest of it (D27).
+- Opening it loads a second file.
+- On a phone, the wide tables scroll horizontally inside their cards.
+
+**Evidence.**
+- Four API tests, one with a sabotage.
+- Playwright on both tabs, desktop and phone, with and without simulated data: no console errors
+  and no page overflow.
+- **An end-to-end run** (2026-09-30), from "Generate now" in the page through the worker (tone
+  voice) to the dashboard:
+  - the episode completed, 321 seconds of audio;
+  - $0.1471 of OpenAI, no ElevenLabs call and no other episode created;
+  - a listen to 45% in the browser became this week's engaged listen, and the run appeared with its
+    cost and stages.
+
+---
+
 ## AI tooling: agent skills
 
 Agent skills are instruction packs for Claude Code. They are installed per project, only in the
@@ -2651,6 +2847,7 @@ useful.
 | `fastapi` | [fastapi/fastapi](https://github.com/fastapi/fastapi/tree/master/fastapi/.agents/skills/fastapi) · MIT · official · 10.7K installs | 4 | Current conventions from FastAPI's maintainers | `Annotated` dependency aliases (`SessionDep`, `CurrentUser`), return types instead of `response_model`, the prefix and tags on each `APIRouter`, `def` endpoints for blocking database code, and when a `yield` dependency closes. Its SQLModel, uv and ty advice was set aside on purpose (D1, D15). |
 | `shadcn` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui/tree/main/skills/shadcn) · MIT · official · 351K installs | 8 | Using shadcn/ui components the way their authors intend | Forms built from `FieldSet`, `Field` and `FieldLabel`; `ToggleGroup` for 2 to 7 options (length, tone, weight, days); `Badge` and `Alert` instead of custom markup; semantic colour tokens. Its preset name `base-nova` was out of date: the current CLI accepts `nova` and records `base-nova`. |
 | `frontend-design` | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) · 934K installs | 8 | A design direction that does not look templated | A token plan (palette, one type family, layout) reviewed against common generated looks; one bold element (the chapter track) with everything else quiet; self-critique from screenshots, which found the unreadable pressed state and the episode list lost below a long transcript. |
+| `dataviz` | Bundled with the Claude Code environment (not installed in the project) | 9 | Chart design with checks instead of taste | Form before colour (stat tiles and one hero figure where the data is a single number; no dual axis); its script validated the chart colours against the card surface (`#2a78d6` for single series; `#86b6ef` as the lighter step for the week in progress, 2.11:1; a one-hue scale for cohort cells, with text at 6.4:1 or more); a table view for every chart; the previous render kept while refetching. |
 
 **Evaluated and not installed:**
 - `github/awesome-copilot@create-architectural-decision-record` (MIT, 10.1K installs): it
@@ -2694,3 +2891,7 @@ useful.
   first amounts to writing Python Playwright scripts, plus a server helper that Docker makes
   unnecessary; the second is a 0.x CLI that grants itself shell permissions. Playwright's Python
   API was used directly, with the system Chrome.
+- Step 9: `dataviz` was used (above), and `shadcn` and `frontend-design` were kept. Searches for dashboards, Recharts,
+  SQL analytics and product metrics returned mostly unrelated skills. `wshobson/agents@kpi-dashboard-design`
+  (14.8K installs, community) was read: a generic guide to SaaS KPIs (MRR, churn), with nothing for metrics
+  that were already defined.

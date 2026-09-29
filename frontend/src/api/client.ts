@@ -15,6 +15,9 @@ export type EpisodeDetail = Schemas["EpisodeDetail"]
 export type EpisodePage = Schemas["EpisodePage"]
 export type Generation = Schemas["Generation"]
 export type ListenKind = Schemas["ListenEventCreate"]["kind"]
+export type ProductMetrics = Schemas["ProductMetrics"]
+export type OperationsMetrics = Schemas["OperationsMetrics"]
+export type Run = Schemas["RunRow"]
 
 export class ApiError extends Error {
   status: number
@@ -75,6 +78,16 @@ export const api = {
       json("POST", { kind, position_seconds })
     ),
   generation: () => request<Generation>("/generation"),
+  product: (includeSimulated: boolean) =>
+    request<ProductMetrics>(
+      `/internal/product?include_simulated=${includeSimulated}`
+    ),
+  operations: (includeSimulated: boolean) =>
+    request<OperationsMetrics>(
+      `/internal/operations?include_simulated=${includeSimulated}`
+    ),
+  retryRun: (id: number) =>
+    request<Episode>(`/internal/episodes/${id}/retry`, { method: "POST" }),
 }
 
 export function audioUrl(id: number): string {

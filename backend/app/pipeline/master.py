@@ -51,6 +51,7 @@ def master_episode(run: Run) -> dict:
 def episode_metrics(run: Run, script: Script, requests: list[Request], files: list[Path]) -> dict:
     spoken = sum(request.chars for request in requests)
     speech = sum(audio.duration(path) for path in files)
+    last_voice = last_voice_run(run)
     calls = {
         provider: (count, float(cost or 0), characters or 0)
         for provider, count, cost, characters in run.session.execute(
@@ -76,10 +77,26 @@ def episode_metrics(run: Run, script: Script, requests: list[Request], files: li
         "chars_per_second": round(spoken / speech, 2) if speech else None,
         "llm_calls": llm[0],
         "llm_cost_usd": round(llm[1], 4),
+        "voice": run.voice.model,
         "voice_calls": voice[0],
         "voice_characters": voice[2],
+        "voice_reused_characters": last_voice.get("reused_characters", 0),
         "voice_cost_usd": round(voice[1], 4),
     }
+
+
+def last_voice_run(run: Run) -> dict:
+    details = run.session.scalar(
+        select(StageRun.details)
+        .where(
+            StageRun.episode_id == run.episode.id,
+            StageRun.stage == "voice",
+            StageRun.status == "completed",
+        )
+        .order_by(StageRun.id.desc())
+        .limit(1)
+    )
+    return details or {}
 
 
 def join(files: list[Path], output: Path) -> None:

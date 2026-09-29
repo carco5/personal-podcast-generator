@@ -64,6 +64,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(Text, unique=True)
     name: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
 
 
 class PodcastSettings(Base):

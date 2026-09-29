@@ -16,9 +16,9 @@ from app.pipeline.repair import Repairs
 from app.pipeline.runner import run_episode
 from app.pipeline.script import Script
 from app.pipeline.selection import Picks
-from app.pipeline.voice import ToneVoice
+from app.pipeline.voice import ToneVoice, Voice
 from app.sources.http import Fetcher
-from tests.fakes import FakeLlm, approve_all, make_article, make_listener
+from tests.fakes import FakeLlm, PaidVoice, approve_all, make_article, make_listener
 
 pytestmark = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is not installed")
 
@@ -41,10 +41,12 @@ def setup(session: Session, with_news: bool = True) -> Episode:
     return episode
 
 
-def generate(session: Session, episode: Episode, llm: FakeLlm, data_dir: Path) -> Episode:
+def generate(
+    session: Session, episode: Episode, llm: FakeLlm, data_dir: Path, voice: Voice | None = None
+) -> Episode:
     config = Settings(_env_file=None, openai_api_key=None, data_dir=data_dir)
     return run_episode(
-        session, episode, llm=llm, voice=ToneVoice(), fetcher=Fetcher(), config=config
+        session, episode, llm=llm, voice=voice or PaidVoice(), fetcher=Fetcher(), config=config
     )
 
 
@@ -94,7 +96,7 @@ def test_as_of_reproduces_a_past_moment(session: Session, tmp_path: Path) -> Non
         session,
         episode,
         llm=FakeLlm(),
-        voice=ToneVoice(),
+        voice=PaidVoice(),
         fetcher=Fetcher(),
         config=config,
         as_of=as_of,
@@ -142,6 +144,44 @@ def test_a_retry_resumes_without_paying_again(
         select(StageRun).where(StageRun.stage == "voice", StageRun.attempt == 2)
     ).one()
     assert voice_run.details["generated_characters"] == 0
+    metrics = master_metrics(session, episode)
+    assert voice_run.details["billed_characters"] == 0
+    assert voice_run.details["reused_characters"] == metrics["spoken_chars"]
+    assert metrics["voice_characters"] == metrics["spoken_chars"]
+    assert metrics["voice_reused_characters"] == metrics["spoken_chars"]
+    assert metrics["voice"] == PaidVoice.model
+
+
+def test_the_tone_voice_is_not_billed_and_keeps_its_history(
+    session: Session, tmp_path: Path
+) -> None:
+    episode = generate(session, setup(session), FakeLlm(), tmp_path, voice=ToneVoice())
+
+    assert episode.status == "completed" and (tmp_path / episode.audio_path).exists()
+    providers = session.scalars(
+        select(ProviderCall.provider)
+        .join(StageRun, StageRun.id == ProviderCall.stage_run_id)
+        .where(StageRun.episode_id == episode.id)
+    ).all()
+    assert "elevenlabs" not in providers and "openai" in providers
+    voice_run = session.scalars(select(StageRun).where(StageRun.stage == "voice")).one()
+    requests = voice_run.details["requests"]
+    assert voice_run.details["voice"] == ToneVoice.model
+    assert requests and all(r["seconds"] > 0 for r in requests)
+    assert voice_run.details["generated_characters"] == sum(r["chars"] for r in requests)
+    assert voice_run.details["billed_characters"] == voice_run.details["cost_usd"] == 0
+    metrics = master_metrics(session, episode)
+    assert metrics["voice"] == ToneVoice.model and metrics["spoken_chars"] > 0
+    assert metrics["voice_calls"] == metrics["voice_characters"] == 0
+
+
+def master_metrics(session: Session, episode: Episode) -> dict:
+    details = session.scalars(
+        select(StageRun.details)
+        .where(StageRun.episode_id == episode.id, StageRun.stage == "master")
+        .order_by(StageRun.id.desc())
+    ).first()
+    return details["metrics"]
 
 
 def test_recheck_repairs_turns_without_rewriting(session: Session, tmp_path: Path) -> None:
@@ -151,7 +191,7 @@ def test_recheck_repairs_turns_without_rewriting(session: Session, tmp_path: Pat
     config = Settings(_env_file=None, openai_api_key=None, data_dir=tmp_path)
 
     run_episode(
-        session, episode, llm=llm, voice=ToneVoice(), fetcher=Fetcher(), config=config, recheck=True
+        session, episode, llm=llm, voice=PaidVoice(), fetcher=Fetcher(), config=config, recheck=True
     )
 
     assert episode.status == "completed" and episode.attempts == 2

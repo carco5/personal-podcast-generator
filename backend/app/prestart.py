@@ -1,6 +1,7 @@
-"""Prepare the database before the API and the worker start: migrations, then the demo listener."""
+"""Prepare the database before the API and the worker start: migrations, then the demo data."""
 
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 
 from alembic import command
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import engine
 from app.demo import seed_demo_listener
+from app.synthetic import seed_if_missing
 
 PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
@@ -28,6 +30,9 @@ def main() -> None:
         user = seed_demo_listener(session, get_settings().data_dir)
         session.commit()
         logger.info("Demo listener ready (id %s)", user.id)
+        created = seed_if_missing(session, datetime.now(UTC))
+        session.commit()
+        logger.info("Simulated listeners: %s created", created)
 
 
 if __name__ == "__main__":

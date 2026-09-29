@@ -195,10 +195,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/internal/product": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Product */
+        get: operations["read_product_api_v1_internal_product_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Operations */
+        get: operations["read_operations_api_v1_internal_operations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/internal/episodes/{episode_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Run */
+        post: operations["retry_run_api_v1_internal_episodes__episode_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Activation */
+        Activation: {
+            /** New Listeners */
+            new_listeners: number;
+            /** Activated */
+            activated: number;
+        };
         /** Chapter */
         Chapter: {
             /** Key */
@@ -232,6 +290,56 @@ export interface components {
              * Format: date-time
              */
             published_at: string;
+        };
+        /** Cohort */
+        Cohort: {
+            /**
+             * Week Start
+             * Format: date-time
+             */
+            week_start: string;
+            /** Listeners */
+            listeners: number;
+            /** Week1 Eligible */
+            week1_eligible: number;
+            /** Week1 Retained */
+            week1_retained: number;
+            /** Week4 Eligible */
+            week4_eligible: number;
+            /** Week4 Retained */
+            week4_retained: number;
+        };
+        /** Delivery */
+        Delivery: {
+            /** Due */
+            due: number;
+            /** On Time */
+            on_time: number;
+        };
+        /** Depth */
+        Depth: {
+            /** Played */
+            played: number;
+            /** Average Share Heard */
+            average_share_heard: number;
+            /** Drop Off */
+            drop_off: components["schemas"]["DropOffPoint"][];
+        };
+        /** DropOffPoint */
+        DropOffPoint: {
+            /** Share Of Episode */
+            share_of_episode: number;
+            /** Listening */
+            listening: number;
+        };
+        /** EpisodeCost */
+        EpisodeCost: {
+            /** Completed */
+            completed: number;
+            /** Openai Usd */
+            openai_usd: number;
+            /** Elevenlabs Usd */
+            elevenlabs_usd: number;
         };
         /** EpisodeDetail */
         EpisodeDetail: {
@@ -330,6 +438,36 @@ export interface components {
             /** News As Of */
             news_as_of?: string | null;
         };
+        /** FailureRow */
+        FailureRow: {
+            /** Category */
+            category: string;
+            /** Count */
+            count: number;
+            /** Latest */
+            latest: string;
+        };
+        /** Funnel */
+        Funnel: {
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /**
+             * Until
+             * Format: date-time
+             */
+            until: string;
+            /** Generated */
+            generated: number;
+            /** Played */
+            played: number;
+            /** Streamed */
+            streamed: number;
+            /** Engaged */
+            engaged: number;
+        };
         /** Generation */
         Generation: {
             /** Missing Keys */
@@ -427,6 +565,37 @@ export interface components {
             /** Position Seconds */
             position_seconds: number;
         };
+        /** OperationsMetrics */
+        OperationsMetrics: {
+            /** Include Simulated */
+            include_simulated: boolean;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            outcomes: components["schemas"]["Outcomes"];
+            cost: components["schemas"]["EpisodeCost"];
+            spend: components["schemas"]["Spend"];
+            voice_month: components["schemas"]["VoiceMonth"];
+            /** Stages */
+            stages: components["schemas"]["StageRow"][];
+            /** Failures */
+            failures: components["schemas"]["FailureRow"][];
+            /** Runs */
+            runs: components["schemas"]["RunRow"][];
+        };
+        /** Outcomes */
+        Outcomes: {
+            /** Completed */
+            completed: number;
+            /** Skipped */
+            skipped: number;
+            /** Failed */
+            failed: number;
+            /** Capped */
+            capped: number;
+        };
         /** PodcastSettingsRead */
         PodcastSettingsRead: {
             /** Show Name */
@@ -484,6 +653,65 @@ export interface components {
             /** Timezone */
             timezone: string;
         };
+        /** ProductMetrics */
+        ProductMetrics: {
+            /** Include Simulated */
+            include_simulated: boolean;
+            /** Simulated Listeners */
+            simulated_listeners: number;
+            /** Weeks */
+            weeks: components["schemas"]["WeekPoint"][];
+            funnel: components["schemas"]["Funnel"];
+            activation: components["schemas"]["Activation"];
+            depth: components["schemas"]["Depth"];
+            /** Topics */
+            topics: components["schemas"]["TopicRow"][];
+            /** Cohorts */
+            cohorts: components["schemas"]["Cohort"][];
+            delivery: components["schemas"]["Delivery"];
+        };
+        /** RunRow */
+        RunRow: {
+            /** Id */
+            id: number;
+            /** Simulated */
+            simulated: boolean;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "scheduled" | "manual";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "in_progress" | "completed" | "failed" | "skipped";
+            /** Status Reason */
+            status_reason: string | null;
+            /**
+             * Scheduled For
+             * Format: date-time
+             */
+            scheduled_for: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Stages */
+            stages: components["schemas"]["RunStage"][];
+        };
+        /** RunStage */
+        RunStage: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "fetch" | "select" | "write" | "check" | "voice" | "master";
+            /** Status */
+            status: string;
+            /** Seconds */
+            seconds: number | null;
+        };
         /** Section */
         Section: {
             /** Key */
@@ -492,6 +720,31 @@ export interface components {
             title: string;
             /** Turns */
             turns: components["schemas"]["Turn"][];
+        };
+        /** Spend */
+        Spend: {
+            /** Last 24H Usd */
+            last_24h_usd: number;
+            /** Daily Cap Usd */
+            daily_cap_usd: number;
+        };
+        /** StageRow */
+        StageRow: {
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "fetch" | "select" | "write" | "check" | "voice" | "master";
+            /** Runs */
+            runs: number;
+            /** Failed */
+            failed: number;
+            /** P50 Seconds */
+            p50_seconds: number | null;
+            /** P95 Seconds */
+            p95_seconds: number | null;
+            /** Cost Usd */
+            cost_usd: number;
         };
         /** Topic */
         Topic: {
@@ -509,6 +762,19 @@ export interface components {
              * @enum {string}
              */
             sport: "football" | "basketball";
+        };
+        /** TopicRow */
+        TopicRow: {
+            /** Topic */
+            topic: string;
+            /** Name */
+            name: string;
+            /** Episodes */
+            episodes: number;
+            /** Started */
+            started: number;
+            /** Finished */
+            finished: number;
         };
         /** Turn */
         Turn: {
@@ -534,6 +800,30 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VoiceMonth */
+        VoiceMonth: {
+            /**
+             * Month Start
+             * Format: date-time
+             */
+            month_start: string;
+            /** Billed Characters */
+            billed_characters: number;
+            /** Reused Characters */
+            reused_characters: number;
+        };
+        /** WeekPoint */
+        WeekPoint: {
+            /**
+             * Week Start
+             * Format: date-time
+             */
+            week_start: string;
+            /** Engaged Listens */
+            engaged_listens: number;
+            /** Engaged Listeners */
+            engaged_listeners: number;
         };
     };
     responses: never;
@@ -1040,6 +1330,120 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Generation"];
                 };
+            };
+        };
+    };
+    read_product_api_v1_internal_product_get: {
+        parameters: {
+            query?: {
+                include_simulated?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductMetrics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_operations_api_v1_internal_operations_get: {
+        parameters: {
+            query?: {
+                include_simulated?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationsMetrics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_run_api_v1_internal_episodes__episode_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeRead"];
+                };
+            };
+            /** @description The episode does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The episode is simulated or did not fail, or another one is being generated */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description OPENAI_API_KEY is missing, or ELEVENLABS_API_KEY when WORKER_VOICE is elevenlabs */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

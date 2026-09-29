@@ -49,3 +49,32 @@ export function whenNext(iso: string, timeZone: string): string {
   if (day === dayKey(tomorrow, timeZone)) return `tomorrow at ${time}`
   return `${parts(iso, timeZone, { weekday: "long", day: "numeric", month: "long" })} at ${time}`
 }
+
+export function percent(part: number, whole: number): string {
+  if (whole <= 0) return "—"
+  const value = (100 * part) / whole
+  const rounded = Math.round(value)
+  if (rounded === 100 && part < whole) return `${Math.floor(value * 10) / 10}%`
+  if (rounded === 0 && part > 0) return `${Math.ceil(value * 10) / 10}%`
+  return `${rounded}%`
+}
+
+export function usd(value: number): string {
+  return `$${value.toFixed(2)}`
+}
+
+export function count(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    notation: value >= 100_000 ? "compact" : "standard",
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
+export function utcDay(iso: string): string {
+  return parts(iso, "UTC", { day: "numeric", month: "short" })
+}
+
+export function utcMoment(iso: string): string {
+  const time = parts(iso, "UTC", { hour: "2-digit", minute: "2-digit" })
+  return `${utcDay(iso)}, ${time}`
+}

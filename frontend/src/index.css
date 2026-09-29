@@ -12,6 +12,11 @@
     --color-court: var(--court);
     --color-frame: var(--frame);
     --color-own: var(--own);
+    --color-chart: var(--chart);
+    --color-chart-soft: var(--chart-soft);
+    --color-seq-1: var(--seq-1);
+    --color-seq-2: var(--seq-2);
+    --color-seq-3: var(--seq-3);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -61,6 +66,11 @@
     --court: #c9702c;
     --frame: #8b93a7;
     --own: #7a6fa8;
+    --chart: #2a78d6;
+    --chart-soft: #86b6ef;
+    --seq-1: #cde2fb;
+    --seq-2: #9ec5f4;
+    --seq-3: #6da7ec;
 }
 
 @layer base {

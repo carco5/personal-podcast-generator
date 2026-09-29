@@ -319,3 +319,31 @@ def test_the_worker_needs_the_keys(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(SystemExit, match="OPENAI_API_KEY and ELEVENLABS_API_KEY"):
         worker.main()
+
+
+def simulated(session: Session, podcast: PodcastSettings) -> User:
+    user = session.get_one(User, podcast.user_id)
+    user.is_synthetic = True
+    session.flush()
+    return user
+
+
+def test_a_simulated_listener_is_never_scheduled(session: Session) -> None:
+    simulated(session, scheduled_listener(session))
+
+    assert schedule_due(session, NOW) == 0
+
+
+def test_a_simulated_episode_is_never_claimed(session: Session) -> None:
+    user = simulated(session, scheduled_listener(session))
+    session.add(Episode(user_id=user.id, trigger="manual", scheduled_for=NOW))
+    session.flush()
+
+    assert claim_next(session) is None
+
+
+def test_simulated_costs_do_not_count_towards_the_cap(session: Session, demo_user: User) -> None:
+    spend(session, demo_user, "0.30", NOW - timedelta(hours=1))
+    spend(session, simulated(session, scheduled_listener(session)), "50.00", NOW)
+
+    assert spent_in_window(session, NOW) == Decimal("0.30")

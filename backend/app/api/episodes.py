@@ -245,7 +245,10 @@ def retry_episode(
     episode_id: int, session: SessionDep, user: CurrentUser, settings: SettingsDep
 ) -> EpisodeRead:
     require_generation_keys(settings)
-    episode = get_own_episode(session, user, episode_id)
+    return requeue(session, get_own_episode(session, user, episode_id))
+
+
+def requeue(session: Session, episode: Episode) -> Episode:
     if episode.status != "failed":
         raise HTTPException(409, "Only failed episodes can be retried")
     episode.status = "queued"

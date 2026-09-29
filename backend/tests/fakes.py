@@ -1,5 +1,5 @@
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, time
 from typing import Any
 
@@ -15,7 +15,7 @@ from app.pipeline.editorial import EditorialPlan
 from app.pipeline.repair import Repairs
 from app.pipeline.script import Script
 from app.pipeline.selection import Picks
-from app.pipeline.voice import ToneVoice, Voice
+from app.pipeline.voice import USD_PER_1K_CHARS, Line, ToneVoice, Voice
 from app.sources.http import Fetcher
 
 
@@ -39,6 +39,16 @@ class FakeLlm:
         self.instructions.append(instructions)
         call = PaidCall("openai", model, 0.0, 1, input_tokens=len(prompt) // 4, output_tokens=10)
         return self.responders[schema](prompt), call
+
+
+class PaidVoice(ToneVoice):
+    model = "fake-eleven-v3"
+
+    def synthesize(self, lines: Sequence[Line]) -> tuple[bytes, PaidCall]:
+        data, _ = super().synthesize(lines)
+        chars = sum(len(line.text) for line in lines)
+        cost = chars * USD_PER_1K_CHARS / 1000
+        return data, PaidCall("elevenlabs", self.model, cost, 1, characters=chars)
 
 
 def pick_first(prompt: str) -> Picks:

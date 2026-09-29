@@ -186,3 +186,140 @@ class EpisodePage(BaseModel):
 
 class Health(BaseModel):
     status: Literal["ok"]
+
+
+# --- Internal dashboard ---
+
+
+class WeekPoint(BaseModel):
+    week_start: datetime
+    engaged_listens: int
+    engaged_listeners: int
+
+
+class Funnel(BaseModel):
+    since: datetime
+    until: datetime
+    generated: int
+    played: int
+    streamed: int
+    engaged: int
+
+
+class Activation(BaseModel):
+    new_listeners: int
+    activated: int
+
+
+class DropOffPoint(BaseModel):
+    share_of_episode: float
+    listening: int
+
+
+class Depth(BaseModel):
+    played: int
+    average_share_heard: float
+    drop_off: list[DropOffPoint]
+
+
+class TopicRow(BaseModel):
+    topic: str
+    name: str
+    episodes: int
+    started: int
+    finished: int
+
+
+class Cohort(BaseModel):
+    week_start: datetime
+    listeners: int
+    week1_eligible: int
+    week1_retained: int
+    week4_eligible: int
+    week4_retained: int
+
+
+class Delivery(BaseModel):
+    due: int
+    on_time: int
+
+
+class ProductMetrics(BaseModel):
+    include_simulated: bool
+    simulated_listeners: int
+    weeks: list[WeekPoint]
+    funnel: Funnel
+    activation: Activation
+    depth: Depth
+    topics: list[TopicRow]
+    cohorts: list[Cohort]
+    delivery: Delivery
+
+
+class Outcomes(BaseModel):
+    completed: int
+    skipped: int
+    failed: int
+    capped: int
+
+
+class EpisodeCost(BaseModel):
+    completed: int
+    openai_usd: float
+    elevenlabs_usd: float
+
+
+class Spend(BaseModel):
+    last_24h_usd: float
+    daily_cap_usd: float
+
+
+class VoiceMonth(BaseModel):
+    month_start: datetime
+    billed_characters: int
+    reused_characters: int
+
+
+class StageRow(BaseModel):
+    stage: Stage
+    runs: int
+    failed: int
+    p50_seconds: float | None
+    p95_seconds: float | None
+    cost_usd: float
+
+
+class FailureRow(BaseModel):
+    category: str
+    count: int
+    latest: str
+
+
+class RunStage(BaseModel):
+    stage: Stage
+    status: str
+    seconds: float | None
+
+
+class RunRow(BaseModel):
+    id: int
+    simulated: bool
+    trigger: EpisodeTrigger
+    status: EpisodeStatus
+    status_reason: str | None
+    scheduled_for: datetime
+    finished_at: datetime | None
+    cost_usd: float
+    stages: list[RunStage]
+
+
+class OperationsMetrics(BaseModel):
+    include_simulated: bool
+    since: datetime
+    outcomes: Outcomes
+    cost: EpisodeCost
+    spend: Spend
+    voice_month: VoiceMonth
+    stages: list[StageRow]
+    failures: list[FailureRow]
+    runs: list[RunRow]

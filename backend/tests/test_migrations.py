@@ -77,3 +77,44 @@ def test_barca_data_migration_splits_and_merges_back(engine: Engine) -> None:
             (hoops, "fc-barcelona", "medium"),
         ]
         transaction.rollback()
+
+
+def test_tone_voice_rows_leave_provider_calls_only(engine: Engine) -> None:
+    def rows() -> list[tuple]:
+        return connection.exec_driver_sql(
+            "SELECT e.status, s.stage, s.details, c.model, c.characters FROM episodes e "
+            "JOIN stage_runs s ON s.episode_id = e.id "
+            "LEFT JOIN provider_calls c ON c.stage_run_id = s.id ORDER BY c.id"
+        ).all()
+
+    with engine.connect() as connection:
+        transaction = connection.begin()
+        config = alembic_config()
+        config.attributes["connection"] = connection
+        command.downgrade(config, "a5739803b67f")
+        user = connection.exec_driver_sql(
+            "INSERT INTO users (email, name) VALUES ('fan@example.com', 'Fan') RETURNING id"
+        ).scalar_one()
+        episode = connection.exec_driver_sql(
+            "INSERT INTO episodes (user_id, trigger, scheduled_for, status, status_reason) "
+            f"VALUES ({user}, 'manual', now(), 'failed', 'master: loudness') RETURNING id"
+        ).scalar_one()
+        stage = connection.exec_driver_sql(
+            "INSERT INTO stage_runs (episode_id, attempt, stage, status, details) VALUES "
+            f"({episode}, 1, 'voice', 'completed', '{{\"requests\": [{{\"chars\": 90}}]}}') "
+            "RETURNING id"
+        ).scalar_one()
+        connection.exec_driver_sql(
+            "INSERT INTO provider_calls "
+            "(stage_run_id, provider, model, characters, cost_usd, latency_ms) VALUES "
+            f"({stage}, 'elevenlabs', 'tone-for-development', 90, 0, 0), "
+            f"({stage}, 'elevenlabs', 'eleven_v3', 60, 0.006, 900)"
+        )
+
+        command.upgrade(config, "a44ca396f657")
+
+        kept = [("failed", "voice", {"requests": [{"chars": 90}]}, "eleven_v3", 60)]
+        assert rows() == kept
+        command.downgrade(config, "a5739803b67f")
+        assert rows() == kept
+        transaction.rollback()

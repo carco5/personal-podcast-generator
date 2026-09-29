@@ -1,10 +1,16 @@
+import { lazy, Suspense } from "react"
 import { NavLink, Route, Routes } from "react-router"
 
 import { cn } from "@/lib/utils"
 import { EpisodesPage } from "@/pages/EpisodesPage"
-import { InternalPage } from "@/pages/InternalPage"
 import { NotFoundPage } from "@/pages/NotFoundPage"
 import { SettingsPage } from "@/pages/SettingsPage"
+
+const InternalPage = lazy(() =>
+  import("@/pages/InternalPage").then((module) => ({
+    default: module.InternalPage,
+  }))
+)
 
 function linkClass({ isActive }: { isActive: boolean }) {
   return cn(
@@ -29,13 +35,28 @@ export function App() {
           <NavLink to="/settings" className={linkClass}>
             Settings
           </NavLink>
+          <NavLink
+            to="/internal"
+            className={(state) => cn(linkClass(state), "ml-auto text-sm")}
+          >
+            Internal
+          </NavLink>
         </nav>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">
         <Routes>
           <Route path="/" element={<EpisodesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/internal" element={<InternalPage />} />
+          <Route
+            path="/internal"
+            element={
+              <Suspense
+                fallback={<p className="text-muted-foreground">Loading…</p>}
+              >
+                <InternalPage />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
