@@ -213,10 +213,6 @@ def code_problems(script: Script, plan: dict, sources: dict[str, EpisodeSource])
     return turn_list + script_problems(script, plan)
 
 
-def allowed_ids(key: str, plan: dict, sources: dict[str, EpisodeSource]) -> set[str]:
-    return set(sources)
-
-
 def turn_problems(
     text: str, source_ids: list[str], allowed: set[str], sources: dict[str, EpisodeSource]
 ) -> list[str]:

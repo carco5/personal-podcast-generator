@@ -64,6 +64,8 @@ def test_write_sends_plan_sources_and_settings(session: Session) -> None:
     assert "[S2] Official · Liga ACB" in prompt
     assert '"Test Show"' in instructions
     assert "introduces George and Sarah by name" in instructions
+    assert 'says which day it is ("It\'s\n  Thursday")' in instructions
+    assert "Monday" not in instructions
     assert "never list every section" in instructions
     assert "Days: never say a full date" in instructions
     assert "At most two stock openers" in instructions

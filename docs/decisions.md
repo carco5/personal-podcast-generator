@@ -19,7 +19,7 @@ record supersedes the old one and both stay here.
 | D11 | [Cost-aware development](#d11--cost-aware-development) | Accepted |
 | D12 | [REST conventions aligned with Prosper's public API](#d12--rest-conventions-aligned-with-prospers-public-api) | Accepted |
 | D13 | [Two fixed, configurable hosts](#d13--two-fixed-configurable-hosts) | Accepted |
-| D14 | [Record the sample episode before building the web app](#d14--record-the-sample-episode-before-building-the-web-app) | Accepted |
+| D14 | [Record the sample episode before building the web app](#d14--record-the-sample-episode-before-building-the-web-app) | Accepted, revised in Step 7 |
 | D15 | [Repository layout, Python version and tooling](#d15--repository-layout-python-version-and-tooling) | Accepted |
 | D16 | [Configuration and secrets](#d16--configuration-and-secrets) | Accepted |
 | D17 | [PostgreSQL 18 in Compose](#d17--postgresql-18-in-compose) | Accepted |
@@ -32,7 +32,7 @@ record supersedes the old one and both stay here.
 | D24 | [Sources are ingested on a schedule and stored](#d24--sources-are-ingested-on-a-schedule-and-stored) | Accepted, built in Step 5 |
 | D25 | [The data model grows step by step, and PostgreSQL enforces it](#d25--the-data-model-grows-step-by-step-and-postgresql-enforces-it) | Accepted |
 | D26 | [Migrations with Alembic, applied by a prestart job](#d26--migrations-with-alembic-applied-by-a-prestart-job) | Accepted |
-| D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted |
+| D27 | [API without login: one current-user dependency, and the database as the guard](#d27--api-without-login-one-current-user-dependency-and-the-database-as-the-guard) | Accepted, revised in Step 8 |
 | D28 | [Tests run against a real PostgreSQL](#d28--tests-run-against-a-real-postgresql) | Accepted |
 | D29 | [One backend Dockerfile with a cached dependency layer and two targets](#d29--one-backend-dockerfile-with-a-cached-dependency-layer-and-two-targets) | Accepted, revised in Steps 6 and 8 |
 | D30 | [Sources are downloaded like a responsible crawler](#d30--sources-are-downloaded-like-a-responsible-crawler) | Accepted |
@@ -44,7 +44,7 @@ record supersedes the old one and both stay here.
 | D36 | [The same story under two URLs is one source](#d36--the-same-story-under-two-urls-is-one-source) | Accepted |
 | D37 | [An editorial plan before writing](#d37--an-editorial-plan-before-writing) | Accepted |
 | D38 | [The show's format comes from the listener's interests](#d38--the-shows-format-comes-from-the-listeners-interests) | Accepted |
-| D39 | [The writer turns the plan into a conversation between two fans](#d39--the-writer-turns-the-plan-into-a-conversation-between-two-fans) | Accepted |
+| D39 | [The writer turns the plan into a conversation between two fans](#d39--the-writer-turns-the-plan-into-a-conversation-between-two-fans) | Accepted, revised in Step 10 |
 | D40 | [Style lint, length control and a record of every episode](#d40--style-lint-length-control-and-a-record-of-every-episode) | Accepted, known issue resolved in Step 9 |
 | D41 | [Episodes can be regenerated as of a past moment](#d41--episodes-can-be-regenerated-as-of-a-past-moment) | Accepted |
 | D42 | [The plan keeps the source's framing, and a rejected turn is repaired, not the episode](#d42--the-plan-keeps-the-sources-framing-and-a-rejected-turn-is-repaired-not-the-episode) | Accepted |
@@ -471,6 +471,16 @@ Evidence from the real runs on 2026-09-28:
 - One official ACB report contradicts itself: 8 rebounds and a valuation of 29 in its summary,
   "nueve rebotes" and 30 in its body. No check can settle which figure is right. The script may
   use either figure the official source states, and nothing outside it.
+
+**Note on untrusted text (Step 10 review, 2026-09-30).** Source text is written by third parties
+and goes into the prompts, so it could carry instructions (prompt injection). What limits it:
+sources come from a fixed catalogue, never from a URL a listener provides; the rules go in the
+model's `instructions` and the sources in its input, labelled as data (`[S3] …`); the models have
+no tools and must answer in a JSON schema; and every factual turn is checked against its cited
+sources, by code and by the judge. The listener's own texts (host names and personalities) go in
+the instructions, but they only shape that listener's show. There is no dedicated test: an
+injection test set and an explicit "sources are data" rule are future work.
+
 ---
 
 ## D8 · Internal dashboard: product and operations
@@ -672,7 +682,7 @@ configuration and not code.
 
 ## D14 · Record the sample episode before building the web app
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27, 2026-09-29 (Step 7)
 
 **Context.** `sample.mp3` is the only deliverable that depends on something outside our control:
 the ElevenLabs quota of a shared account whose limit is not visible.
@@ -703,6 +713,12 @@ Revised on 2026-09-27 with the sample's content and date. The date moved into th
 week, once the catch-up rule removed the dependency on a round. Calendars used: the
 EuroLeague API, the [Liga Endesa 2026-27 calendar](https://acb.com/docs/calendario/calendarioLigaEndesa202627.pdf)
 and [UEFA's 2026/27 dates](https://www.uefa.com/uefachampionsleague/news/02a6-20d57cfcd03e-407c22a7f465-1000--2026-27-champions-league-teams-dates-draws-format-final/).
+
+**Revised on 2026-09-29 (Step 7): what happened.** The sample was voiced on 29 September, as soon
+as its text was right, not on 1 October: with the catch-up rule and `--as-of` (D41), every version
+was generated as of the same moment, Monday 28 September at 23:32 in Madrid, so the recording day
+no longer mattered. The ingest had been storing sources since 24 September. The order held: the
+sample came before the web app. See D45.
 
 ---
 
@@ -919,6 +935,15 @@ with its own weight, so the quotient is now counted per block, with the same tie
 sample's weights and news in all seven sections, the 5-minute allocation is unchanged (a test
 proves it).
 
+**Revised on 2026-09-30 (Step 10): the length is approximate.** Two things move it: the script is
+kept within 10% of a character target (D40), and the voice's pace varies around the spike's 12.4
+characters per second. The sample, a 5-minute episode, runs 293.6 seconds. The last real-voice run
+before delivery was trimmed from 4,277 to 3,386 characters (91% of the 3,720 target), and
+ElevenLabs spoke them at 13.8 per second: 248 seconds. Making the audio hit the minute
+(regenerating the voice, or stretching it) would cost voice credits or sound quality for a length
+the product presents as a target. The cheaper improvement is to budget with the pace the master
+already measures for each episode.
+
 ---
 
 ## D20 · Every check is proven by a sabotage test, and the judge is measured
@@ -974,6 +999,9 @@ recorded when the judge is built (Step 5) and on the sample episode (Step 7).
 Both samples are small. The claims were written and labelled by the AI assistant that built the
 checks, and the script's turns by the author, so they rule out gross errors rather than give an
 accuracy figure. The sample episode will be checked the same way.
+
+**Done in Step 7 (2026-09-29).** Every fact of the sample's final candidates was checked against its
+sources, sentence by sentence, before the voice was paid for (D45).
 
 ---
 
@@ -1102,6 +1130,17 @@ hours, besides the latest round of each league.
   competition's block takes its latest round.
 - *Standings* now come from official structured data for the EuroLeague, LaLiga and the Champions
   League (D31, D4). For the Liga ACB, only its official news mention them.
+
+**Revised on 2026-09-30 (Step 10): every completed episode moves the line, a manual one
+included.** The previous episode is the listener's last completed one, scheduled or from
+"Generate now". Three test episodes on the same day left the third with 2 hours 44 minutes of new
+material: 12 candidates for the Liga ACB, the EuroLeague and the NBA, and none for Barça, whose
+items were all seen earlier or already told. The two high-weight Barça sections were left out
+(D19), and a EuroLeague injury report led the episode. The rule did its job, since nothing was
+repeated; the cost is that a second episode on the same day can be thin, and nothing tells the
+listener why. Future: say before "Generate now" how little is new, say in the episode that a
+followed section has nothing new, or let an on-demand episode leave the scheduled one's line where
+it was.
 
 ---
 
@@ -1276,7 +1315,7 @@ without shell scripts in the containers.
 
 ## D27 · API without login: one current-user dependency, and the database as the guard
 
-**Status:** Accepted · **Date:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-27 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** Authentication is future work, but the data model already has users. The web app
 (Step 8) needs a predictable API, and a double click must never pay for voice twice.
@@ -1329,6 +1368,16 @@ without shell scripts in the containers.
 **Evidence.** `backend/tests/test_api_*.py` and `test_openapi.py`. Each guard was broken on
 purpose, and its test failed: the key check, the time zone check, the ownership filter, the
 one-in-flight index and the documented error responses.
+
+**Revised on 2026-09-29 (Step 8).** The cap is now eight interests: the seven catalogue sections plus
+one of the listener's own (D51). The trade-off above applies to this cap: it is checked in the API,
+not in the database.
+
+**Revised on 2026-09-30 (Step 10).** The web app disables "Generate now" only while its request is
+in flight. Once the API answers `202`, the button is enabled again although the episode is still
+queued or running, and a second press gets the `409`, shown as an error. The index still allows
+one episode in flight, so a listener can never pay for two at once. Keeping the button disabled,
+with the episode's state, while one is in flight is a small future improvement.
 
 ---
 
@@ -1551,7 +1600,9 @@ explainable from the database afterwards.
 
 **Trade-offs.**
 - The runner marks the episode `in_progress` itself. In Step 6 the worker will claim episodes
-  with `SKIP LOCKED`, and that step decides where the claim lives.
+  with `SKIP LOCKED`, and that step decides where the claim lives. *Resolved in Step 6 (D47):* the
+  worker claims the episode with `SELECT … FOR UPDATE SKIP LOCKED`, and the runner's first commit,
+  which marks it `in_progress`, releases the lock; the runner stays the only place that sets it.
 - An episode is generated synchronously, one at a time per process: about 1.5 minutes of text
   stages when measured, plus the voice.
 
@@ -1795,6 +1846,8 @@ basketball, Liga ACB, EuroLeague), then the NBA. The product must stay generic.
 
 **Trade-offs.** A team's two sports cannot yet be chosen separately (for example, Barça football
 without Barça basketball). That needs a data-model change and belongs to the web app step.
+*Resolved in Step 8 (D51):* Barça football and Barça basketball are two catalogue sections, each
+with its own switch and weight.
 
 **Evidence.** The demo listener's interests were re-created in this order on 2026-09-29 through
 the API. On 2026-09-28 the author had chosen the Champions League before LaLiga; he changed it so
@@ -1804,7 +1857,8 @@ both sports follow the same pattern.
 
 ## D39 · The writer turns the plan into a conversation between two fans
 
-**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (the writer's instructions)
+**Status:** Accepted · **Date:** 2026-09-29 · **Revises:** D7 (the writer's instructions) ·
+**Revised:** 2026-09-30 (Step 10)
 
 **Context.** The writer's instructions had grown one rule at a time during the sample test runs,
 and together they produced a news wire: "Now, basketball.", a full date on every result, an
@@ -1845,6 +1899,18 @@ script.
 
 **Evidence.** The episode 14 script, reviewed by the author on 2026-09-29. Unit tests check what
 the writer receives (plan, only the cited sources) and each structure check with a sabotage.
+
+**Revised on 2026-09-30 (Step 10): the day in the intro comes from code.** A manual run from the web
+app on a Wednesday (episode 2438) showed that the intro rule's example, "It's Monday", was written by
+hand. The writer copied it literally, and the judge rightly rejected the turn as the wrong day. The
+check records show the same on a Tuesday (episode 24) and in that morning's end-to-end run (episode
+2437); the sample was generated as of a Monday, so it matched by chance. Each time it cost a rewrite.
+In episode 2438 the rewrite repeated it, the repaired turn failed the judge for another reason and
+was removed, so the episode opened without its welcome. The example now carries the episode's
+weekday, written by code with the same `episode_day` and day name as the episode context (D34). The
+checks had kept the wrong day off the air; the fix removes the error at its source instead of
+relying on them every time. Evidence: the check records of episodes 24, 2437 and 2438; the writer
+test asserts the weekday of a Thursday episode and fails with the old example.
 
 ---
 
@@ -2299,6 +2365,10 @@ Around the loop:
   each `robots.txt` (D30).
 
 **Alternatives considered.**
+- *FastAPI's `BackgroundTasks` for "Generate now"* (added in the Step 10 review): the task runs
+  inside the API process after the response is sent, so it dies with that process, has no retry
+  and ties minutes of paid work to the web server; and it cannot serve the schedule, where there is
+  no request to attach it to. A separate worker reading the queue covers both.
 - *Claiming with a single `UPDATE … RETURNING` in the worker:* equivalent. The pipeline already
   marks the episode `in_progress` and commits at once, so the lock is just as short, and only one
   place changes that status.
@@ -2345,6 +2415,12 @@ Around the loop:
     before it actually terminates";
   - Compose: `stop_grace_period` defaults to 10 s, and a service with profiles "is only started
     if the profile is activated".
+
+**Revised on 2026-09-30 (Step 10).** Runs grew longer than the "one to three minutes" above once
+the pipeline had its editorial plan and repair step, a fresh ingest and real voice: from the
+worker in Docker, 176 seconds (test tone, Step 6), 216 and 273 seconds (test tone, from the web
+app) and 302 seconds with the real voice, 139 of them in the voice stage. The 30-minute stale age,
+the 30-minute lead (D48) and the 10-minute stop grace period still cover the longest run.
 
 ---
 
@@ -2419,6 +2495,11 @@ runs unattended.
   −16.5 LUFS, $0.0628.
 - *systemd's `Persistent=`:* "the service unit is triggered immediately if it would have been
   triggered at least once during the time when the timer was inactive".
+
+**Revised on 2026-09-30 (Step 10).** The real voice was exercised once from the worker in Docker
+before delivery: `WORKER_VOICE=elevenlabs` in a local `.env`, "Generate now" from the web app, six
+`eleven_v3` requests (3,390 characters, $0.339) and the master in the container. The run took 302
+seconds (D47), well inside the 30-minute lead, and the setting went back to the tone afterwards.
 
 ---
 
@@ -2625,6 +2706,7 @@ backward steps, a pause, and the shorter last slot. Removing the sent-slot memor
 them, including the replay test; removing `seek()` fails the small-jump test. In the browser,
 with the real audio: after 16.19 s, one heartbeat at 0; after jumping back to 0.47 s and playing
 the same slot to 16.12 s, no new heartbeat.
+
 ---
 
 ## D53 · A fresh install shows the sample episode, without keys
@@ -2895,3 +2977,7 @@ useful.
   SQL analytics and product metrics returned mostly unrelated skills. `wshobson/agents@kpi-dashboard-design`
   (14.8K installs, community) was read: a generic guide to SaaS KPIs (MRR, churn), with nothing for metrics
   that were already defined.
+- Step 10 (the delivery documents): no new skill; `documentation-and-adrs` was kept. A search for README
+  skills returned `anthropics/skills@doc-coauthoring` (87.3K installs), described as a guided co-writing
+  workflow; the README and this repository's `solution.md` summarise records that already exist, so it
+  was not installed.

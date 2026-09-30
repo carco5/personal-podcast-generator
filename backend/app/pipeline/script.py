@@ -103,7 +103,7 @@ Tone: {tone}.
 
 Write from the PLAN: exactly its segments, in its order, with their keys, and only what it gives.
 - "intro": {host} opens with the plan's hook in one sentence, says which day it is ("It's
-  Monday"), welcomes the listener to {show} and introduces {host} and {analyst} by name;
+  {weekday}"), welcomes the listener to {show} and introduces {host} and {analyst} by name;
   {analyst} says a short hello. Tease two or three stories; never list every section. The intro
   never compresses a record: say it with its scope ("the third-highest total in a league
   opener") or leave the figure out.
@@ -203,7 +203,9 @@ TONES = {
 
 def instructions(run: Run) -> str:
     host, analyst = run.podcast.hosts
+    weekday = f"{episode_day(run.episode.plan, ZoneInfo(run.podcast.timezone)):%A}"
     return INSTRUCTIONS.format(
+        weekday=weekday,
         show=run.podcast.show_name,
         host=host["name"],
         analyst=analyst["name"],
