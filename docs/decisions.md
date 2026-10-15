@@ -17,7 +17,7 @@ record supersedes the old one and both stay here.
 | D9 | [Frontend: a single-page app served by FastAPI](#d9--frontend-a-single-page-app-served-by-fastapi) | Accepted, built in Step 8 |
 | D10 | [Runs locally with Docker Compose, including without API keys](#d10--runs-locally-with-docker-compose-including-without-api-keys) | Accepted, revised in Step 6 |
 | D11 | [Cost-aware development](#d11--cost-aware-development) | Accepted |
-| D12 | [REST conventions aligned with Prosper's public API](#d12--rest-conventions-aligned-with-prospers-public-api) | Accepted |
+| D12 | [Consistent REST conventions](#d12--consistent-rest-conventions) | Accepted |
 | D13 | [Two fixed, configurable hosts](#d13--two-fixed-configurable-hosts) | Accepted |
 | D14 | [Record the sample episode before building the web app](#d14--record-the-sample-episode-before-building-the-web-app) | Accepted, revised in Step 7 |
 | D15 | [Repository layout, Python version and tooling](#d15--repository-layout-python-version-and-tooling) | Accepted |
@@ -70,8 +70,8 @@ record supersedes the old one and both stay here.
 **Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 8)
 
 **Context.** The product needs a user-facing UI, a backend that pulls news and generates audio on
-a schedule, and an internal dashboard. Prosper's own stack is FastAPI, PostgreSQL and
-React/TypeScript.
+a schedule, and an internal dashboard. FastAPI and PostgreSQL are the backend stack I already use
+at work; React with TypeScript is a common choice for a product UI.
 
 **Decision.** Backend: FastAPI, SQLAlchemy 2 (synchronous sessions), Alembic, psycopg 3 and
 Pydantic 2, with API schemas kept separate from database tables. Frontend: React 19, Vite,
@@ -86,8 +86,7 @@ TypeScript, Tailwind 4, shadcn/ui, TanStack Query, Recharts and React Router.
 **Trade-offs.** Synchronous sessions handle less concurrency than async ones. The load here is
 tiny, and FastAPI runs plain `def` endpoints in a thread pool.
 
-**Evidence.** Prosper's job postings and its public OpenAPI document, which is served by FastAPI.
-PyPI (SQLModel 0.0.47, SQLAlchemy 2.1). The FastAPI SQL tutorial points to Alembic for
+**Evidence.** PyPI (SQLModel 0.0.47, SQLAlchemy 2.1). The FastAPI SQL tutorial points to Alembic for
 production migrations.
 
 **Revised on 2026-09-29 (Step 8).** The web app uses shadcn/ui on Base UI (the CLI's current
@@ -565,8 +564,8 @@ repository root with an allowlist `.dockerignore`.
 
 **Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-29 (Step 6)
 
-**Context.** Reviewers must be able to run the project with one command, and the API keys belong
-to Prosper.
+**Context.** Reviewers must be able to run the project with one command, and the API keys are
+private.
 
 **Decision.** `docker compose up` starts the database, a one-off `prestart` job (migrations and the
 demo user, D26) and the API. The worker is optional: it only starts with `--profile worker`,
@@ -623,36 +622,33 @@ Extended in Step 6 (2026-09-29): the same `provider_calls` table sets the worker
 
 ---
 
-## D12 · REST conventions aligned with Prosper's public API
+## D12 · Consistent REST conventions
 
-**Status:** Accepted · **Date:** 2026-09-26 · **Revised:** 2026-09-27
+**Status:** Accepted · **Date:** 2026-09-26
 
-**Context.** The reviewers build and maintain a public REST API. Following their conventions where
-they are consistent makes this API familiar to them.
+**Context.** Anyone who integrates with the API should find it predictable: one prefix, one way to
+page through lists and one style of status values.
 
 **Decision.**
-- `/api/v1/` prefix and `GET /api/v1/health`, as in Prosper's API.
-- `page` + `limit` pagination, as in Prosper's call-log listing: `page` starts at 0, and a list
-  answers `{"episodes": [...], "page_count": …, "next_page": … | null}`, the shape of Prosper's
-  `{"call_logs": [...], "page_count", "next_page"}`.
-- An endpoint to retry a failed episode, similar to Prosper's `rerun-failed` webhooks endpoint.
+- `/api/v1/` prefix and `GET /api/v1/health`, so a breaking change can ship as `/api/v2/`.
+- `page` + `limit` pagination: `page` starts at 0, and a list answers
+  `{"episodes": [...], "page_count": …, "next_page": … | null}`, so a client knows whether there
+  is more to fetch.
+- An endpoint to retry a failed episode.
 - Episode status values `queued`, `in_progress`, `completed`, `failed` and `skipped`, in one
   consistent style. This is the job lifecycle of GitHub's Checks API (`queued`, `in_progress`,
   `completed`) plus `failed`, and `skipped`, which is one of that API's conclusions.
 
 **Alternatives considered.**
-- *Copying Prosper's status values:* they differ between resources (for example `In Progress` and
-  `Failed` for campaign targets, `IN_PROGRESS` and `COMPLETED` for cases), so there is no single
-  convention to copy.
-- *`page_size` pagination:* common elsewhere, but Prosper uses `limit`.
+- *Status values in other styles* (`In Progress`, `IN_PROGRESS`): common in public APIs, but one
+  lowercase snake_case style matches the JSON field names and is easier to consume.
+- *`page_size` instead of `limit`:* equally common; what matters is using one name everywhere.
 
 **Trade-offs.** Offset pagination gets slower on deep pages. With tens of episodes per user this
 does not matter; keyset pagination is the next step if lists grow.
 
-**Evidence.** Prosper's public OpenAPI document (`voice.getprosperapp.com/openapi.json`), checked
-on 2026-09-27, and again in Step 4 for the page numbering and the response shape. [GitHub Checks API](https://docs.github.com/en/rest/checks/runs): `status` is
-`queued`, `in_progress` or `completed`. Revised on 2026-09-27 after re-checking the OpenAPI
-document: pagination there uses `limit`, and status values are not shared across resources.
+**Evidence.** [GitHub Checks API](https://docs.github.com/en/rest/checks/runs): `status` is
+`queued`, `in_progress` or `completed`.
 
 ---
 
@@ -2673,7 +2669,7 @@ the episode (`position // 15`).
   `user_id` (the listener is the episode's owner) and no `is_synthetic` flag (simulated data will
   be marked on the user, Step 9), so nothing is stored twice. Confirmed by the owner.
 - **`POST /api/v1/episodes/{id}/listen-events`** returns 204, only for completed episodes (409
-  otherwise). The path is kebab-case, like Prosper's `rerun-failed` (D12).
+  otherwise). The path is kebab-case, the usual style for multi-word URL paths.
 - **The player's counter** (`src/lib/listening.ts`) splits the episode into the same fixed
   15-second slots the dashboard counts. It remembers which whole seconds of the episode have
   actually played (a set, so a second is remembered once), and when all the seconds of a slot
